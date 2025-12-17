@@ -7,6 +7,7 @@ import Link from "next/link";
 import { locationApi, ordersApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
+import PaymentForm from "@/components/PaymentForm";
 
 export default function OrderPage() {
   const router = useRouter();
@@ -16,6 +17,9 @@ export default function OrderPage() {
   const [error, setError] = useState(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [paymentData, setPaymentData] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Customer information
   const [customerInfo, setCustomerInfo] = useState({
@@ -373,12 +377,21 @@ export default function OrderPage() {
         errors.email = "Please enter a valid email address";
       }
     }
+
+    // Validate pickup date and time
+    if (!selectedDate) {
+      errors.pickupDate = "Please select a pickup date";
+    }
+    
+    if (!selectedTime) {
+      errors.pickupTime = "Please select a pickup time";
+    }
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleOrderInfoSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setValidationErrors({});
@@ -388,7 +401,14 @@ export default function OrderPage() {
       return;
     }
 
-    setLoading(true);
+    // Show payment form
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = async (paymentResult) => {
+    setPaymentData(paymentResult);
+    setPaymentProcessing(true);
+    setError(null);
 
     try {
       const { subtotal, tax, total } = calculateTotals();
@@ -420,21 +440,48 @@ export default function OrderPage() {
         taxRate,
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
-        paymentStatus: "pending", // Will be updated after payment processing
+        paymentStatus: "paid", // Payment already processed
+        paymentRef: paymentResult.paymentRef || paymentResult.chargeId,
       };
 
+      setLoading(true);
       const result = await ordersApi.create(orderData);
       setOrderId(result._id);
+
+      // Attempt to print receipt (non-blocking)
+      try {
+        await fetch('/api/payments/print-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: result._id,
+          }),
+        });
+      } catch (printError) {
+        console.error('Receipt printing failed:', printError);
+        // Don't fail the order if printing fails
+      }
+
       setOrderPlaced(true);
       
       // Clear cart
       localStorage.removeItem("cart");
       setCart([]);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to create order. Payment was successful, please contact support.');
+      // Payment was successful but order creation failed - this is a critical error
+      // In production, you might want to implement a refund or manual order creation process
     } finally {
       setLoading(false);
+      setPaymentProcessing(false);
     }
+  };
+
+  const handlePaymentError = (errorMessage) => {
+    setError(errorMessage || 'Payment processing failed. Please try again.');
+    setPaymentProcessing(false);
   };
 
   if (orderPlaced) {
@@ -644,7 +691,7 @@ export default function OrderPage() {
           {/* Checkout Form */}
           <div className="lg:col-span-1">
             <form
-              onSubmit={handleSubmit}
+              onSubmit={handleOrderInfoSubmit}
               className="rounded-lg bg-white p-6 shadow-md"
             >
               <h2 className="mb-6 text-2xl font-semibold text-[var(--coffee-brown)]">
@@ -748,7 +795,7 @@ export default function OrderPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                    Preferred Pickup Time
+                    Preferred Pickup Time *
                   </label>
                   
                   {/* Date Picker */}
@@ -758,8 +805,16 @@ export default function OrderPage() {
                       onClick={() => {
                         setShowDatePicker(!showDatePicker);
                         setShowTimePicker(false);
+                        // Clear validation error when user interacts
+                        if (validationErrors.pickupDate) {
+                          setValidationErrors({ ...validationErrors, pickupDate: "" });
+                        }
                       }}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-left focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] bg-white flex items-center justify-between"
+                      className={`w-full rounded-lg border px-4 py-2 text-left focus:outline-none focus:ring-2 bg-white flex items-center justify-between ${
+                        validationErrors.pickupDate
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                      }`}
                     >
                       <span className={selectedDate ? "text-[var(--coffee-brown)]" : "text-gray-500"}>
                         {selectedDate
@@ -780,6 +835,10 @@ export default function OrderPage() {
                         />
                       </svg>
                     </button>
+                    
+                    {validationErrors.pickupDate && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.pickupDate}</p>
+                    )}
                     
                     {showDatePicker && (
                       <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg max-h-60 overflow-y-auto">
@@ -809,8 +868,16 @@ export default function OrderPage() {
                         onClick={() => {
                           setShowTimePicker(!showTimePicker);
                           setShowDatePicker(false);
+                          // Clear validation error when user interacts
+                          if (validationErrors.pickupTime) {
+                            setValidationErrors({ ...validationErrors, pickupTime: "" });
+                          }
                         }}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2 text-left focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] bg-white flex items-center justify-between"
+                        className={`w-full rounded-lg border px-4 py-2 text-left focus:outline-none focus:ring-2 bg-white flex items-center justify-between ${
+                          validationErrors.pickupTime
+                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                        }`}
                       >
                         <span className={selectedTime ? "text-[var(--coffee-brown)]" : "text-gray-500"}>
                           {selectedTime
@@ -831,6 +898,10 @@ export default function OrderPage() {
                           />
                         </svg>
                       </button>
+                      
+                      {validationErrors.pickupTime && (
+                        <p className="mt-1 text-sm text-red-600">{validationErrors.pickupTime}</p>
+                      )}
                       
                       {showTimePicker && (
                         <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg max-h-60 overflow-y-auto">
@@ -858,6 +929,12 @@ export default function OrderPage() {
                       )}
                     </div>
                   )}
+                  
+                  {!selectedDate && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Please select a date first
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -873,17 +950,44 @@ export default function OrderPage() {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Placing Order..." : "Place Order"}
-                </button>
+                {!showPayment ? (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={loading || !selectedDate || !selectedTime}
+                      className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Continue to Payment
+                    </button>
+                    {(!selectedDate || !selectedTime) && (
+                      <p className="text-center text-xs text-gray-500 mt-2">
+                        Please select a pickup date and time to continue
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <PaymentForm
+                      amount={calculateTotals().total}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                      disabled={paymentProcessing || loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPayment(false)}
+                      className="w-full rounded-full border-2 border-gray-300 px-6 py-2 text-gray-700 font-semibold transition-colors hover:bg-gray-50"
+                    >
+                      Back to Order Details
+                    </button>
+                  </div>
+                )}
 
-                <p className="text-center text-xs text-gray-500">
-                  Payment will be processed at pickup
-                </p>
+                {paymentProcessing && (
+                  <p className="text-center text-xs text-gray-500">
+                    Processing your order...
+                  </p>
+                )}
               </div>
             </form>
           </div>

@@ -40,3 +40,28 @@ body {
     -apple-system,
     sans-serif;
 }
+
+/* Clover iframe element styling */
+#clover-card-number,
+#clover-card-expiry,
+#clover-card-cvv {
+  position: relative;
+}
+
+#clover-card-number iframe,
+#clover-card-expiry iframe,
+#clover-card-cvv iframe {
+  width: 100% !important;
+  height: 48px !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure Clover input elements are properly sized */
+#clover-card-number .CloverElement,
+#clover-card-expiry .CloverElement,
+#clover-card-cvv .CloverElement {
+  height: 48px !important;
+  line-height: 1.5 !important;
+}
