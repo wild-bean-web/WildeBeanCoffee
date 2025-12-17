@@ -50,6 +50,16 @@ function validateOrderPayload(body) {
     errors.push(`paymentStatus must be one of ${allowedPaymentStatuses.join(", ")}`);
   }
 
+  // Require payment to be completed before order can be created
+  if (paymentStatus !== "paid") {
+    errors.push("Payment must be completed before order can be created. paymentStatus must be 'paid'");
+  }
+
+  // If payment is paid, paymentRef should be provided
+  if (paymentStatus === "paid" && !paymentRef) {
+    errors.push("paymentRef is required when paymentStatus is 'paid'");
+  }
+
   if (pickupTime && Number.isNaN(Date.parse(pickupTime))) {
     errors.push("pickupTime must be a valid date if provided");
   }
@@ -87,6 +97,19 @@ router.post("/", optionalAuth, async (req, res, next) => {
       status: "placed",
       totals,
     });
+
+    // Attempt to print receipt if payment is successful (non-blocking)
+    if (paymentStatus === "paid") {
+      try {
+        const { printReceipt } = await import("../services/clover.js");
+        printReceipt(order).catch((err) => {
+          console.error("Receipt printing failed for order:", order._id, err);
+          // Don't fail the order creation if printing fails
+        });
+      } catch (err) {
+        console.error("Failed to import printReceipt service:", err);
+      }
+    }
 
     res.status(201).json({ data: order });
   } catch (err) {
