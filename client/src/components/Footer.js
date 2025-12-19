@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
+import { SOCIAL_MEDIA_LINKS } from "@/lib/socialMediaLinks";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [instagramAnimation, setInstagramAnimation] = useState(null);
   const [facebookAnimation, setFacebookAnimation] = useState(null);
+  const [tiktokAnimation, setTiktokAnimation] = useState(null);
 
   // Load Lottie animations
   useEffect(() => {
@@ -43,6 +45,22 @@ export default function Footer() {
         }
       })
       .catch((err) => console.error("Failed to load Facebook Lottie animation:", err));
+
+    // Load TikTok animation
+    fetch("/animations/Tiktok.json")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        try {
+          const data = JSON.parse(text);
+          setTiktokAnimation(data);
+        } catch (parseError) {
+          console.error("Failed to parse TikTok Lottie JSON:", parseError);
+        }
+      })
+      .catch((err) => console.error("Failed to load TikTok Lottie animation:", err));
   }, []);
 
   return (
@@ -115,7 +133,7 @@ export default function Footer() {
             {/* Social Media Icons */}
             <div className="flex items-center gap-4">
               <motion.a
-                href="https://instagram.com/"
+                href={SOCIAL_MEDIA_LINKS.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1 }}
@@ -135,7 +153,7 @@ export default function Footer() {
                 )}
               </motion.a>
               <motion.a
-                href="https://facebook.com/"
+                href={SOCIAL_MEDIA_LINKS.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1 }}
@@ -152,6 +170,26 @@ export default function Footer() {
                   />
                 ) : (
                   <span className="text-2xl">👤</span>
+                )}
+              </motion.a>
+              <motion.a
+                href={SOCIAL_MEDIA_LINKS.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-white bg-[var(--lime-green-light)] p-2 transition-all hover:shadow-lg"
+                aria-label="Follow us on TikTok"
+              >
+                {tiktokAnimation ? (
+                  <Lottie
+                    animationData={tiktokAnimation}
+                    loop={true}
+                    autoplay={true}
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <span className="text-2xl">🎵</span>
                 )}
               </motion.a>
             </div>
