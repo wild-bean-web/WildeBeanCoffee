@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Lottie from "lottie-react";
+import { SOCIAL_MEDIA_LINKS } from "@/lib/socialMediaLinks";
 
 export default function SocialMediaGallery() {
   const [instagramAnimation, setInstagramAnimation] = useState(null);
   const [facebookAnimation, setFacebookAnimation] = useState(null);
+  const [tiktokAnimation, setTiktokAnimation] = useState(null);
   const [selfieAnimation, setSelfieAnimation] = useState(null);
   const [espressoSelfieAnimation, setEspressoSelfieAnimation] = useState(null);
 
@@ -47,6 +49,24 @@ export default function SocialMediaGallery() {
       })
       .catch((err) =>
         console.error("Failed to load Facebook Lottie animation:", err)
+      );
+
+    // Load TikTok animation
+    fetch("/animations/Tiktok.json")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        try {
+          const data = JSON.parse(text);
+          setTiktokAnimation(data);
+        } catch (parseError) {
+          console.error("Failed to parse TikTok Lottie JSON:", parseError);
+        }
+      })
+      .catch((err) =>
+        console.error("Failed to load TikTok Lottie animation:", err)
       );
 
     // Load Selfie animation
@@ -96,21 +116,21 @@ export default function SocialMediaGallery() {
       src: "/images/menu/Coffee/Latte.jpg",
       alt: "Coffee",
       platform: "instagram",
-      link: "https://instagram.com/",
+      link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 2,
       src: "/images/menu/Coffee/Cappuccino.jpg",
       alt: "Cappuccino",
       platform: "instagram",
-      link: "https://instagram.com/",
+      link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 3,
       src: "/images/menu/Bakery/Croissant.jpeg",
       alt: "Bakery",
       platform: "facebook",
-      link: "https://facebook.com/",
+      link: SOCIAL_MEDIA_LINKS.facebook,
       title: "Sip. Snap. Share",
       text: "Made for mornings. Perfect for your feed.",
       animation: "selfie",
@@ -120,21 +140,21 @@ export default function SocialMediaGallery() {
       src: "/images/menu/Smoothies/TropicalBliss.jpeg",
       alt: "Smoothie",
       platform: "instagram",
-      link: "https://instagram.com/",
+      link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 5,
       src: "/images/menu/Coffee/Mocha.png",
       alt: "Mocha",
       platform: "facebook",
-      link: "https://facebook.com/",
+      link: SOCIAL_MEDIA_LINKS.facebook,
     },
     {
       id: 6,
       src: "/images/menu/Favorites/ChaiLatte.jpg",
       alt: "Chai Latte",
       platform: "instagram",
-      link: "https://instagram.com/",
+      link: SOCIAL_MEDIA_LINKS.instagram,
       title: "Tag @loveWildBeanCoffee",
       text: "Espresso yourself… we won't judge",
       animation: "espressoSelfie",
@@ -144,14 +164,14 @@ export default function SocialMediaGallery() {
       src: "/images/menu/Smoothies/BerryBoost.jpeg",
       alt: "Smoothie",
       platform: "instagram",
-      link: "https://instagram.com/",
+      link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 8,
       src: "/images/menu/Bakery/Muffin.jpeg",
       alt: "Muffin",
       platform: "facebook",
-      link: "https://facebook.com/",
+      link: SOCIAL_MEDIA_LINKS.facebook,
     },
   ];
 
@@ -197,7 +217,7 @@ export default function SocialMediaGallery() {
           {/* Social Media Links */}
           <div className="mt-8 flex items-center justify-center gap-8">
             <motion.a
-              href="https://instagram.com/"
+              href={SOCIAL_MEDIA_LINKS.instagram}
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.15 }}
@@ -217,7 +237,7 @@ export default function SocialMediaGallery() {
             </motion.a>
 
             <motion.a
-              href="https://facebook.com/"
+              href={SOCIAL_MEDIA_LINKS.facebook}
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.15 }}
@@ -233,6 +253,26 @@ export default function SocialMediaGallery() {
                 />
               ) : (
                 <div className="text-5xl">👤</div>
+              )}
+            </motion.a>
+
+            <motion.a
+              href={SOCIAL_MEDIA_LINKS.tiktok}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
+              className="group relative flex h-24 w-24 items-center justify-center transition-all"
+            >
+              {tiktokAnimation ? (
+                <Lottie
+                  animationData={tiktokAnimation}
+                  loop={true}
+                  autoplay={true}
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="text-5xl">🎵</div>
               )}
             </motion.a>
           </div>
@@ -302,9 +342,18 @@ export default function SocialMediaGallery() {
                             className="h-full w-full"
                           />
                         </div>
+                      ) : image.platform === "tiktok" && tiktokAnimation ? (
+                        <div className="h-8 w-8 rounded-full bg-white/90 p-1">
+                          <Lottie
+                            animationData={tiktokAnimation}
+                            loop={true}
+                            autoplay={true}
+                            className="h-full w-full"
+                          />
+                        </div>
                       ) : (
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-xs">
-                          {image.platform === "instagram" ? "📷" : "👤"}
+                          {image.platform === "instagram" ? "📷" : image.platform === "facebook" ? "👤" : "🎵"}
                         </div>
                       )}
                     </div>
@@ -358,7 +407,9 @@ export default function SocialMediaGallery() {
                           Follow us on{" "}
                           {image.platform === "instagram"
                             ? "Instagram"
-                            : "Facebook"}
+                            : image.platform === "facebook"
+                            ? "Facebook"
+                            : "TikTok"}
                         </p>
                       </>
                     )}

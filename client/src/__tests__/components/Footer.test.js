@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import Footer from '@/components/Footer'
+import { SOCIAL_MEDIA_LINKS } from '@/lib/socialMediaLinks'
 
 describe('Footer', () => {
   it('renders footer with company name', () => {
@@ -38,10 +39,13 @@ describe('Footer', () => {
     render(<Footer />)
     const instagramLink = screen.getByLabelText('Follow us on Instagram')
     const facebookLink = screen.getByLabelText('Follow us on Facebook')
+    const tiktokLink = screen.getByLabelText('Follow us on TikTok')
     expect(instagramLink).toBeInTheDocument()
     expect(facebookLink).toBeInTheDocument()
-    expect(instagramLink).toHaveAttribute('href', 'https://instagram.com/wildbeancoffee')
-    expect(facebookLink).toHaveAttribute('href', 'https://facebook.com/wildbeancoffee')
+    expect(tiktokLink).toBeInTheDocument()
+    expect(instagramLink).toHaveAttribute('href', SOCIAL_MEDIA_LINKS.instagram)
+    expect(facebookLink).toHaveAttribute('href', SOCIAL_MEDIA_LINKS.facebook)
+    expect(tiktokLink).toHaveAttribute('href', SOCIAL_MEDIA_LINKS.tiktok)
   })
 })
 
