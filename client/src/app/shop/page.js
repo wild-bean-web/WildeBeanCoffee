@@ -518,12 +518,22 @@ export default function ShopPage() {
                     )}
                   </p>
                 </div>
-                <Link
-                  href="/order"
-                  className="rounded-full bg-[var(--lime-green)] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                >
-                  Checkout
-                </Link>
+                {process.env.NEXT_PUBLIC_ONLINE_ORDERING_ENABLED === 'true' ? (
+                  <Link
+                    href="/order"
+                    className="rounded-full bg-[var(--lime-green)] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
+                  >
+                    Checkout
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="rounded-full bg-gray-400 px-6 py-2 text-sm font-semibold text-white cursor-not-allowed opacity-60"
+                    title="Online ordering is temporarily unavailable"
+                  >
+                    Checkout (Unavailable)
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -537,11 +537,36 @@ export default function PaymentForm({ amount, onPaymentSuccess, onPaymentError, 
         const messageListener = (event) => {
           // Only log messages from Clover domain
           if (event.origin.includes('clover.com')) {
+            let parsedData = event.data;
+            try {
+              if (typeof event.data === 'string') {
+                parsedData = JSON.parse(event.data);
+              }
+            } catch (e) {
+              // Not JSON, keep as is
+            }
+            
             console.log('[PAYMENT FORM] 📨 Received postMessage from Clover:', JSON.stringify({
               origin: event.origin,
-              data: event.data,
-              dataType: typeof event.data,
+              functionToInvoke: parsedData?.functionToInvoke || 'N/A',
+              hash: parsedData?.hash || 'N/A',
+              sender: parsedData?.sender || 'N/A',
+              recipients: parsedData?.recipients || 'N/A',
+              shouldDefer: parsedData?.shouldDefer || false,
+              hasData: !!parsedData?.data,
+              dataKeys: parsedData?.data ? Object.keys(parsedData.data) : [],
+              fullData: parsedData,
             }, null, 2));
+            
+            // Check if this is a token response
+            if (parsedData?.functionToInvoke === 'onTokenReceived' || parsedData?.data?.token) {
+              console.log('[PAYMENT FORM] ✅ TOKEN RESPONSE DETECTED!');
+            }
+            
+            // Check if this is an error response
+            if (parsedData?.functionToInvoke?.includes('Error') || parsedData?.data?.error) {
+              console.error('[PAYMENT FORM] ❌ ERROR RESPONSE DETECTED!');
+            }
           }
         };
         window.addEventListener('message', messageListener);
