@@ -12,6 +12,50 @@ import PaymentForm from "@/components/PaymentForm";
 export default function OrderPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  
+  // Feature flag: Enable/disable online ordering
+  const ONLINE_ORDERING_ENABLED = process.env.NEXT_PUBLIC_ONLINE_ORDERING_ENABLED === 'true';
+  
+  // Show disabled message if online ordering is turned off
+  if (!ONLINE_ORDERING_ENABLED) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="rounded-xl border-2 border-yellow-200 bg-yellow-50 p-8 shadow-sm">
+            <div className="mb-4 flex justify-center">
+              <svg className="h-16 w-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)]">
+              Online Ordering Temporarily Unavailable
+            </h1>
+            <p className="mb-6 text-lg text-gray-700">
+              We're currently updating our payment system. Online ordering will be back soon!
+            </p>
+            <p className="mb-8 text-sm text-gray-600">
+              In the meantime, please visit us in-store or call us to place your order.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                href="/shop"
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              >
+                Continue Shopping
+              </Link>
+              <Link
+                href="/menu"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              >
+                View Menu
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

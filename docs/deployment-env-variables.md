@@ -60,6 +60,11 @@ Add these in your hosting platform's environment variables settings:
 
 ### Additional Required Variables (Add These):
 
+**Online Ordering Feature Flag** (Control online ordering):
+```
+NEXT_PUBLIC_ONLINE_ORDERING_ENABLED=false  # Set to 'true' to enable, 'false' to disable
+```
+
 **Clover Payment Integration** (Required for payments):
 ```
 NEXT_PUBLIC_CLOVER_PUBLIC_KEY=your-clover-public-token-here
