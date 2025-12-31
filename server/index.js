@@ -1,5 +1,20 @@
-import express from "express";
+// Load environment variables FIRST, before any other imports
+// This ensures env vars are available when modules are evaluated
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Explicitly specify the path to .env file to ensure it's loaded correctly
+const envPath = join(__dirname, ".env");
+const result = dotenv.config({ path: envPath });
+if (result.error) {
+  console.error("[SERVER] Error loading .env file:", result.error);
+}
+
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -11,8 +26,6 @@ import orderRoutes from "./routes/orders.js";
 import locationRoutes from "./routes/location.js";
 import authRoutes from "./routes/auth.js";
 import paymentRoutes from "./routes/payments.js";
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;

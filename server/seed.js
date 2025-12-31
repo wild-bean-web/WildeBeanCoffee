@@ -218,6 +218,18 @@ const menuItems = [
     active: true,
   },
   {
+    name: "Bagel TEST TEST TEST",
+    description: "Plain, everything, or Cinnamon raisin",
+    price: 0.01,
+    currency: "USD",
+    section: "Bakery & Pastries",
+    tags: ["bakery", "bagel", "cream-cheese"],
+    allergens: ["Gluten", "Dairy"],
+    image: "/images/menu/Bakery/BagelWCreamCheese.jpeg",
+    available: true,
+    active: true,
+  },
+  {
     name: "Bagel with Cream Cheese",
     description: "Plain, everything, or Cinnamon raisin",
     price: 4.5,
@@ -290,7 +302,7 @@ const locations = [
     country: "US",
     coordinates: { lat: 39.0629, lng: -77.1291 },
     phone: "555-555-1234",
-    email: "hello@wildbeancoffee.com",
+    email: "wildbeancoffeellc@gmail.com",
     mapsUrl: "",
     hours: [
       { day: "Monday", opens: "06:00", closes: "19:00" },
