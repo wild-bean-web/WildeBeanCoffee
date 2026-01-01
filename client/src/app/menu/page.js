@@ -428,12 +428,12 @@ export default function MenuPage() {
               >
                 {/* Image Section */}
                 {selectedMenuItem.image && (
-                  <div className="relative h-64 w-full bg-gray-200 sm:h-80">
+                  <div className="relative h-80 w-full bg-gray-200 sm:h-96">
                     <Image
                       src={selectedMenuItem.image}
                       alt={selectedMenuItem.name}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       unoptimized
                     />
                     <button
