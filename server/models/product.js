@@ -14,6 +14,7 @@ const ProductSchema = new mongoose.Schema(
     images: [{ type: String, trim: true }],
     categories: [{ type: String, trim: true }],
     active: { type: Boolean, default: true },
+    comingSoon: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -38,7 +38,7 @@ export async function createTestMenuItem(overrides = {}) {
     tags: ["hot", "dairy"],
     allergens: ["Milk"],
     available: true,
-    image: "/images/test-latte.jpg",
+    image: "/images/test-Latte.png",
     active: true,
     ...overrides,
   });
@@ -105,4 +105,3 @@ export async function createTestLocation(overrides = {}) {
     ...overrides,
   });
 }
-

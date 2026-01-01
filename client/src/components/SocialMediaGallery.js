@@ -113,14 +113,14 @@ export default function SocialMediaGallery() {
   const galleryImages = [
     {
       id: 1,
-      src: "/images/menu/Coffee/Latte.jpg",
+      src: "/images/menu/Coffee/Latte.png",
       alt: "Coffee",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 2,
-      src: "/images/menu/Coffee/Cappuccino.jpg",
+      src: "/images/menu/Coffee/Cappuccino.png",
       alt: "Cappuccino",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
@@ -151,7 +151,7 @@ export default function SocialMediaGallery() {
     },
     {
       id: 6,
-      src: "/images/menu/Favorites/ChaiLatte.jpg",
+      src: "/images/menu/Favorites/ChaiLatte.png",
       alt: "Chai Latte",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
@@ -353,7 +353,11 @@ export default function SocialMediaGallery() {
                         </div>
                       ) : (
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-xs">
-                          {image.platform === "instagram" ? "📷" : image.platform === "facebook" ? "👤" : "🎵"}
+                          {image.platform === "instagram"
+                            ? "📷"
+                            : image.platform === "facebook"
+                              ? "👤"
+                              : "🎵"}
                         </div>
                       )}
                     </div>
@@ -408,8 +412,8 @@ export default function SocialMediaGallery() {
                           {image.platform === "instagram"
                             ? "Instagram"
                             : image.platform === "facebook"
-                            ? "Facebook"
-                            : "TikTok"}
+                              ? "Facebook"
+                              : "TikTok"}
                         </p>
                       </>
                     )}

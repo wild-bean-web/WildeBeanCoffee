@@ -337,7 +337,11 @@ export default function ShopPage() {
                       <span className="text-xl font-bold text-[var(--coffee-brown)]">
                         {formatPrice(product.price, product.currency)}
                       </span>
-                      {product.inStock && (
+                      {product.comingSoon ? (
+                        <span className="rounded-full bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600">
+                          Coming Soon
+                        </span>
+                      ) : product.inStock ? (
                         <AddToCartButton
                           item={product}
                           quantity={getCartQuantity(product._id)}
@@ -346,7 +350,7 @@ export default function ShopPage() {
                           onDecrease={(item) => updateCartQuantity(item, -1)}
                           stopPropagation={true}
                         />
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </motion.div>
@@ -471,7 +475,11 @@ export default function ShopPage() {
                           selectedProduct.currency
                         )}
                       </p>
-                      {selectedProduct.inStock ? (
+                      {selectedProduct.comingSoon ? (
+                        <p className="mt-1 text-sm text-gray-600">
+                          Coming Soon
+                        </p>
+                      ) : selectedProduct.inStock ? (
                         <p className="mt-1 text-sm text-[var(--lime-green)]">
                           ✓ In Stock
                         </p>
@@ -481,7 +489,11 @@ export default function ShopPage() {
                         </p>
                       )}
                     </div>
-                    {selectedProduct.inStock && (
+                    {selectedProduct.comingSoon ? (
+                      <span className="rounded-full bg-gray-300 px-8 py-3 text-lg font-semibold text-gray-600">
+                        Coming Soon
+                      </span>
+                    ) : selectedProduct.inStock ? (
                       <AddToCartButton
                         item={selectedProduct}
                         quantity={getCartQuantity(selectedProduct._id)}
@@ -490,7 +502,7 @@ export default function ShopPage() {
                         onDecrease={(item) => updateCartQuantity(item, -1)}
                         className="px-8 py-3 text-lg"
                       />
-                    )}
+                    ) : null}
                   </div>
                   <p className="mt-4 text-center text-sm text-gray-500">
                     Available for in-store pickup

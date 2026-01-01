@@ -17,11 +17,37 @@ export default function MenuPage() {
   // Fetch menu items using custom hook
   const { menuItems, loading, error } = useMenu();
 
-  // Get unique sections
-  const sections = useMemo(
-    () => [...new Set(menuItems.map((item) => item.section))].filter(Boolean),
-    [menuItems]
-  );
+  // Define the desired order for filter buttons
+  const sectionOrder = [
+    "Coffee & Espresso",
+    "Smoothies (Organic & Fresh)",
+    "Oatmeals",
+    "Bakery & Pastries",
+    "Tea",
+  ];
+
+  // Map section names to display names for filter buttons
+  const sectionDisplayNames = {
+    "Smoothies (Organic & Fresh)": "Smoothies",
+  };
+
+  // Get unique sections and order them according to sectionOrder
+  const sections = useMemo(() => {
+    const uniqueSections = [...new Set(menuItems.map((item) => item.section))].filter(Boolean);
+    
+    // Sort sections: first by sectionOrder, then any remaining sections alphabetically
+    const ordered = sectionOrder.filter((section) => uniqueSections.includes(section));
+    const remaining = uniqueSections
+      .filter((section) => !sectionOrder.includes(section))
+      .sort();
+    
+    return [...ordered, ...remaining];
+  }, [menuItems]);
+
+  // Helper function to get display name for a section
+  const getSectionDisplayName = (section) => {
+    return sectionDisplayNames[section] || section;
+  };
 
   // Filter menu items by section
   const filteredItems = useMemo(
@@ -168,7 +194,7 @@ export default function MenuPage() {
                       : "bg-white text-[var(--coffee-brown)] hover:bg-gray-100"
                   }`}
                 >
-                  {section}
+                  {getSectionDisplayName(section)}
                 </button>
               ))}
             </div>
