@@ -94,7 +94,7 @@ export default function Home() {
       ctaLink: "/shop",
       cta2: "View Menu",
       cta2Link: "/menu",
-      bgImage: "/images/menu/Coffee/Cappuccino.jpg",
+      bgImage: "/images/menu/Coffee/Cappuccino.png",
     },
     {
       id: 3,
@@ -118,7 +118,7 @@ export default function Home() {
       ctaLink: "/location",
       cta2: "Order Online",
       cta2Link: "/order",
-      bgImage: "/images/menu/Coffee/Latte.jpg",
+      bgImage: "/images/menu/Coffee/Latte.png",
     },
   ];
 
