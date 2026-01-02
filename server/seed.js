@@ -138,7 +138,7 @@ const menuItems = [
     name: "Green Glow",
     description:
       "Spinach, Kale, Banana, Avocado, Chia Seeds, Almond Milk, Honey, Lime Juice",
-    price: 9.89,
+    price: 8.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "green", "vegan-option"],
@@ -151,7 +151,7 @@ const menuItems = [
     name: "Berry Boost",
     description:
       "Frozen Blueberries, Frozen Raspberries, Fresh Strawberries, Vanilla Yogurt, Almond Milk, Honey",
-    price: 9.89,
+    price: 8.95,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "berry"],
@@ -161,15 +161,15 @@ const menuItems = [
     active: true,
   },
   {
-    name: "Tropical Bean",
+    name: "Tropical Bliss",
     description:
       "Frozen Mango, Frozen Pineapple, Banana, Coconut Water, Orange Juice, Lime Juice",
-    price: 9.89,
+    price: 7.95,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical"],
     allergens: [],
-    image: "/images/menu/Smoothies/TropicalBeanLand.png",
+    image: "/images/menu/Smoothies/TropicalBlissLand.png",
     available: true,
     active: true,
   },
@@ -177,7 +177,7 @@ const menuItems = [
     name: "Nutty Banana Bliss",
     description:
       "Banana, Peanut Butter, Chia Seeds, Almonds, Cinnamon, Milk or Oat Milk, Honey",
-    price: 9.89,
+    price: 8.25,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "nutty"],
@@ -190,7 +190,7 @@ const menuItems = [
     name: "Espresso Energy",
     description:
       "Espresso, Oat Milk, Vanilla Yogurt, Cocoa Powder, Cinnamon, Honey (Served Over Ice)",
-    price: 9.89,
+    price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "espresso", "energy"],
@@ -203,7 +203,7 @@ const menuItems = [
     name: "Guava Cream Smoothie",
     description:
       "Goya Guava Nectar, Plain Non-Fat Yogurt, Almond Milk or Oat Milk, Avocado, Fresh Lime Juice, Blended with Ice",
-    price: 9.89,
+    price: 8.5,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical", "guava"],
@@ -216,8 +216,8 @@ const menuItems = [
   {
     name: "Protein Packed Oatmeal",
     description:
-      "Cooked Oatmeal, Yogurt, Chia Seeds, Strawberries, Blueberries, Banana, Peanut Butter",
-    price: 7.99,
+      "Cooked Oatmeal, Chia pudding, Yogurt, Strawberries, Blueberries, Banana, Peanut Butter",
+    price: 8.95,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "protein", "healthy", "breakfast"],
@@ -229,8 +229,8 @@ const menuItems = [
   {
     name: "Tropical Flavor Oatmeal",
     description:
-      "Cooked Oatmeal, Yogurt, Chia Seeds, Raspberries, Blueberries, Granola, Coconut Flakes",
-    price: 7.99,
+      "Cooked Oatmeal, Chia pudding, Yogurt, Raspberries, Blueberries, Granola, Coconut Flakes",
+    price: 7.95,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "tropical", "healthy", "breakfast"],
@@ -242,8 +242,8 @@ const menuItems = [
   {
     name: "Nutty Harvest Oatmeal",
     description:
-      "Cooked Oatmeal, Yogurt, Chia Seeds, Pecans, Walnuts, Dried Cranberries, Coconut Flakes",
-    price: 7.99,
+      "Cooked Oatmeal, Chia pudding, Yogurt, Pecans, Walnuts, Dried Cranberries, Coconut Flakes",
+    price: 8.5,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "nuts", "harvest", "healthy", "breakfast"],
@@ -255,8 +255,8 @@ const menuItems = [
   {
     name: "Nut Free Oatmeal",
     description:
-      "Cooked Oatmeal, Vanilla Yogurt, Chia Seeds, Raisins, Sunflower Seeds, Coconut Flakes, Banana",
-    price: 7.99,
+      "Cooked Oatmeal, Chia pudding, Vanilla Yogurt, Raisins, Sunflower Seeds, Coconut Flakes, Banana",
+    price: 7.5,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "nut-free", "healthy", "breakfast"],

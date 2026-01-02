@@ -30,18 +30,48 @@ async function fetchJson(url, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
   
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers,
-    credentials: "include", // Include cookies for httpOnly cookie support
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed: ${response.status}`);
+  let response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers,
+      credentials: "include", // Include cookies for httpOnly cookie support
+    });
+  } catch (networkError) {
+    // Network error (server not running, CORS, etc.)
+    throw new Error(`Network error: ${networkError.message}. Make sure the server is running at ${API_BASE_URL || 'http://localhost:4000'}`);
   }
 
-  return response.json();
+  if (!response.ok) {
+    let errorMessage = `Request failed: ${response.status} ${response.statusText}`;
+    try {
+      // Clone the response to read it without consuming it
+      const contentType = response.headers.get("content-type");
+      if (contentType && typeof contentType === "string" && contentType.includes("application/json")) {
+        const body = await response.json();
+        if (body && typeof body === "object") {
+          errorMessage = body.error || body.message || errorMessage;
+        }
+      } else {
+        // Try to get text if not JSON
+        const text = await response.text();
+        if (text && text.length > 0) {
+          errorMessage = text;
+        }
+      }
+    } catch (parseError) {
+      // If we can't parse the response, use the status message
+      console.error("Error parsing error response:", parseError);
+      errorMessage = `Request failed: ${response.status} ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  try {
+    return await response.json();
+  } catch (parseError) {
+    throw new Error(`Invalid JSON response from server: ${parseError.message}`);
+  }
 }
 
 /**
@@ -240,6 +270,24 @@ export const authApi = {
   getUserOrders: async () => {
     const result = await fetchJson("/api/auth/orders");
     return result.data.orders || [];
+  },
+};
+
+/**
+ * Payments API
+ */
+export const paymentsApi = {
+  /**
+   * Create a Hosted Checkout session
+   * @param {Object} checkoutData - Checkout data (items, customer, amount, URLs, etc.)
+   * @returns {Promise<Object>} Checkout session with URL
+   */
+  createCheckout: async (checkoutData) => {
+    const result = await fetchJson("/api/payments/create-checkout", {
+      method: "POST",
+      body: JSON.stringify(checkoutData),
+    });
+    return result.data;
   },
 };
 

@@ -1,0 +1,199 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ordersApi } from "@/lib/api";
+
+export default function OrderSuccessPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const checkoutId = searchParams.get("checkoutId");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [orderId, setOrderId] = useState(null);
+
+  useEffect(() => {
+
+    // Get pending order data from sessionStorage
+    const pendingOrderData = sessionStorage.getItem("pendingOrder");
+    
+    if (!pendingOrderData) {
+      setError("No order data found. Your payment was successful, but we couldn't create your order. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    const orderData = JSON.parse(pendingOrderData);
+
+    // Create order with payment status
+    const createOrder = async () => {
+      try {
+        const orderPayload = {
+          ...orderData,
+          paymentStatus: "paid",
+          paymentRef: checkoutId || "hosted-checkout",
+        };
+
+        const result = await ordersApi.create(orderPayload);
+        setOrderId(result._id);
+
+        // Clear sessionStorage
+        sessionStorage.removeItem("pendingOrder");
+
+        // Attempt to print receipt (non-blocking)
+        try {
+          await fetch("/api/payments/print-receipt", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              orderId: result._id,
+            }),
+          });
+        } catch (printError) {
+          console.error("Receipt printing failed:", printError);
+        }
+
+        // Clear cart
+        localStorage.removeItem("cart");
+      } catch (err) {
+        console.error("Error creating order:", err);
+        setError(
+          err.message ||
+            "Payment was successful, but we couldn't create your order. Please contact support with your payment reference."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    createOrder();
+  }, [checkoutId]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--lime-green)] border-r-transparent"></div>
+          <p className="text-gray-600">Processing your order...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-lg bg-white p-8 text-center shadow-lg"
+          >
+            <div className="mb-6">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <svg
+                  className="h-8 w-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-brown)]">
+                Order Processing Error
+              </h1>
+              <p className="text-gray-600">{error}</p>
+              {checkoutId && (
+                <p className="mt-4 text-sm text-gray-500">
+                  Payment Reference: {checkoutId}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                href="/order"
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              >
+                Try Again
+              </Link>
+              <Link
+                href="/shop"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              >
+                Continue Shopping
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-lg bg-white p-8 text-center shadow-lg"
+        >
+          <div className="mb-6">
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--lime-green)]">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 className="mb-2 text-3xl font-bold text-[var(--coffee-brown)]">
+              Order Placed Successfully!
+            </h1>
+            <p className="mb-4 text-gray-600">
+              Thank you for your order. We'll have it ready for pickup soon.
+            </p>
+            {orderId && (
+              <p className="text-sm text-gray-500">
+                Order ID: {orderId.slice(-8)}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Link
+              href="/shop"
+              className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+            >
+              Continue Shopping
+            </Link>
+            <Link
+              href="/menu"
+              className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+            >
+              View Menu
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
