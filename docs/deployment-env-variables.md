@@ -67,7 +67,6 @@ NEXT_PUBLIC_ONLINE_ORDERING_ENABLED=false  # Set to 'true' to enable, 'false' to
 
 **Clover Payment Integration** (Required for payments):
 ```
-NEXT_PUBLIC_CLOVER_PUBLIC_KEY=your-clover-public-token-here
 NEXT_PUBLIC_CLOVER_MERCHANT_ID=your-clover-merchant-id-here
 NEXT_PUBLIC_CLOVER_ENVIRONMENT=production
 ```
@@ -75,9 +74,9 @@ NEXT_PUBLIC_CLOVER_ENVIRONMENT=production
 ### Complete Frontend Environment Variables List:
 ```
 NEXT_PUBLIC_API_URL=https://your-backend.railway.app
-NEXT_PUBLIC_CLOVER_PUBLIC_KEY=your-clover-public-token-here
 NEXT_PUBLIC_CLOVER_MERCHANT_ID=your-clover-merchant-id-here
 NEXT_PUBLIC_CLOVER_ENVIRONMENT=production
+NEXT_PUBLIC_ONLINE_ORDERING_ENABLED=true
 ```
 
 ---
@@ -86,7 +85,6 @@ NEXT_PUBLIC_CLOVER_ENVIRONMENT=production
 
 ### Clover Credentials:
 - **Private Token** (`CLOVER_API_KEY`) → Goes in **Railway (Backend)** only
-- **Public Token** (`NEXT_PUBLIC_CLOVER_PUBLIC_KEY`) → Goes in **Frontend** only
 - **Merchant ID** → Goes in both (safe to expose in frontend)
 - **Environment** → Use `sandbox` for testing, `production` for live
 
@@ -117,9 +115,9 @@ NEXT_PUBLIC_CLOVER_ENVIRONMENT=production
 ### 2. Frontend (Parcel/Vercel/etc.)
 1. Go to your hosting platform's environment variables settings
 2. Add the Clover variables:
-   - `NEXT_PUBLIC_CLOVER_PUBLIC_KEY` (your public token)
    - `NEXT_PUBLIC_CLOVER_MERCHANT_ID`
    - `NEXT_PUBLIC_CLOVER_ENVIRONMENT` (start with `sandbox`)
+   - `NEXT_PUBLIC_ONLINE_ORDERING_ENABLED` (set to `true` to enable)
 3. Verify `NEXT_PUBLIC_API_URL` points to your Railway backend
 
 ### 3. Redeploy
@@ -144,7 +142,7 @@ After setting up environment variables:
 ## Troubleshooting
 
 ### Payment form not loading:
-- Check that `NEXT_PUBLIC_CLOVER_PUBLIC_KEY` is set correctly
+- Check that `NEXT_PUBLIC_CLOVER_MERCHANT_ID` is set correctly
 - Verify `NEXT_PUBLIC_CLOVER_ENVIRONMENT` matches your Clover account
 - Check browser console for errors
 

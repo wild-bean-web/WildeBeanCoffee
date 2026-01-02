@@ -1,5 +1,5 @@
 import express from "express";
-import { processPayment, printReceipt, verifyPaymentToken } from "../services/clover.js";
+import { processPayment, printReceipt } from "../services/clover.js";
 import { errorResponse } from "../utils/validation.js";
 
 const router = express.Router();
@@ -91,27 +91,6 @@ router.post("/process", async (req, res, next) => {
     }, null, 2));
     console.error('[PAYMENT ROUTE] ========== PAYMENT REQUEST FAILED ==========');
     console.log('═══════════════════════════════════════════════════════════');
-    next(err);
-  }
-});
-
-/**
- * POST /api/payments/verify-token
- * Verify a payment token from Clover iFrame
- * Body: { token }
- */
-router.post("/verify-token", async (req, res, next) => {
-  try {
-    const { token } = req.body;
-
-    if (!token) {
-      return errorResponse(res, 400, "Payment token is required");
-    }
-
-    const result = await verifyPaymentToken(token);
-    res.json({ data: result });
-  } catch (err) {
-    console.error("Token verification error:", err);
     next(err);
   }
 });

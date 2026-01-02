@@ -7,7 +7,6 @@ import Link from "next/link";
 import { locationApi, ordersApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
-import PaymentForm from "@/components/PaymentForm";
 
 export default function OrderPage() {
   const router = useRouter();
@@ -1011,12 +1010,11 @@ export default function OrderPage() {
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <PaymentForm
-                      amount={calculateTotals().total}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                      disabled={paymentProcessing || loading}
-                    />
+                    <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-6 text-center">
+                      <p className="text-gray-700">
+                        Payment integration is being updated. Please check back soon.
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowPayment(false)}

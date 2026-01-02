@@ -5,7 +5,7 @@ This guide will help you set up and test the Clover payment integration for Wild
 ## Prerequisites
 
 - Clover Merchant Account with POS system
-- Ecommerce API Token created in Clover Dashboard (Hosted iFrame + API/SDK type)
+- Ecommerce API Token created in Clover Dashboard
 - Both Public and Private API keys from Clover
 - Your Clover Merchant ID
 
@@ -31,24 +31,17 @@ CLOVER_ENVIRONMENT=sandbox  # Use 'sandbox' for testing, 'production' for live
 Add the following to your `client/.env.local` file:
 
 ```bash
-# Clover Payment Integration (Public Key - Safe to expose)
-NEXT_PUBLIC_CLOVER_PUBLIC_KEY=your-clover-public-token-here
+# Clover Payment Integration
 NEXT_PUBLIC_CLOVER_MERCHANT_ID=your-clover-merchant-id-here
 NEXT_PUBLIC_CLOVER_ENVIRONMENT=sandbox  # Use 'sandbox' for testing, 'production' for live
+NEXT_PUBLIC_ONLINE_ORDERING_ENABLED=true  # Enable online ordering
 ```
 
 **Important:**
-- `NEXT_PUBLIC_CLOVER_PUBLIC_KEY` should be your **Public Token** (PAKMS key - used for client-side iFrame)
-- This is safe to expose in the browser as it's designed for client-side use
+- Merchant ID is safe to expose in the browser
+- Environment must match between client and server
 
-## Step 2: Enable reCAPTCHA (Optional but Recommended)
-
-1. Log in to your Clover Merchant Dashboard
-2. Navigate to **Account & Setup** > **Ecommerce API Tokens**
-3. Find your token and enable **"Use reCAPTCHA for all transactions made through iFrame embedded page"**
-4. Share your Merchant ID with Clover support if required for reCAPTCHA integration
-
-## Step 3: Set Up Printer (When POS is Ready)
+## Step 2: Set Up Printer (When POS is Ready)
 
 Once your Clover POS system is set up in the store:
 
@@ -56,7 +49,7 @@ Once your Clover POS system is set up in the store:
 2. Receipts will be printed automatically after successful payment and order creation
 3. If you have multiple printers, you can specify a printer ID in the print request
 
-## Step 4: Testing the Integration
+## Step 3: Testing the Integration
 
 ### Test Mode (Sandbox)
 
@@ -85,26 +78,18 @@ Once your Clover POS system is set up in the store:
 ### Payment Flow
 
 1. **Customer fills out order form** → Customer information and order details
-2. **Customer clicks "Continue to Payment"** → Payment form appears
-3. **Customer enters card details** → Securely processed through Clover iFrame
-4. **Payment is processed** → Backend calls Clover API to charge the card
-5. **Order is created** → Only after successful payment
-6. **Receipt is printed** → Automatically sent to in-store printer
+2. **Customer initiates payment** → Payment processing begins
+3. **Payment is processed** → Backend calls Clover API to charge the card
+4. **Order is created** → Only after successful payment
+5. **Receipt is printed** → Automatically sent to in-store printer
 
 ### Security Features
 
 - **PCI Compliance:** Card data never touches your server - handled entirely by Clover
 - **Token-based:** Payment uses secure tokens, not raw card data
 - **Server-side processing:** Actual payment processing happens on your secure backend
-- **reCAPTCHA:** Optional protection against automated attacks
 
 ## Troubleshooting
-
-### Payment Form Not Loading
-
-- Check that `NEXT_PUBLIC_CLOVER_PUBLIC_KEY` is set correctly
-- Verify the Clover SDK script is loading (check browser console)
-- Ensure you're using the correct environment (sandbox vs production)
 
 ### Payment Processing Fails
 
@@ -136,7 +121,7 @@ Process a payment through Clover.
 ```json
 {
   "amount": 25.50,
-  "source": "token_from_clover_iframe",
+  "source": "payment_token_from_clover",
   "currency": "USD"
 }
 ```
@@ -196,4 +181,3 @@ For application-specific issues:
 - Check server logs for detailed error messages
 - Verify all environment variables are set correctly
 - Ensure database connection is working
-

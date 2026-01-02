@@ -78,7 +78,7 @@ function getCloverHeaders() {
  * Process a payment through Clover
  * @param {Object} paymentData - Payment information
  * @param {number} paymentData.amount - Amount in cents
- * @param {string} paymentData.source - Payment source token from Clover iFrame
+ * @param {string} paymentData.source - Payment source token from Clover
  * @param {string} paymentData.orderId - Order ID (optional, for tracking)
  * @param {string} paymentData.currency - Currency code (default: USD)
  * @returns {Promise<Object>} Payment result
@@ -170,7 +170,7 @@ export async function processPayment(paymentData) {
     const chargePayload = {
       amount: Math.round(amount), // Ensure amount is in cents
       currency: currency.toLowerCase(),
-      source: source, // Token from Clover iFrame
+      source: source, // Payment token from Clover
       description: orderId ? `Order #${orderId}` : "Online Order",
       capture: true, // Capture immediately (not just authorize)
     };
@@ -528,40 +528,3 @@ function formatReceiptContent(order) {
   return lines;
 }
 
-/**
- * Verify a payment token from Clover iFrame
- * @param {string} token - Payment token from iFrame
- * @returns {Promise<Object>} Token verification result
- */
-export async function verifyPaymentToken(token) {
-  initializeConfig(); // Ensure config is loaded before use
-  if (!CLOVER_API_KEY || !CLOVER_MERCHANT_ID) {
-    throw new Error("Clover API credentials not configured");
-  }
-
-  try {
-    // Verify token with Clover API
-    const verifyUrl = `${CLOVER_API_BASE_URL}/v3/merchants/${CLOVER_MERCHANT_ID}/tokens/${token}`;
-
-    const response = await fetch(verifyUrl, {
-      method: "GET",
-      headers: getCloverHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error("Invalid payment token");
-    }
-
-    const result = await response.json();
-    return {
-      valid: true,
-      token: result.id,
-    };
-  } catch (error) {
-    console.error("Clover token verification error:", error);
-    return {
-      valid: false,
-      error: error.message,
-    };
-  }
-}
