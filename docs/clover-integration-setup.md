@@ -28,15 +28,16 @@ This guide will help you set up and test the Clover Hosted Checkout integration 
    - Business name, logo, colors
    - Customer fields (first name, last name, email, etc.)
    - Enable reCAPTCHA (recommended)
-4. **Set Redirect URLs:**
-   - **Success URL:** `https://wildbeancoffeeshop.com/order/success?checkoutId={CHECKOUT_ID}`
+4. **Set Redirect URLs (Optional - can also be set in API call):**
+   - **Success URL:** `https://wildbeancoffeeshop.com/order/success?checkoutId={CHECKOUT_SESSION_ID}`
    - **Failure URL:** `https://wildbeancoffeeshop.com/order/failure`
-   - **Cancel URL:** `https://wildbeancoffeeshop.com/order?canceled=true`
    
-   **Note:** If you see "Invalid URL" warnings, this is normal - Clover's validator doesn't recognize the `{CHECKOUT_ID}` placeholder, but it will work at runtime. You can:
-   - Try URL-encoding the placeholder: `%7BCHECKOUT_ID%7D`
-   - Use a test value temporarily: `?checkoutId=test` (then change back)
-   - Ignore the warning - our API call will override these URLs anyway
+   **Note:** 
+   - Redirect URLs can be set in the Merchant Dashboard OR in the API call
+   - If set in Merchant Dashboard, those URLs override the API call URLs
+   - The placeholder format is `{CHECKOUT_SESSION_ID}` (not `{CHECKOUT_ID}`)
+   - If you see "Invalid URL" warnings, try using a test value temporarily to save, then update it
+   - Our API call also sets redirectUrls, so you can leave these empty if you prefer
 5. **Configure Webhook (Optional but Recommended):**
    - **Webhook URL:** `https://wildecoffeebean-production.up.railway.app/api/payments/webhook`
    - Click **"GENERATE"** to create a signing secret
@@ -65,15 +66,14 @@ CLOVER_WEBHOOK_SECRET=your-webhook-signing-secret-here  # Optional, for webhook 
 Add the following to your `client/.env.local` file:
 
 ```bash
-# Clover Payment Integration
-NEXT_PUBLIC_CLOVER_MERCHANT_ID=your-clover-merchant-id-here
-NEXT_PUBLIC_CLOVER_ENVIRONMENT=sandbox  # Use 'sandbox' for testing, 'production' for live
+# Online Ordering Feature Flag
 NEXT_PUBLIC_ONLINE_ORDERING_ENABLED=true  # Enable online ordering
 ```
 
 **Important:**
-- Merchant ID is safe to expose in the browser
-- Environment must match between client and server
+- Hosted Checkout doesn't require any client-side Clover environment variables
+- All Clover API calls are handled server-side for security
+- The client only redirects to Clover's hosted payment page
 
 ## Step 3: How Hosted Checkout Works
 

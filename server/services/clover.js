@@ -543,7 +543,9 @@ function formatReceiptContent(order) {
  * @returns {Promise<Object>} Checkout session with URL
  */
 export async function createHostedCheckoutSession(checkoutData) {
-  console.log("[CLOVER SERVICE] ========== CREATE HOSTED CHECKOUT SESSION ==========");
+  console.log(
+    "[CLOVER SERVICE] ========== CREATE HOSTED CHECKOUT SESSION =========="
+  );
   initializeConfig(); // Ensure config is loaded before use
 
   const {
@@ -557,20 +559,28 @@ export async function createHostedCheckoutSession(checkoutData) {
     currency = "USD",
   } = checkoutData;
 
-  console.log("[CLOVER SERVICE] Checkout data:", JSON.stringify({
-    itemCount: items?.length || 0,
-    customerName: customer?.firstName && customer?.lastName 
-      ? `${customer.firstName} ${customer.lastName}` 
-      : "N/A",
-    customerEmail: customer?.email || "N/A",
-    amount: amount,
-    amountInDollars: amount ? (amount / 100).toFixed(2) : "N/A",
-    taxRate: taxRate,
-    currency: currency,
-    successUrl: successUrl || "MISSING",
-    failureUrl: failureUrl || "MISSING",
-    cancelUrl: cancelUrl || "MISSING",
-  }, null, 2));
+  console.log(
+    "[CLOVER SERVICE] Checkout data:",
+    JSON.stringify(
+      {
+        itemCount: items?.length || 0,
+        customerName:
+          customer?.firstName && customer?.lastName
+            ? `${customer.firstName} ${customer.lastName}`
+            : "N/A",
+        customerEmail: customer?.email || "N/A",
+        amount: amount,
+        amountInDollars: amount ? (amount / 100).toFixed(2) : "N/A",
+        taxRate: taxRate,
+        currency: currency,
+        successUrl: successUrl || "MISSING",
+        failureUrl: failureUrl || "MISSING",
+        cancelUrl: cancelUrl || "MISSING",
+      },
+      null,
+      2
+    )
+  );
 
   // Validation
   if (!CLOVER_API_KEY || !CLOVER_MERCHANT_ID) {
@@ -582,8 +592,15 @@ export async function createHostedCheckoutSession(checkoutData) {
     throw new Error("Checkout items are required");
   }
 
-  if (!customer || !customer.firstName || !customer.lastName || !customer.email) {
-    throw new Error("Customer information (firstName, lastName, email) is required");
+  if (
+    !customer ||
+    !customer.firstName ||
+    !customer.lastName ||
+    !customer.email
+  ) {
+    throw new Error(
+      "Customer information (firstName, lastName, email) is required"
+    );
   }
 
   if (!amount || amount <= 0) {
@@ -596,155 +613,230 @@ export async function createHostedCheckoutSession(checkoutData) {
 
   try {
     // Calculate line items for Clover
+    // Note: Clover uses 'unitQty' not 'quantity', and price is in cents
     const lineItems = items.map((item) => ({
       name: item.name,
-      quantity: item.quantity || 1,
+      unitQty: item.quantity || 1,
       price: Math.round((item.price || 0) * 100), // Convert to cents
     }));
 
-    // Calculate totals
+    // Calculate totals for logging
     const subtotal = lineItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + item.price * item.unitQty,
       0
     );
     const taxAmount = Math.round(subtotal * taxRate);
     const totalAmount = subtotal + taxAmount;
 
-    // Ensure total matches provided amount (use provided amount as source of truth)
+    // Clover calculates the total automatically, but we validate it matches
     const finalAmount = Math.round(amount);
 
-    console.log("[CLOVER SERVICE] Calculated totals:", JSON.stringify({
-      subtotal: subtotal,
-      subtotalInDollars: (subtotal / 100).toFixed(2),
-      taxAmount: taxAmount,
-      taxAmountInDollars: (taxAmount / 100).toFixed(2),
-      totalAmount: totalAmount,
-      totalAmountInDollars: (totalAmount / 100).toFixed(2),
-      providedAmount: finalAmount,
-      providedAmountInDollars: (finalAmount / 100).toFixed(2),
-    }, null, 2));
+    console.log(
+      "[CLOVER SERVICE] Calculated totals:",
+      JSON.stringify(
+        {
+          subtotal: subtotal,
+          subtotalInDollars: (subtotal / 100).toFixed(2),
+          taxAmount: taxAmount,
+          taxAmountInDollars: (taxAmount / 100).toFixed(2),
+          totalAmount: totalAmount,
+          totalAmountInDollars: (totalAmount / 100).toFixed(2),
+          providedAmount: finalAmount,
+          providedAmountInDollars: (finalAmount / 100).toFixed(2),
+        },
+        null,
+        2
+      )
+    );
 
     // Create checkout session payload (Clover Hosted Checkout API format)
+    // Note: redirectUrls can be set in API call OR Merchant Dashboard
+    // If set in Merchant Dashboard, those URLs override the API call URLs
+    // Tax rate must be an integer where 10% = 1000000 (so 0.06 = 600000)
     const checkoutPayload = {
       customer: {
         firstName: customer.firstName,
         lastName: customer.lastName,
         email: customer.email,
-        phone: customer.phone || undefined,
+        phoneNumber: customer.phone || undefined,
+      },
+      redirectUrls: {
+        success: successUrl,
+        failure: failureUrl,
       },
       shoppingCart: {
         lineItems: lineItems,
       },
-      taxRates: taxRate > 0 ? [
-        {
-          name: "Tax",
-          rate: taxRate,
-        }
-      ] : [],
-      total: finalAmount,
-      currency: currency.toLowerCase(),
-      redirectUrl: successUrl,
-      cancelUrl: cancelUrl,
+      taxRates:
+        taxRate > 0
+          ? [
+              {
+                name: "Tax",
+                rate: Math.round(taxRate * 10000000), // Convert to Clover's format (0.06 = 600000 for 6%)
+              },
+            ]
+          : [],
     };
 
-    console.log("[CLOVER SERVICE] Checkout payload:", JSON.stringify({
-      customer: checkoutPayload.customer,
-      lineItemCount: checkoutPayload.shoppingCart.lineItems.length,
-      taxRatesCount: checkoutPayload.taxRates.length,
-      total: checkoutPayload.total,
-      totalInDollars: (checkoutPayload.total / 100).toFixed(2),
-      currency: checkoutPayload.currency,
-      redirectUrl: checkoutPayload.redirectUrl,
-      cancelUrl: checkoutPayload.cancelUrl,
-    }, null, 2));
+    console.log(
+      "[CLOVER SERVICE] Checkout payload:",
+      JSON.stringify(
+        {
+          customer: checkoutPayload.customer,
+          lineItemCount: checkoutPayload.shoppingCart.lineItems.length,
+          taxRatesCount: checkoutPayload.taxRates.length,
+          total: checkoutPayload.total,
+          totalInDollars: (checkoutPayload.total / 100).toFixed(2),
+          currency: checkoutPayload.currency,
+          redirectUrl: checkoutPayload.redirectUrl,
+          cancelUrl: checkoutPayload.cancelUrl,
+        },
+        null,
+        2
+      )
+    );
 
     // Create checkout session via Clover API
-    const checkoutUrl = `${CLOVER_API_BASE_URL}/invoicingcheckoutservice/v1/merchants/${CLOVER_MERCHANT_ID}/checkouts`;
+    // Note: Merchant ID goes in header, not URL path
+    const checkoutUrl = `${CLOVER_API_BASE_URL}/invoicingcheckoutservice/v1/checkouts`;
 
     console.log("[CLOVER SERVICE] API Endpoint:", checkoutUrl);
     console.log("[CLOVER SERVICE] Sending request to Clover API...");
 
     const headers = getCloverHeaders();
-    
+
     // Log request details (without sensitive data)
-    console.log("[CLOVER SERVICE] Request headers:", JSON.stringify({
-      Authorization: headers.Authorization ? `Bearer ${headers.Authorization.substring(7, 17)}...` : "MISSING",
-      "Content-Type": headers["Content-Type"],
-      "X-Clover-Merchant-Id": headers["X-Clover-Merchant-Id"],
-    }, null, 2));
-    
+    console.log(
+      "[CLOVER SERVICE] Request headers:",
+      JSON.stringify(
+        {
+          Authorization: headers.Authorization
+            ? `Bearer ${headers.Authorization.substring(7, 17)}...`
+            : "MISSING",
+          "Content-Type": headers["Content-Type"],
+          "X-Clover-Merchant-Id": headers["X-Clover-Merchant-Id"],
+        },
+        null,
+        2
+      )
+    );
+
     const response = await fetch(checkoutUrl, {
       method: "POST",
       headers: headers,
       body: JSON.stringify(checkoutPayload),
     });
 
-    console.log("[CLOVER SERVICE] Response status:", response.status, response.statusText);
+    console.log(
+      "[CLOVER SERVICE] Response status:",
+      response.status,
+      response.statusText
+    );
 
     let result;
     try {
       const responseText = await response.text();
       console.log("[CLOVER SERVICE] Response body (raw):", responseText);
-      
+
       if (responseText && responseText.length > 0) {
         result = JSON.parse(responseText);
-        console.log("[CLOVER SERVICE] Response body (parsed):", JSON.stringify(result, null, 2));
+        console.log(
+          "[CLOVER SERVICE] Response body (parsed):",
+          JSON.stringify(result, null, 2)
+        );
       } else {
         result = {};
       }
     } catch (parseError) {
-      console.error("[CLOVER SERVICE] ❌ Failed to parse Clover response:", parseError);
-      throw new Error(`Failed to parse Clover API response: ${parseError.message}`);
+      console.error(
+        "[CLOVER SERVICE] ❌ Failed to parse Clover response:",
+        parseError
+      );
+      throw new Error(
+        `Failed to parse Clover API response: ${parseError.message}`
+      );
     }
 
     if (!response.ok) {
       console.error("[CLOVER SERVICE] ❌ Failed to create checkout session");
-      console.error("[CLOVER SERVICE] Clover API Error Response:", JSON.stringify(result, null, 2));
-      
+      console.error(
+        "[CLOVER SERVICE] Response Status:",
+        response.status,
+        response.statusText
+      );
+      console.error("[CLOVER SERVICE] Response URL:", checkoutUrl);
+      console.error(
+        "[CLOVER SERVICE] Clover API Error Response:",
+        JSON.stringify(result, null, 2)
+      );
+
       // Extract error message from Clover's response
       let errorMessage = `Clover API error: ${response.status} ${response.statusText}`;
       if (result) {
         if (result.error) {
-          errorMessage = typeof result.error === 'string' 
-            ? result.error 
-            : result.error.message || result.error.code || errorMessage;
+          errorMessage =
+            typeof result.error === "string"
+              ? result.error
+              : result.error.message || result.error.code || errorMessage;
         } else if (result.message) {
           errorMessage = result.message;
         } else if (result.code) {
           errorMessage = result.code;
         }
       }
-      
+
       // Add more context for common errors
       if (response.status === 401 || response.status === 403) {
         errorMessage = `Clover API Authentication Failed: ${errorMessage}. Please verify your CLOVER_API_KEY and CLOVER_MERCHANT_ID are correct.`;
+      } else if (response.status === 404) {
+        errorMessage = `Clover API Endpoint Not Found: ${errorMessage}. Please verify:
+1. Your CLOVER_MERCHANT_ID (${CLOVER_MERCHANT_ID}) is correct
+2. Your API key has access to this merchant
+3. The endpoint URL is correct: ${checkoutUrl}
+4. Your CLOVER_ENVIRONMENT (${
+          process.env.CLOVER_ENVIRONMENT || "sandbox"
+        }) matches your API key type`;
       }
-      
+
       throw new Error(errorMessage);
     }
 
-    // Clover returns the checkout URL in 'href' field
+    // Clover returns the checkout URL in 'href' field and session ID in 'checkoutSessionId'
     const checkoutSession = {
       success: true,
-      checkoutId: result.id,
-      checkoutUrl: result.href || result.url || result.checkoutUrl,
-      expiresAt: result.expiresAt,
+      checkoutId: result.checkoutSessionId || result.id,
+      checkoutUrl: result.href,
+      expiresAt: result.expirationTime || result.expiresAt,
+      createdTime: result.createdTime,
     };
 
     console.log("[CLOVER SERVICE] ✅ Checkout session created successfully");
     console.log("[CLOVER SERVICE] Checkout URL:", checkoutSession.checkoutUrl);
-    console.log("[CLOVER SERVICE] ============================================");
+    console.log(
+      "[CLOVER SERVICE] ============================================"
+    );
 
     return checkoutSession;
   } catch (error) {
-    console.error("[CLOVER SERVICE] ❌ Error creating checkout session:", error.message);
-    console.error("[CLOVER SERVICE] Error details:", JSON.stringify({
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    }, null, 2));
-    console.error("[CLOVER SERVICE] ============================================");
+    console.error(
+      "[CLOVER SERVICE] ❌ Error creating checkout session:",
+      error.message
+    );
+    console.error(
+      "[CLOVER SERVICE] Error details:",
+      JSON.stringify(
+        {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        },
+        null,
+        2
+      )
+    );
+    console.error(
+      "[CLOVER SERVICE] ============================================"
+    );
     throw error;
   }
 }
-

@@ -84,8 +84,8 @@ function OrderPageContent() {
   const [storeHours, setStoreHours] = useState({ open: 6, close: 19 }); // Default fallback (6am-7pm)
   const [successAnimation, setSuccessAnimation] = useState(null);
 
-  // Tax rate (8.75% - adjust as needed)
-  const taxRate = 0.0875;
+  // Tax rate (6% - adjust as needed)
+  const taxRate = 0.06;
 
   useEffect(() => {
     // Load cart from localStorage or state
@@ -514,7 +514,8 @@ function OrderPageContent() {
       const baseUrl = typeof window !== "undefined" 
         ? window.location.origin 
         : "https://wildbeancoffeeshop.com";
-      const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_ID}`;
+      // Use Clover's placeholder format: {CHECKOUT_SESSION_ID}
+      const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_SESSION_ID}`;
       const failureUrl = `${baseUrl}/order/failure`;
       const cancelUrl = `${baseUrl}/order?canceled=true`;
 
