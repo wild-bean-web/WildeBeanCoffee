@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { locationApi, ordersApi } from "@/lib/api";
+import { locationApi, ordersApi, paymentsApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 
 export default function OrderPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   
   // Feature flag: Enable/disable online ordering
@@ -66,7 +67,8 @@ export default function OrderPage() {
 
   // Customer information
   const [customerInfo, setCustomerInfo] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     phone: "",
     email: "",
   });
@@ -142,7 +144,8 @@ export default function OrderPage() {
   useEffect(() => {
     if (user && !authLoading) {
       setCustomerInfo({
-        name: `${user.firstName} ${user.lastName}`,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         phone: user.phone || "",
         email: user.email || "",
       });
@@ -406,18 +409,30 @@ export default function OrderPage() {
     
     // Only validate customer info if user is not signed in
     if (!user) {
-      if (!customerInfo.name.trim()) {
-        errors.name = "Name is required";
+      if (!customerInfo.firstName || !customerInfo.firstName.trim()) {
+        errors.firstName = "First name is required";
       }
       
-      if (!customerInfo.phone.trim()) {
+      if (!customerInfo.lastName || !customerInfo.lastName.trim()) {
+        errors.lastName = "Last name is required";
+      }
+      
+      if (!customerInfo.phone || !customerInfo.phone.trim()) {
         errors.phone = "Phone number is required";
       } else if (!validatePhone(customerInfo.phone)) {
         errors.phone = "Please enter a valid phone number (at least 10 digits)";
       }
       
-      if (customerInfo.email && !validateEmail(customerInfo.email)) {
+      // Email is required for payment processing
+      if (!customerInfo.email || !customerInfo.email.trim()) {
+        errors.email = "Email is required";
+      } else if (!validateEmail(customerInfo.email)) {
         errors.email = "Please enter a valid email address";
+      }
+    } else {
+      // If user is signed in, ensure they have email
+      if (!user.email && !customerInfo.email) {
+        errors.email = "Email is required";
       }
     }
 
@@ -444,8 +459,105 @@ export default function OrderPage() {
       return;
     }
 
-    // Show payment form
-    setShowPayment(true);
+    // Create Hosted Checkout session and redirect
+    await handleCreateCheckout();
+  };
+
+  const handleCreateCheckout = async () => {
+    setError(null);
+    setPaymentProcessing(true);
+
+    try {
+      const { subtotal, tax, total } = calculateTotals();
+
+      // Prepare order items
+      const orderItems = cart.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+
+      // Prepare customer data
+      const customerData = user
+        ? {
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            email: user.email || customerInfo.email || "",
+            phone: user.phone || "",
+          }
+        : {
+            firstName: customerInfo.firstName || "",
+            lastName: customerInfo.lastName || "",
+            email: customerInfo.email || "",
+            phone: customerInfo.phone || "",
+          };
+
+      // Validate customer data before sending
+      if (!customerData.firstName || !customerData.firstName.trim()) {
+        throw new Error("First name is required");
+      }
+      if (!customerData.lastName || !customerData.lastName.trim()) {
+        throw new Error("Last name is required");
+      }
+      if (!customerData.email || !customerData.email.trim()) {
+        throw new Error("Email is required");
+      }
+      
+      console.log("[ORDER PAGE] Customer data being sent:", JSON.stringify({
+        firstName: customerData.firstName,
+        lastName: customerData.lastName,
+        email: customerData.email,
+        hasPhone: !!customerData.phone,
+      }, null, 2));
+
+      // Build redirect URLs using production domain
+      const baseUrl = typeof window !== "undefined" 
+        ? window.location.origin 
+        : "https://wildbeancoffeeshop.com";
+      const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_ID}`;
+      const failureUrl = `${baseUrl}/order/failure`;
+      const cancelUrl = `${baseUrl}/order?canceled=true`;
+
+      // Create checkout session
+      const checkoutSession = await paymentsApi.createCheckout({
+        items: orderItems,
+        customer: customerData,
+        amount: Math.round(total * 100), // Convert to cents
+        successUrl,
+        failureUrl,
+        cancelUrl,
+        taxRate,
+        currency: "USD",
+      });
+
+      // Store order data in sessionStorage for after payment
+      const orderData = {
+        customer: customerData,
+        items: cart.map((item) => ({
+          itemType: item.itemType || "product",
+          itemId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        taxRate,
+        pickupTime: pickupTime || undefined,
+        notes: notes || undefined,
+        checkoutId: checkoutSession.checkoutId,
+      };
+      sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
+
+      // Redirect to Clover Hosted Checkout
+      if (checkoutSession.checkoutUrl) {
+        window.location.href = checkoutSession.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL received from server");
+      }
+    } catch (err) {
+      console.error("Error creating checkout session:", err);
+      setError(err.message || "Failed to initiate payment. Please try again.");
+      setPaymentProcessing(false);
+    }
   };
 
   const handlePaymentSuccess = async (paymentResult) => {
@@ -473,7 +585,8 @@ export default function OrderPage() {
             email: user.email || undefined,
           }
         : {
-            ...customerInfo,
+            name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+            phone: customerInfo.phone,
             email: customerInfo.email || undefined,
           };
 
@@ -522,10 +635,17 @@ export default function OrderPage() {
     }
   };
 
-  const handlePaymentError = (errorMessage) => {
-    setError(errorMessage || 'Payment processing failed. Please try again.');
-    setPaymentProcessing(false);
-  };
+  // Handle cancel redirect from Clover
+  useEffect(() => {
+    const canceled = searchParams?.get("canceled");
+    if (canceled === "true") {
+      setError("Payment was cancelled. You can try again when ready.");
+      // Clear any pending order data
+      sessionStorage.removeItem("pendingOrder");
+      // Remove canceled param from URL
+      router.replace("/order", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   if (orderPlaced) {
     return (
@@ -751,30 +871,58 @@ export default function OrderPage() {
                 {/* Only show customer info fields if user is not signed in */}
                 {!user && (
                   <>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={customerInfo.name}
-                        onChange={(e) => {
-                          setCustomerInfo({ ...customerInfo, name: e.target.value });
-                          if (validationErrors.name) {
-                            setValidationErrors({ ...validationErrors, name: "" });
-                          }
-                        }}
-                        className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                          validationErrors.name
-                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
-                        }`}
-                        placeholder="John Doe"
-                      />
-                      {validationErrors.name && (
-                        <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
-                      )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                          First Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={customerInfo.firstName}
+                          onChange={(e) => {
+                            setCustomerInfo({ ...customerInfo, firstName: e.target.value });
+                            if (validationErrors.firstName) {
+                              setValidationErrors({ ...validationErrors, firstName: "" });
+                            }
+                          }}
+                          className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
+                            validationErrors.firstName
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                          }`}
+                          placeholder="John"
+                        />
+                        {validationErrors.firstName && (
+                          <p className="mt-1 text-sm text-red-600">{validationErrors.firstName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                          Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={customerInfo.lastName}
+                          onChange={(e) => {
+                            setCustomerInfo({ ...customerInfo, lastName: e.target.value });
+                            if (validationErrors.lastName) {
+                              setValidationErrors({ ...validationErrors, lastName: "" });
+                            }
+                          }}
+                          className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
+                            validationErrors.lastName
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                          }`}
+                          placeholder="Doe"
+                        />
+                        {validationErrors.lastName && (
+                          <p className="mt-1 text-sm text-red-600">{validationErrors.lastName}</p>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -808,10 +956,11 @@ export default function OrderPage() {
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                        Email
+                        Email *
                       </label>
                       <input
                         type="email"
+                        required
                         value={customerInfo.email}
                         onChange={(e) => {
                           setCustomerInfo({
@@ -827,7 +976,7 @@ export default function OrderPage() {
                             ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
                         }`}
-                        placeholder="john@example.com (optional)"
+                        placeholder="john@example.com"
                       />
                       {validationErrors.email && (
                         <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
@@ -1010,10 +1159,18 @@ export default function OrderPage() {
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-6 text-center">
-                      <p className="text-gray-700">
-                        Payment integration is being updated. Please check back soon.
+                    <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
+                      <p className="mb-4 text-gray-700">
+                        You will be redirected to Clover's secure payment page to complete your order.
                       </p>
+                      <button
+                        type="button"
+                        onClick={handleCreateCheckout}
+                        disabled={paymentProcessing || loading}
+                        className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {paymentProcessing ? "Processing..." : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
+                      </button>
                     </div>
                     <button
                       type="button"

@@ -161,7 +161,7 @@ const menuItems = [
     active: true,
   },
   {
-    name: "Tropical Bean",
+    name: "Tropical Bliss",
     description:
       "Frozen Mango, Frozen Pineapple, Banana, Coconut Water, Orange Juice, Lime Juice",
     price: 7.95,
@@ -169,7 +169,7 @@ const menuItems = [
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical"],
     allergens: [],
-    image: "/images/menu/Smoothies/TropicalBeanLand.png",
+    image: "/images/menu/Smoothies/TropicalBlissLand.png",
     available: true,
     active: true,
   },
