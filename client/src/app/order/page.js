@@ -514,7 +514,7 @@ function OrderPageContent() {
       const baseUrl = typeof window !== "undefined" 
         ? window.location.origin 
         : "https://wildbeancoffeeshop.com";
-      // Use Clover's placeholder format: {CHECKOUT_SESSION_ID}
+      // Include placeholder for checkout session ID (Clover replaces it with actual ID)
       const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_SESSION_ID}`;
       const failureUrl = `${baseUrl}/order/failure`;
       const cancelUrl = `${baseUrl}/order?canceled=true`;
@@ -532,8 +532,15 @@ function OrderPageContent() {
       });
 
       // Store order data in sessionStorage for after payment
+      // Convert customer data to format expected by Order model (customer.name required)
+      const orderCustomerData = {
+        name: `${customerData.firstName} ${customerData.lastName}`.trim(),
+        phone: customerData.phone || "",
+        email: customerData.email || undefined,
+      };
+
       const orderData = {
-        customer: customerData,
+        customer: orderCustomerData,
         items: cart.map((item) => ({
           itemType: item.itemType || "product",
           itemId: item._id,
