@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function OrderFailurePage() {
+function OrderFailureContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") || "Payment processing failed";
 
@@ -57,6 +58,23 @@ export default function OrderFailurePage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function OrderFailurePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--lime-green)] border-r-transparent"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <OrderFailureContent />
+    </Suspense>
   );
 }
 
