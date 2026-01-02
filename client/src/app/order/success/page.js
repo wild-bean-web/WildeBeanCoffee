@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
-import Lottie from "lottie-react";
 
 export default function OrderSuccessPage() {
   const router = useRouter();
@@ -14,13 +13,8 @@ export default function OrderSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderId, setOrderId] = useState(null);
-  const [successAnimation, setSuccessAnimation] = useState(null);
 
   useEffect(() => {
-    // Load success animation
-    import("@/public/animations/success.json")
-      .then((anim) => setSuccessAnimation(anim.default))
-      .catch(() => setSuccessAnimation(null));
 
     // Get pending order data from sessionStorage
     const pendingOrderData = sessionStorage.getItem("pendingOrder");
@@ -155,30 +149,21 @@ export default function OrderSuccessPage() {
         >
           <div className="mb-6">
             <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center">
-              {successAnimation ? (
-                <Lottie
-                  animationData={successAnimation}
-                  loop={true}
-                  autoplay={true}
-                  className="h-full w-full"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--lime-green)]">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              )}
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--lime-green)]">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
             </div>
             <h1 className="mb-2 text-3xl font-bold text-[var(--coffee-brown)]">
               Order Placed Successfully!
