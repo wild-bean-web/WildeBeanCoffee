@@ -532,8 +532,15 @@ function OrderPageContent() {
       });
 
       // Store order data in sessionStorage for after payment
+      // Convert customer data to format expected by Order model (customer.name required)
+      const orderCustomerData = {
+        name: `${customerData.firstName} ${customerData.lastName}`.trim(),
+        phone: customerData.phone || "",
+        email: customerData.email || undefined,
+      };
+
       const orderData = {
-        customer: customerData,
+        customer: orderCustomerData,
         items: cart.map((item) => ({
           itemType: item.itemType || "product",
           itemId: item._id,
