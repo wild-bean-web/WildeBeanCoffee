@@ -652,6 +652,7 @@ export async function createHostedCheckoutSession(checkoutData) {
     // Create checkout session payload (Clover Hosted Checkout API format)
     // Note: redirectUrls can be set in API call OR Merchant Dashboard
     // If set in Merchant Dashboard, those URLs override the API call URLs
+    // Clover requires HTTPS URLs, so we only include redirectUrls if they're HTTPS
     // Tax rate must be an integer where 10% = 1000000 (so 0.06 = 600000)
     const checkoutPayload = {
       customer: {
@@ -659,10 +660,6 @@ export async function createHostedCheckoutSession(checkoutData) {
         lastName: customer.lastName,
         email: customer.email,
         phoneNumber: customer.phone || undefined,
-      },
-      redirectUrls: {
-        success: successUrl,
-        failure: failureUrl,
       },
       shoppingCart: {
         lineItems: lineItems,
@@ -678,22 +675,21 @@ export async function createHostedCheckoutSession(checkoutData) {
           : [],
     };
 
+    // Only include redirectUrls if they're HTTPS (Clover requires HTTPS)
+    // For localhost development, omit redirectUrls and use Merchant Dashboard URLs instead
+    if (successUrl.startsWith("https://") && failureUrl.startsWith("https://")) {
+      checkoutPayload.redirectUrls = {
+        success: successUrl,
+        failure: failureUrl,
+      };
+    } else {
+      console.log("[CLOVER SERVICE] ⚠️  Redirect URLs are not HTTPS, omitting from API call");
+      console.log("[CLOVER SERVICE] Using Merchant Dashboard redirect URLs instead");
+    }
+
     console.log(
       "[CLOVER SERVICE] Checkout payload:",
-      JSON.stringify(
-        {
-          customer: checkoutPayload.customer,
-          lineItemCount: checkoutPayload.shoppingCart.lineItems.length,
-          taxRatesCount: checkoutPayload.taxRates.length,
-          total: checkoutPayload.total,
-          totalInDollars: (checkoutPayload.total / 100).toFixed(2),
-          currency: checkoutPayload.currency,
-          redirectUrl: checkoutPayload.redirectUrl,
-          cancelUrl: checkoutPayload.cancelUrl,
-        },
-        null,
-        2
-      )
+      JSON.stringify(checkoutPayload, null, 2)
     );
 
     // Create checkout session via Clover API

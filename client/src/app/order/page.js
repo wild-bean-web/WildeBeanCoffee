@@ -514,7 +514,7 @@ function OrderPageContent() {
       const baseUrl = typeof window !== "undefined" 
         ? window.location.origin 
         : "https://wildbeancoffeeshop.com";
-      // Use Clover's placeholder format: {CHECKOUT_SESSION_ID}
+      // Include placeholder for checkout session ID (Clover replaces it with actual ID)
       const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_SESSION_ID}`;
       const failureUrl = `${baseUrl}/order/failure`;
       const cancelUrl = `${baseUrl}/order?canceled=true`;
