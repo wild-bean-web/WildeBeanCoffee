@@ -12,17 +12,6 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Cup Size",
-    description: "Select your cup size",
-    type: "single",
-    required: true,
-    options: [
-      { name: "Medium", price: 0, available: true },
-      { name: "Large", price: 0.8, available: true },
-      { name: "Small (Disabled)", price: 0, available: false },
-    ],
-  },
-  {
     name: "Cup Size (12-16)",
     description: "Select your cup size",
     type: "single",

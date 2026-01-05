@@ -78,8 +78,8 @@ export default function Home() {
       subtitle: "Fresh Roasted Coffee & Handcrafted Beverages",
       description:
         "Experience the perfect blend of quality beans and artisanal craftsmanship.",
-      cta: "Shop Coffee Beans",
-      ctaLink: "/shop",
+      cta: "View Menu",
+      ctaLink: "/menu",
       cta2: "Order Online",
       cta2Link: "/order",
       bgImage: "/images/menu/Coffee/Mocha.png",
