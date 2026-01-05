@@ -1,0 +1,237 @@
+// Modifier Groups Seed Data
+// Based on Clover POS export analysis - Updated with exact options and pricing
+
+export const modifierGroups = [
+  {
+    name: "Shot Preference",
+    description: "Choose your espresso shot preference",
+    type: "single",
+    required: false,
+    options: [
+      { name: "Single Shot (instead of double)", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Cup Size",
+    description: "Select your cup size",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Medium", price: 0, available: true },
+      { name: "Large", price: 0.8, available: true },
+      { name: "Small (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Cup Size (12-16)",
+    description: "Select your cup size",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Small (12oz)", price: 0, available: true },
+      { name: "Medium (16oz)", price: 0.5, available: true },
+      { name: "Large (20oz) (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Cup Size (16-20)",
+    description: "Select your cup size",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Medium (16oz)", price: 0, available: true },
+      { name: "Large (20oz)", price: 0.75, available: true },
+      { name: "Small (12oz) (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Syrup Pumps (+$0.20 each)",
+    description: "Add flavored syrup pumps",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 10,
+    options: [
+      { name: "Vanilla Syrup Pump", price: 0.2, available: true },
+      { name: "Caramel Syrup Pump", price: 0.2, available: true },
+      { name: "Hazelnut Syrup Pump", price: 0.2, available: true },
+      { name: "Mocha Syrup Pump (Disabled)", price: 0.2, available: false },
+      { name: "Pumpkin Spice Syrup Pump (Disabled)", price: 0.2, available: false },
+      { name: "French Vanilla Syrup Pump (Disabled)", price: 0.2, available: false },
+      { name: "Cinnamon Syrup Pump (Disabled)", price: 0.2, available: false },
+      { name: "Seasonal Syrup Pump (Disabled)", price: 0.2, available: false },
+    ],
+  },
+  {
+    name: "Coffee Toppings",
+    description: "Add toppings to your coffee",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 5,
+    options: [
+      { name: "Whipped Cream (+$0.50)", price: 0.5, available: true },
+      { name: "Cinnamon Powder", price: 0, available: true },
+      { name: "Cocoa Powder", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Extra Single Shots (Hot)",
+    description: "Add extra espresso shots",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 5,
+    options: [
+      { name: "Extra Single Shot", price: 0.6, available: true },
+    ],
+  },
+  {
+    name: "Extra Single Shots (Iced)",
+    description: "Add extra espresso shots",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 5,
+    options: [
+      { name: "Extra Single Shot", price: 1.0, available: true },
+    ],
+  },
+  {
+    name: "Milk Choice",
+    description: "Select your milk preference",
+    type: "single",
+    required: true,
+    options: [
+      { name: "2% Milk", price: 0, available: true },
+      { name: "Oat Milk (+$0.50)", price: 0.5, available: true },
+      { name: "No Milk", price: 0, available: true },
+      { name: "Almond Milk (+$0.50) (Disabled)", price: 0.5, available: false },
+      { name: "Whole Milk (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Ice Level",
+    description: "Select your ice preference",
+    type: "single",
+    required: true,
+    options: [
+      { name: "No Ice", price: 0, available: true },
+      { name: "Light Ice", price: 0, available: true },
+      { name: "Medium Ice", price: 0, available: true },
+      { name: "Extra Ice", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Filtered Coffee Refill",
+    description: "Add a refill",
+    type: "single",
+    required: false,
+    options: [
+      { name: "Paid Refill (+$0.50)", price: 0.5, available: true },
+    ],
+  },
+  {
+    name: "Custom Oatmeal Add-On",
+    description: "Customize your oatmeal",
+    type: "multiple",
+    required: true, // Required based on "Yes" in your data
+    minSelections: 1,
+    maxSelections: 13, // Matches the number of available options
+    options: [
+      { name: "Sliced almonds", price: 0, available: true },
+      { name: "Chopped walnuts", price: 0, available: true },
+      { name: "Chopped pecans", price: 0, available: true },
+      { name: "Pumpkin seeds", price: 0, available: true },
+      { name: "Chia seeds", price: 0, available: true },
+      { name: "Dried cranberries", price: 0, available: true },
+      { name: "Golden raisins", price: 0, available: true },
+      { name: "Coconut flakes", price: 0, available: true },
+      { name: "Cinnamon", price: 0, available: true },
+      { name: "Nutmeg", price: 0, available: true },
+      { name: "Classic granola", price: 0, available: true },
+      { name: "Vanilla yogurt", price: 0, available: true },
+      { name: "Vanilla yogurt (Dairy Free)", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Oatmeal Add-Ons (+$0.75 each)",
+    description: "Add extra toppings to your oatmeal",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 13, // Matches the number of available options
+    options: [
+      { name: "Sliced almonds", price: 0.75, available: true },
+      { name: "Chopped walnuts", price: 0.75, available: true },
+      { name: "Chopped pecans", price: 0.75, available: true },
+      { name: "Pumpkin seeds", price: 0.75, available: true },
+      { name: "Chia seeds", price: 0.75, available: true },
+      { name: "Dried cranberries", price: 0.75, available: true },
+      { name: "Golden raisins", price: 0.75, available: true },
+      { name: "Coconut flakes", price: 0.75, available: true },
+      { name: "Cinnamon", price: 0.75, available: true },
+      { name: "Nutmeg", price: 0.75, available: true },
+      { name: "Classic granola", price: 0.75, available: true },
+      { name: "Vanilla yogurt", price: 0.75, available: true },
+      { name: "Vanilla yogurt (Dairy Free)", price: 0.75, available: true },
+    ],
+  },
+  {
+    name: "Smoothie Add-Ons",
+    description: "Add extra ingredients to your smoothie",
+    type: "multiple",
+    required: false, // Add-ons are typically optional, even if marked "Yes" in Clover
+    minSelections: 0,
+    maxSelections: 10,
+    options: [
+      { name: "Chia Seeds", price: 0.25, available: true },
+      { name: "Peanut Butter", price: 0.5, available: true },
+      { name: "Almonds", price: 0.25, available: true },
+      { name: "Cinnamon", price: 0.25, available: true },
+      { name: "Honey", price: 0.5, available: true },
+    ],
+  },
+  {
+    name: "Yogurt Choice",
+    description: "Select your yogurt preference",
+    type: "single",
+    required: true, // Required based on "Yes" in your data
+    options: [
+      { name: "Regular Yogurt", price: 0, available: true },
+      { name: "Dairy-Free Yogurt", price: 0.5, available: true },
+      { name: "Non-Fat Yogurt", price: 0.5, available: true },
+    ],
+  },
+  {
+    name: "Warmed",
+    description: "Would you like your pastry warmed?",
+    type: "single",
+    required: false,
+    options: [
+      { name: "Not Warmed", price: 0, available: true },
+      { name: "Warmed", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Toasted",
+    description: "Would you like your bagel toasted?",
+    type: "single",
+    required: false,
+    options: [
+      { name: "Not Toasted", price: 0, available: true },
+      { name: "Toasted", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Tea Selection",
+    description: "Select your tea type",
+    type: "single",
+    required: true,
+    options: [
+      { name: "English Breakfast", price: 0, available: true },
+      { name: "Earl Grey", price: 0, available: true },
+      { name: "Green Tea", price: 0, available: true },
+    ],
+  },
+];

@@ -4,9 +4,11 @@ import { Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { locationApi, ordersApi, paymentsApi } from "@/lib/api";
+import Image from "next/image";
+import { locationApi, ordersApi, paymentsApi, menuApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
+import CustomizationModal from "@/components/CustomizationModal";
 
 function OrderPageContent() {
   const router = useRouter();
@@ -83,6 +85,13 @@ function OrderPageContent() {
   const [notes, setNotes] = useState("");
   const [storeHours, setStoreHours] = useState({ open: 6, close: 19 }); // Default fallback (6am-7pm)
   const [successAnimation, setSuccessAnimation] = useState(null);
+  
+  // Customization modal state
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState(null);
+
+  // Get the section to return to from URL params
+  const fromSection = searchParams.get("fromSection");
 
   // Tax rate (6% - adjust as needed)
   const taxRate = 0.06;
@@ -348,10 +357,11 @@ function OrderPageContent() {
     };
   }, [showDatePicker, showTimePicker]);
 
-  const updateQuantity = (itemId, change) => {
+  const updateQuantity = (itemKey, change) => {
     setCart((prevCart) => {
       const updated = prevCart.map((item) => {
-        if (item._id === itemId) {
+        const key = item.cartKey || item._id;
+        if (key === itemKey) {
           const newQuantity = item.quantity + change;
           if (newQuantity <= 0) return null;
           return { ...item, quantity: newQuantity };
@@ -364,19 +374,76 @@ function OrderPageContent() {
     });
   };
 
-  const removeItem = (itemId) => {
+  const removeItem = (itemKey) => {
     setCart((prevCart) => {
-      const updated = prevCart.filter((item) => item._id !== itemId);
+      const updated = prevCart.filter((item) => {
+        const key = item.cartKey || item._id;
+        return key !== itemKey;
+      });
       localStorage.setItem("cart", JSON.stringify(updated));
       return updated;
     });
   };
 
+  // Handle editing a cart item
+  const handleEditItem = async (cartItem) => {
+    // If cart item doesn't have modifierGroups, fetch the full menu item
+    if (!cartItem.modifierGroups || cartItem.modifierGroups.length === 0) {
+      try {
+        const fullMenuItem = await menuApi.getById(cartItem._id);
+        // Merge the full menu item with the cart item's current state (quantity, modifiers, etc.)
+        setItemToEdit({
+          ...fullMenuItem,
+          quantity: cartItem.quantity,
+          modifiers: cartItem.modifiers,
+          modifierTotal: cartItem.modifierTotal,
+          cartKey: cartItem.cartKey,
+        });
+      } catch (error) {
+        console.error("Error fetching menu item:", error);
+        // Fallback to using cart item as-is
+        setItemToEdit(cartItem);
+      }
+    } else {
+      setItemToEdit(cartItem);
+    }
+    setIsCustomizationModalOpen(true);
+  };
+
+  // Handle updating cart item from customization modal
+  const handleUpdateCartItem = (updatedCartItem) => {
+    setCart((prevCart) => {
+      const itemKey = itemToEdit?.cartKey || itemToEdit?._id;
+      if (!itemKey) return prevCart;
+
+      const updated = prevCart.map((item) => {
+        const key = item.cartKey || item._id;
+        if (key === itemKey) {
+          // Update the item with new modifiers and recalculate cartKey
+          const newCartKey = updatedCartItem.cartKey || `${updatedCartItem._id}_${JSON.stringify(updatedCartItem.modifiers || [])}`;
+          return {
+            ...updatedCartItem,
+            cartKey: newCartKey,
+            quantity: item.quantity, // Preserve quantity
+          };
+        }
+        return item;
+      });
+
+      localStorage.setItem("cart", JSON.stringify(updated));
+      return updated;
+    });
+    setIsCustomizationModalOpen(false);
+    setItemToEdit(null);
+  };
+
   const calculateTotals = () => {
-    const subtotal = cart.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const subtotal = cart.reduce((sum, item) => {
+      const basePrice = item.price || 0;
+      const modifierTotal = item.modifierTotal || 0;
+      const itemPrice = basePrice + modifierTotal;
+      return sum + itemPrice * item.quantity;
+    }, 0);
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
     return { subtotal, tax, total };
@@ -470,12 +537,20 @@ function OrderPageContent() {
     try {
       const { subtotal, tax, total } = calculateTotals();
 
-      // Prepare order items
-      const orderItems = cart.map((item) => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      }));
+      // Prepare order items with modifiers
+      const orderItems = cart.map((item) => {
+        const basePrice = item.price || 0;
+        const modifierTotal = item.modifierTotal || 0;
+        const itemPrice = basePrice + modifierTotal;
+        
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          price: itemPrice, // Include modifier costs in price
+          modifiers: item.modifiers || [], // Include modifier selections
+          modifierTotal: modifierTotal,
+        };
+      });
 
       // Prepare customer data
       const customerData = user
@@ -576,14 +651,22 @@ function OrderPageContent() {
     try {
       const { subtotal, tax, total } = calculateTotals();
 
-      // Prepare order items
-      const orderItems = cart.map((item) => ({
-        itemType: item.itemType || "product", // 'product' or 'menu'
-        itemId: item._id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      }));
+      // Prepare order items with modifiers
+      const orderItems = cart.map((item) => {
+        const basePrice = item.price || 0;
+        const modifierTotal = item.modifierTotal || 0;
+        const itemPrice = basePrice + modifierTotal;
+        
+        return {
+          itemType: item.itemType || "product", // 'product' or 'menu'
+          itemId: item._id,
+          name: item.name,
+          price: itemPrice, // Include modifier costs in price
+          quantity: item.quantity,
+          modifiers: item.modifiers || [], // Include modifier selections
+          modifierTotal: modifierTotal,
+        };
+      });
 
       // Use user info if signed in, otherwise use form data
       const customerData = user
@@ -760,80 +843,197 @@ function OrderPageContent() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href={fromSection ? `/menu?section=${encodeURIComponent(fromSection)}` : "/menu"}
+            className="flex items-center gap-2 text-[var(--coffee-brown)] hover:text-[var(--coffee-brown-dark)] transition-colors"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            <span className="font-medium">Back to Menu</span>
+          </Link>
+        </div>
         <h1 className="mb-8 text-4xl font-bold text-[var(--coffee-brown)]">
           Checkout
         </h1>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-5">
           {/* Order Summary */}
           <div className="lg:col-span-2">
-            <div className="rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-6 shadow-md max-w-xl">
               <h2 className="mb-6 text-2xl font-semibold text-[var(--coffee-brown)]">
                 Order Summary
               </h2>
 
               <div className="space-y-4">
-                {cart.map((item) => (
-                  <div
-                    key={item._id}
-                    className="flex items-center justify-between border-b border-gray-200 pb-4"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-[var(--coffee-brown)]">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {formatPrice(item.price, item.currency)} each
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateQuantity(item._id, -1)}
-                          className="rounded-full border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item._id, 1)}
-                          className="rounded-full border border-gray-300 px-2 py-1 text-sm hover:bg-gray-100"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <div className="w-24 text-right">
-                        <p className="font-semibold text-[var(--coffee-brown)]">
-                          {formatPrice(
-                            item.price * item.quantity,
-                            item.currency
+                {cart.map((item) => {
+                  const basePrice = item.price || 0;
+                  const modifierTotal = item.modifierTotal || 0;
+                  const itemPrice = basePrice + modifierTotal;
+                  const itemKey = item.cartKey || item._id;
+                  
+                  return (
+                    <motion.div
+                      key={itemKey}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-3"
+                    >
+                      <div className="flex gap-4">
+                        {/* Item Image */}
+                        {item.image && (
+                          <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200">
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Item Details - constrained width */}
+                        <div className="flex-1 min-w-0 max-w-full">
+                          {/* Header with name and action buttons */}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <h3 className="text-lg font-bold text-[var(--coffee-brown)] flex-1 min-w-0">
+                              {item.name}
+                            </h3>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {item.modifierGroups && item.modifierGroups.length > 0 && (
+                                <button
+                                  onClick={() => handleEditItem(item)}
+                                  className="p-1.5 text-gray-400 hover:text-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 rounded-lg transition-colors"
+                                  aria-label="Edit item"
+                                  title="Edit customization"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Base price */}
+                          <div className="text-sm font-medium text-gray-700 mb-2">
+                            {formatPrice(basePrice, item.currency)}
+                          </div>
+                          
+                          {/* Display modifiers - constrained to pricing width */}
+                          {item.modifiers && item.modifiers.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {item.modifiers.map((mod, idx) =>
+                                mod.selectedOptions.map((opt, optIdx) => {
+                                  const quantity = opt.quantity || 1;
+                                  const optionTotal = (opt.price || 0) * quantity;
+                                  const showQuantity = quantity > 1;
+                                  
+                                  return (
+                                    <div 
+                                      key={`${idx}-${optIdx}`} 
+                                      className="text-xs text-gray-600 flex items-center justify-between gap-3"
+                                    >
+                                      <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                                        {showQuantity && (
+                                          <span className="font-semibold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
+                                            {quantity}
+                                          </span>
+                                        )}
+                                        <span className="truncate">{opt.name}</span>
+                                      </span>
+                                      {optionTotal > 0 && (
+                                        <span className="text-gray-700 font-semibold whitespace-nowrap flex-shrink-0">
+                                          +{formatPrice(optionTotal)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
                           )}
-                        </p>
+                          
+                          {/* Quantity controls and total price - below modifiers */}
+                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => updateQuantity(itemKey, -1)}
+                                className="w-8 h-8 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors text-gray-600 hover:text-[var(--lime-green)]"
+                                aria-label="Decrease quantity"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M20 12H4"
+                                  />
+                                </svg>
+                              </button>
+                              <span className="w-10 text-center font-semibold text-gray-900">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(itemKey, 1)}
+                                className="w-8 h-8 rounded-lg border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors text-gray-600 hover:text-[var(--lime-green)]"
+                                aria-label="Increase quantity"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 4v16m8-8H4"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-[var(--coffee-brown)]">
+                                {formatPrice(itemPrice * item.quantity, item.currency)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeItem(item._id)}
-                        className="text-red-600 hover:text-red-800"
-                        aria-label="Remove item"
-                      >
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
 
               <div className="mt-6 border-t border-gray-200 pt-4">
@@ -860,7 +1060,7 @@ function OrderPageContent() {
           </div>
 
           {/* Checkout Form */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-3">
             <form
               onSubmit={handleOrderInfoSubmit}
               className="rounded-lg bg-white p-6 shadow-md"
@@ -1200,6 +1400,20 @@ function OrderPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Customization Modal */}
+      {itemToEdit && (
+        <CustomizationModal
+          isOpen={isCustomizationModalOpen}
+          onClose={() => {
+            setIsCustomizationModalOpen(false);
+            setItemToEdit(null);
+          }}
+          menuItem={itemToEdit}
+          onAddToCart={handleUpdateCartItem}
+          existingCartItem={itemToEdit}
+        />
+      )}
     </div>
   );
 }

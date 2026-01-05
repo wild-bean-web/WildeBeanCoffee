@@ -12,6 +12,13 @@ const MenuItemSchema = new mongoose.Schema(
     available: { type: Boolean, default: true },
     image: { type: String, trim: true },
     active: { type: Boolean, default: true },
+    modifierGroups: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ModifierGroup",
+      },
+    ], // References to modifier groups that can be applied to this item
+    cloverId: { type: String, trim: true }, // Clover item ID for integration
   },
   { timestamps: true }
 );
