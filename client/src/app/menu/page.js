@@ -1,18 +1,23 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMenu } from "@/hooks/useMenu";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import CustomizationModal from "@/components/CustomizationModal";
 
-export default function MenuPage() {
+function MenuPageContent() {
+  const searchParams = useSearchParams();
   const [selectedSection, setSelectedSection] = useState("");
   const [cart, setCart] = useState([]);
   const [selectedMenuItem, setSelectedMenuItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [itemToCustomize, setItemToCustomize] = useState(null);
 
   // Fetch menu items using custom hook
   const { menuItems, loading, error } = useMenu();
@@ -78,22 +83,91 @@ export default function MenuPage() {
     if (savedCart) {
       setCart(JSON.parse(savedCart));
     }
-  }, []);
 
-  const addToCart = (menuItem) => {
-    const existingItem = cart.find((item) => item._id === menuItem._id);
+    // Restore selected section from URL query param
+    const sectionFromUrl = searchParams.get("section");
+    if (sectionFromUrl) {
+      setSelectedSection(sectionFromUrl);
+      // Also save to sessionStorage for consistency
+      sessionStorage.setItem("menuSelectedSection", sectionFromUrl);
+    } else {
+      // Try to restore from sessionStorage if no URL param
+      const savedSection = sessionStorage.getItem("menuSelectedSection");
+      if (savedSection) {
+        setSelectedSection(savedSection);
+      }
+    }
+  }, [searchParams]);
+
+  // Save selected section to sessionStorage when it changes (but don't update URL to avoid loops)
+  useEffect(() => {
+    if (selectedSection) {
+      sessionStorage.setItem("menuSelectedSection", selectedSection);
+    } else {
+      sessionStorage.removeItem("menuSelectedSection");
+    }
+  }, [selectedSection]);
+
+  const addToCart = (menuItem, modifiers = null, modifierTotal = 0) => {
+    // If item has modifiers, use the cartKey to identify unique combinations
+    const cartKey = modifiers
+      ? `${menuItem._id}_${JSON.stringify(modifiers)}`
+      : `${menuItem._id}_default`;
+
+    const existingItem = cart.find(
+      (item) => item.cartKey === cartKey || (!item.cartKey && item._id === menuItem._id && !item.modifiers)
+    );
+
     let updatedCart;
     if (existingItem) {
       updatedCart = cart.map((item) =>
-        item._id === menuItem._id
+        item.cartKey === cartKey || (item._id === menuItem._id && !item.modifiers && !modifiers)
           ? { ...item, quantity: item.quantity + 1 }
           : item
       );
     } else {
-      updatedCart = [...cart, { ...menuItem, quantity: 1, itemType: "menu" }];
+      const cartItem = {
+        ...menuItem,
+        quantity: 1,
+        itemType: "menu",
+        cartKey,
+      };
+      
+      if (modifiers) {
+        cartItem.modifiers = modifiers;
+        cartItem.modifierTotal = modifierTotal;
+      }
+      
+      updatedCart = [...cart, cartItem];
     }
     setCart(updatedCart);
     localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
+  const handleAddToCartClick = (menuItem) => {
+    // Check if item has modifier groups
+    const hasModifiers = menuItem.modifierGroups && menuItem.modifierGroups.length > 0;
+    
+    if (hasModifiers) {
+      // Open customization modal
+      setItemToCustomize(menuItem);
+      setIsCustomizationModalOpen(true);
+      // Close the detail modal
+      setIsModalOpen(false);
+    } else {
+      // Add directly to cart (no modifiers)
+      addToCart(menuItem);
+    }
+  };
+
+  const handleCustomizationAddToCart = (cartItem) => {
+    addToCart(
+      cartItem,
+      cartItem.modifiers,
+      cartItem.modifierTotal
+    );
+    setIsCustomizationModalOpen(false);
+    setItemToCustomize(null);
   };
 
   const updateCartQuantity = (menuItem, change) => {
@@ -282,7 +356,19 @@ export default function MenuPage() {
                       </div>
                       
                       {item.available ? (
-                        getCartQuantity(item._id) > 0 ? (
+                        // For items with modifiers, always show "Add to Cart" to allow different customizations
+                        // For items without modifiers, show quantity controls if already in cart
+                        (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCartClick(item);
+                            }}
+                            className="mt-3 w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
+                          >
+                            Add to Cart
+                          </button>
+                        ) : (
                           <div className="mt-3 flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
                             <button
                               onClick={(e) => {
@@ -345,16 +431,6 @@ export default function MenuPage() {
                               </svg>
                             </button>
                           </div>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(item);
-                            }}
-                            className="mt-3 w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                          >
-                            Add to Cart
-                          </button>
                         )
                       ) : (
                         <p className="mt-2 text-xs text-red-600">
@@ -399,7 +475,7 @@ export default function MenuPage() {
                   </p>
                 </div>
                 <Link
-                  href="/order"
+                  href={selectedSection ? `/order?fromSection=${encodeURIComponent(selectedSection)}` : "/order"}
                   className="rounded-full bg-[var(--lime-green)] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                 >
                   Checkout
@@ -520,7 +596,16 @@ export default function MenuPage() {
                       )}
                     </div>
                     {selectedMenuItem.available && (
-                      getCartQuantity(selectedMenuItem._id) > 0 ? (
+                      // For items with modifiers, always show "Add to Cart" to allow different customizations
+                      // For items without modifiers, show quantity controls if already in cart
+                      (selectedMenuItem.modifierGroups && selectedMenuItem.modifierGroups.length > 0) || getCartQuantity(selectedMenuItem._id) === 0 ? (
+                        <button
+                          onClick={() => handleAddToCartClick(selectedMenuItem)}
+                          className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
+                        >
+                          Add to Cart
+                        </button>
+                      ) : (
                         <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
                           <button
                             onClick={() =>
@@ -581,13 +666,6 @@ export default function MenuPage() {
                             </svg>
                           </button>
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => addToCart(selectedMenuItem)}
-                          className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                        >
-                          Add to Cart
-                        </button>
                       )
                     )}
                   </div>
@@ -596,8 +674,33 @@ export default function MenuPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Customization Modal */}
+        <CustomizationModal
+          isOpen={isCustomizationModalOpen}
+          onClose={() => {
+            setIsCustomizationModalOpen(false);
+            setItemToCustomize(null);
+          }}
+          menuItem={itemToCustomize}
+          onAddToCart={handleCustomizationAddToCart}
+        />
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner message="Loading menu..." />
+        </div>
+      }
+    >
+      <MenuPageContent />
+    </Suspense>
   );
 }

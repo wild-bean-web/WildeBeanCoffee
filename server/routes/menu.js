@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import { MenuItem } from "../models/index.js";
+import { MenuItem, ModifierGroup } from "../models/index.js";
 import { errorResponse, validateQueryBoolean } from "../utils/validation.js";
 
 const router = express.Router();
@@ -34,7 +34,10 @@ router.get("/", async (req, res, next) => {
       ];
     }
 
-    const items = await MenuItem.find(query).sort({ section: 1, name: 1 }).lean();
+    const items = await MenuItem.find(query)
+      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .sort({ section: 1, name: 1 })
+      .lean();
     res.json({ data: items });
   } catch (err) {
     next(err);
@@ -48,11 +51,26 @@ router.get("/:id", async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return errorResponse(res, 400, "Invalid menu item id");
     }
-    const item = await MenuItem.findById(id).lean();
+    const item = await MenuItem.findById(id)
+      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .lean();
     if (!item) {
       return errorResponse(res, 404, "Menu item not found");
     }
     res.json({ data: item });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/menu/modifier-groups
+// Get all available modifier groups
+router.get("/modifier-groups", async (req, res, next) => {
+  try {
+    const groups = await ModifierGroup.find({ available: true })
+      .sort({ name: 1 })
+      .lean();
+    res.json({ data: groups });
   } catch (err) {
     next(err);
   }

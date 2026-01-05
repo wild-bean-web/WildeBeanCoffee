@@ -1,12 +1,28 @@
 import mongoose from "mongoose";
 
+// Schema for selected modifier options
+const SelectedModifierSchema = new mongoose.Schema(
+  {
+    modifierGroupName: { type: String, required: true, trim: true }, // e.g., "Cup Size"
+    selectedOptions: [
+      {
+        name: { type: String, required: true, trim: true }, // e.g., "Large"
+        price: { type: Number, default: 0, min: 0 }, // Additional cost for this option
+      },
+    ],
+  },
+  { _id: false }
+);
+
 const OrderItemSchema = new mongoose.Schema(
   {
     itemType: { type: String, enum: ["product", "menu"], required: true },
     itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
     name: { type: String, required: true, trim: true }, // snapshot of name at purchase
-    price: { type: Number, required: true, min: 0 }, // snapshot of price at purchase
+    price: { type: Number, required: true, min: 0 }, // snapshot of base price at purchase
     quantity: { type: Number, required: true, min: 1, default: 1 },
+    modifiers: [SelectedModifierSchema], // Selected customization options
+    modifierTotal: { type: Number, default: 0, min: 0 }, // Total additional cost from modifiers
     notes: { type: String, trim: true },
   },
   { _id: false }

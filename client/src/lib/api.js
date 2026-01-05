@@ -137,6 +137,15 @@ export const menuApi = {
     const result = await fetchJson(`/api/menu/${id}`);
     return result.data;
   },
+
+  /**
+   * Get all available modifier groups
+   * @returns {Promise<Array>} Array of modifier groups
+   */
+  getModifierGroups: async () => {
+    const result = await fetchJson("/api/menu/modifier-groups");
+    return result.data || [];
+  },
 };
 
 /**
