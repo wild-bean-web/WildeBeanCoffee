@@ -17,7 +17,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/RegularCoffee.jpeg", // Update image path if needed
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (12-16)", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Extra Single Shots (Hot)"],
   },
   {
     name: "Cappuccino",
@@ -30,7 +30,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/Cappuccino.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
   },
   {
     name: "Doppio",
@@ -69,7 +69,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/Latte.png", // Update if you have a specific image
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
   },
   {
     name: "Latte",
@@ -82,7 +82,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/Latte.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
   },
   {
     name: "Mocha",
@@ -95,7 +95,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/Mocha.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
   },
   {
     name: "Espresso Macchiato",
@@ -121,7 +121,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/Latte.png", // Update if you have a specific image
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
   },
   {
     name: "Filtered Coffee",
@@ -162,7 +162,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Ice Level", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Ice Level", "Extra Single Shots (Iced)"],
   },
   {
     name: "Iced Cappuccino",
@@ -175,7 +175,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
   },
   {
     name: "Iced Coffee",
@@ -201,7 +201,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
   },
   {
     name: "Iced Latte",
@@ -214,7 +214,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
   },
   {
     name: "Iced Flat White",
@@ -227,7 +227,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
   },
   {
     name: "Iced Mocha",
@@ -240,7 +240,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCoffee.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
   },
   
   // Smoothies
