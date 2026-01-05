@@ -457,30 +457,52 @@ function MenuPageContent() {
 
         {/* Cart Summary (sticky at bottom) */}
         {cart.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white shadow-lg">
-            <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[var(--coffee-brown)]">
-                    {cart.reduce((sum, item) => sum + item.quantity, 0)} item(s)
-                    in cart
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {formatPrice(
-                      cart.reduce(
-                        (sum, item) => sum + item.price * item.quantity,
-                        0
-                      )
-                    )}
-                  </p>
+          <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center px-4 pb-6 sm:px-6">
+            <div className="mx-auto w-full max-w-7xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-full bg-gradient-to-r from-gray-100 to-gray-50 backdrop-blur-md shadow-2xl border border-gray-300/70 px-5 py-3.5 sm:px-6"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5 text-[var(--coffee-brown)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium text-[var(--coffee-brown)]">
+                        {cart.reduce((sum, item) => sum + item.quantity, 0)} item{cart.reduce((sum, item) => sum + item.quantity, 0) !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="h-6 w-px bg-gray-300"></div>
+                    <p className="text-base font-bold text-[var(--coffee-brown)]">
+                      {formatPrice(
+                        cart.reduce(
+                          (sum, item) => sum + item.price * item.quantity,
+                          0
+                        )
+                      )}
+                    </p>
+                  </div>
+                  <Link
+                    href={selectedSection ? `/order?fromSection=${encodeURIComponent(selectedSection)}` : "/order"}
+                    className="rounded-full bg-[var(--lime-green)] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[var(--lime-green-dark)] hover:shadow-md active:scale-95"
+                  >
+                    Checkout
+                  </Link>
                 </div>
-                <Link
-                  href={selectedSection ? `/order?fromSection=${encodeURIComponent(selectedSection)}` : "/order"}
-                  className="rounded-full bg-[var(--lime-green)] px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                >
-                  Checkout
-                </Link>
-              </div>
+              </motion.div>
             </div>
           </div>
         )}
