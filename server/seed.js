@@ -227,7 +227,7 @@ const menuItems = [
     section: "Oatmeals",
     tags: ["oatmeal", "protein", "healthy", "breakfast"],
     allergens: ["Dairy", "Peanuts"],
-    image: "/images/menu/Oatmeals/ProteinPacked.png",
+    image: "/images/menu/Oatmeals/PowerBreakfastOatmeal.png",
     available: true,
     active: true,
   },
@@ -424,23 +424,25 @@ async function seed() {
   // Function to parse ingredients from oatmeal description
   const parseOatmealIngredients = (description) => {
     if (!description) return [];
-    
+
     // Split by newline to separate ingredients from allergens
-    const parts = description.split('\n');
+    const parts = description.split("\n");
     const ingredientsPart = parts[0]; // First part contains ingredients
-    
+
     // Split by comma and clean up
     const ingredients = ingredientsPart
-      .split(',')
-      .map(ing => ing.trim())
-      .filter(ing => {
+      .split(",")
+      .map((ing) => ing.trim())
+      .filter((ing) => {
         const trimmed = ing.trim();
-        return trimmed.length > 0 && 
-               !trimmed.toLowerCase().includes('allergens') &&
-               !trimmed.toLowerCase().startsWith('build your own') &&
-               !trimmed.toLowerCase().startsWith('required:');
+        return (
+          trimmed.length > 0 &&
+          !trimmed.toLowerCase().includes("allergens") &&
+          !trimmed.toLowerCase().startsWith("build your own") &&
+          !trimmed.toLowerCase().startsWith("required:")
+        );
       });
-    
+
     return ingredients;
   };
 
@@ -452,10 +454,10 @@ async function seed() {
     // Check if it's an oatmeal item (not "Custom Oatmeal" which is build-your-own)
     if (item.section === "Oatmeals" && item.name !== "Custom Oatmeal") {
       const ingredients = parseOatmealIngredients(item.description);
-      
+
       if (ingredients.length > 0) {
         // Create options for removing each ingredient
-        const removeOptions = ingredients.map(ingredient => ({
+        const removeOptions = ingredients.map((ingredient) => ({
           name: `No ${ingredient}`,
           price: 0, // Removing ingredients doesn't change price
           available: true,
@@ -463,7 +465,7 @@ async function seed() {
 
         // Create a unique modifier group name for this oatmeal
         const groupName = `Remove Ingredients - ${item.name}`;
-        
+
         const removeGroup = {
           name: groupName,
           description: "Remove ingredients you don't want",
@@ -483,9 +485,13 @@ async function seed() {
 
   // Insert dynamic remove ingredient modifier groups
   if (oatmealRemoveIngredientGroups.length > 0) {
-    const createdRemoveGroups = await ModifierGroup.insertMany(oatmealRemoveIngredientGroups);
-    console.log(`Created ${createdRemoveGroups.length} dynamic "Remove Ingredients" modifier groups for oatmeal items`);
-    
+    const createdRemoveGroups = await ModifierGroup.insertMany(
+      oatmealRemoveIngredientGroups
+    );
+    console.log(
+      `Created ${createdRemoveGroups.length} dynamic "Remove Ingredients" modifier groups for oatmeal items`
+    );
+
     // Add to modifier group map
     createdRemoveGroups.forEach((group) => {
       modifierGroupMap[group.name] = group._id;
@@ -495,22 +501,26 @@ async function seed() {
   // Map modifier group names to IDs for menu items
   const menuItemsWithModifierIds = menuItemsFromCSV.map((item) => {
     let modifierGroupIds = [];
-    
+
     // For oatmeal items, add "Remove Ingredients" FIRST, then other modifier groups
-    if (item.section === "Oatmeals" && item.name !== "Custom Oatmeal" && oatmealItemModifierMap[item.name]) {
+    if (
+      item.section === "Oatmeals" &&
+      item.name !== "Custom Oatmeal" &&
+      oatmealItemModifierMap[item.name]
+    ) {
       const removeGroupId = modifierGroupMap[oatmealItemModifierMap[item.name]];
       if (removeGroupId) {
         modifierGroupIds.push(removeGroupId); // Add "Remove Ingredients" first
       }
     }
-    
+
     // Then add other modifier groups (like "Oatmeal Add-Ons")
     const otherModifierGroupIds = (item.modifierGroupNames || [])
       .map((name) => modifierGroupMap[name])
       .filter((id) => id !== undefined);
-    
+
     modifierGroupIds = [...modifierGroupIds, ...otherModifierGroupIds];
-    
+
     // Remove modifierGroupNames and add modifierGroups
     const { modifierGroupNames, ...itemData } = item;
     return {
