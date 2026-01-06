@@ -339,23 +339,18 @@ export const menuItemsFromCSV = [
 
   // Smoothies
   {
-    name: "Espresso Energy",
+    name: "Green Glow",
     description:
-      "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
-    price: 7.75,
+      "Spinach, kale, banana, avocado, chia seeds, almond milk, honey\nAllergens: Tree Nuts",
+    price: 8.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "espresso", "energy"],
-    allergens: ["Dairy"],
-    image: "/images/menu/Smoothies/EspressoEnergyLand.png",
+    tags: ["smoothie", "organic", "fresh", "green"],
+    allergens: ["Tree Nuts"],
+    image: "/images/menu/Smoothies/GreenGlowLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Milk Choice",
-      "Smoothie Add-Ons",
-      "Yogurt Choice",
-    ],
+    modifierGroupNames: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
   },
   {
     name: "Berry Boost",
@@ -381,20 +376,6 @@ export const menuItemsFromCSV = [
     tags: ["smoothie", "organic", "fresh", "tropical"],
     allergens: ["Coconut"],
     image: "/images/menu/Smoothies/TropicalBlissLand.png",
-    available: true,
-    active: true,
-    modifierGroupNames: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
-  },
-  {
-    name: "Green Glow",
-    description:
-      "Spinach, kale, banana, avocado, chia seeds, almond milk, honey\nAllergens: Tree Nuts",
-    price: 8.75,
-    currency: "USD",
-    section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "green"],
-    allergens: ["Tree Nuts"],
-    image: "/images/menu/Smoothies/GreenGlowLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
@@ -426,6 +407,25 @@ export const menuItemsFromCSV = [
     available: true,
     active: true,
     modifierGroupNames: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
+  },
+  {
+    name: "Espresso Energy",
+    description:
+      "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
+    price: 7.75,
+    currency: "USD",
+    section: "Smoothies (Organic & Fresh)",
+    tags: ["smoothie", "organic", "fresh", "espresso", "energy"],
+    allergens: ["Dairy"],
+    image: "/images/menu/Smoothies/EspressoEnergyLand.png",
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Milk Choice",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
 
   // Oatmeals
