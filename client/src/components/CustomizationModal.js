@@ -26,7 +26,7 @@ export default function CustomizationModal({
   const [modifierQuantities, setModifierQuantities] = useState({}); // Store quantities for each selected option
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Initialize modifiers from existing cart item or reset
+  // Initialize modifiers from existing cart item or reset with defaults
   useEffect(() => {
     if (isOpen) {
       if (existingCartItem?.modifiers) {
@@ -43,13 +43,42 @@ export default function CustomizationModal({
         setSelectedModifiers(restored);
         setModifierQuantities(restoredQuantities);
       } else {
-        // Reset for new item
-        setSelectedModifiers({});
-        setModifierQuantities({});
+        // Reset for new item and set default selections
+        const defaults = {};
+        const defaultQuantities = {};
+        
+        if (menuItem?.modifierGroups) {
+          menuItem.modifierGroups.forEach((group) => {
+            if (!group.options || group.options.length === 0) return;
+            
+            // Find the default option based on group name and option name
+            let defaultOption = null;
+            
+            if (group.name === "Cup Size (16-20)") {
+              defaultOption = group.options.find(opt => opt.name === "Medium (16oz)" && opt.available);
+            } else if (group.name === "Cup Size (12-16)") {
+              defaultOption = group.options.find(opt => opt.name === "Small (12oz)" && opt.available);
+            } else if (group.name === "Ice Level") {
+              defaultOption = group.options.find(opt => opt.name === "Regular Ice" && opt.available);
+            } else if (group.name === "Milk Choice") {
+              defaultOption = group.options.find(opt => opt.name === "2% Milk" && opt.available);
+            } else if (group.name === "Yogurt Choice") {
+              defaultOption = group.options.find(opt => opt.name === "Regular Yogurt" && opt.available);
+            }
+            
+            // If a default option is found and the group is required, set it
+            if (defaultOption && group.required) {
+              defaults[group.name] = [defaultOption.name];
+            }
+          });
+        }
+        
+        setSelectedModifiers(defaults);
+        setModifierQuantities(defaultQuantities);
       }
       setValidationErrors({});
     }
-  }, [isOpen, existingCartItem]);
+  }, [isOpen, existingCartItem, menuItem]);
 
   // Check if a modifier group supports quantities (like Syrup Pumps)
   const isQuantityBased = (groupName) => {

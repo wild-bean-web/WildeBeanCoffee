@@ -82,7 +82,7 @@ export default function Home() {
       ctaLink: "/menu",
       cta2: "Order Online",
       cta2Link: "/order",
-      bgImage: "/images/menu/Coffee/Mocha.png",
+      bgImage: "/images/webDesignImages/HomePage/Homepage1.png",
     },
     {
       id: 2,
@@ -94,7 +94,7 @@ export default function Home() {
       ctaLink: "/shop",
       cta2: "View Menu",
       cta2Link: "/menu",
-      bgImage: "/images/menu/Coffee/Cappuccino.png",
+      bgImage: "/images/webDesignImages/HomePage/Homepage2.png",
     },
     {
       id: 3,
@@ -106,7 +106,7 @@ export default function Home() {
       ctaLink: "/menu",
       cta2: "Order Now",
       cta2Link: "/order",
-      bgImage: "/images/menu/Smoothies/TropicalBliss.jpeg",
+      bgImage: "/images/webDesignImages/HomePage/HomePage03.png",
     },
     {
       id: 4,
@@ -118,7 +118,7 @@ export default function Home() {
       ctaLink: "/location",
       cta2: "Order Online",
       cta2Link: "/order",
-      bgImage: "/images/menu/Coffee/Latte.png",
+      bgImage: "/images/webDesignImages/HomePage/HomePage4.png",
     },
   ];
 

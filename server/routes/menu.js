@@ -78,6 +78,38 @@ router.get("/", async (req, res, next) => {
         return 0;
       });
     }
+
+    // For Smoothies section, sort in specific order
+    if (section === "Smoothies (Organic & Fresh)" || (!section && items.some(item => item.section === "Smoothies (Organic & Fresh)"))) {
+      const smoothieOrder = [
+        "Green Glow",
+        "Berry Boost",
+        "Tropical Bliss",
+        "Nutty Banana Bliss",
+        "Guava Cream",
+        "Espresso Energy",
+      ];
+      
+      items.sort((a, b) => {
+        // Only apply custom sorting to Smoothies items
+        if (a.section === "Smoothies (Organic & Fresh)" && b.section === "Smoothies (Organic & Fresh)") {
+          const aIndex = smoothieOrder.indexOf(a.name);
+          const bIndex = smoothieOrder.indexOf(b.name);
+          
+          // If both are in the order list, sort by their position
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          // If only one is in the list, prioritize it
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          // If neither is in the list, sort alphabetically
+          return a.name.localeCompare(b.name);
+        }
+        // For items in different sections, maintain original order
+        return 0;
+      });
+    }
     res.json({ data: items });
   } catch (err) {
     next(err);

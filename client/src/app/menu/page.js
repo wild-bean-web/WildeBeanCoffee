@@ -78,6 +78,38 @@ function MenuPageContent() {
     [filteredItems]
   );
 
+  // Define section display order for "All Items" view
+  const sectionDisplayOrder = [
+    "Coffee & Espresso",
+    "Tea",
+    "Smoothies (Organic & Fresh)",
+    "Oatmeals",
+    "Bakery & Pastries",
+  ];
+
+  // Sort grouped items by section order
+  const sortedGroupedItems = useMemo(() => {
+    const entries = Object.entries(groupedItems);
+    
+    // Sort entries based on sectionDisplayOrder
+    entries.sort((a, b) => {
+      const aIndex = sectionDisplayOrder.indexOf(a[0]);
+      const bIndex = sectionDisplayOrder.indexOf(b[0]);
+      
+      // If both sections are in the order list, sort by their position
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      // If only one is in the list, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      // If neither is in the list, sort alphabetically
+      return a[0].localeCompare(b[0]);
+    });
+    
+    return Object.fromEntries(entries);
+  }, [groupedItems]);
+
   useEffect(() => {
     // Load cart from localStorage
     const savedCart = localStorage.getItem("cart");
@@ -282,7 +314,7 @@ function MenuPageContent() {
 
         {/* Menu Items by Section */}
         <div className="space-y-12">
-          {Object.entries(groupedItems).map(([section, items]) => (
+          {Object.entries(sortedGroupedItems).map(([section, items]) => (
             <motion.div
               key={section}
               initial={{ opacity: 0, y: 20 }}
@@ -298,7 +330,7 @@ function MenuPageContent() {
                   <motion.div
                     key={item._id}
                     whileHover={{ y: -4 }}
-                    className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg"
+                    className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg flex flex-col h-full"
                     onClick={() => openMenuItemModal(item)}
                   >
                     {/* Image Section */}
@@ -315,7 +347,7 @@ function MenuPageContent() {
                     )}
                     
                     {/* Content Section */}
-                    <div className="p-4">
+                    <div className="p-4 flex flex-col flex-1">
                       <div className="mb-3 flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="mb-1 text-lg font-semibold text-[var(--lime-green)]">
@@ -356,88 +388,90 @@ function MenuPageContent() {
                         )}
                       </div>
                       
-                      {item.available ? (
-                        // For items with modifiers, always show "Add to Cart" to allow different customizations
-                        // For items without modifiers, show quantity controls if already in cart
-                        (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCartClick(item);
-                            }}
-                            className="mt-3 w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                          >
-                            Add to Cart
-                          </button>
+                      <div className="mt-auto">
+                        {item.available ? (
+                          // For items with modifiers, always show "Add to Cart" to allow different customizations
+                          // For items without modifiers, show quantity controls if already in cart
+                          (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToCartClick(item);
+                              }}
+                              className="w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
+                            >
+                              Add to Cart
+                            </button>
+                          ) : (
+                            <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateCartQuantity(item, -1);
+                                }}
+                                className="flex h-10 w-10 items-center justify-center rounded-l-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
+                                aria-label="Decrease quantity"
+                              >
+                                <svg
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M20 12H4"
+                                  />
+                                </svg>
+                              </button>
+                              <span className="flex flex-1 items-center justify-center gap-1.5 text-sm font-semibold text-[var(--coffee-brown)]">
+                                <span>{getCartQuantity(item._id)}</span>
+                                <svg
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                  />
+                                </svg>
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateCartQuantity(item, 1);
+                                }}
+                                className="flex h-10 w-10 items-center justify-center rounded-r-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
+                                aria-label="Increase quantity"
+                              >
+                                <svg
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 4v16m8-8H4"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          )
                         ) : (
-                          <div className="mt-3 flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateCartQuantity(item, -1);
-                              }}
-                              className="flex h-10 w-10 items-center justify-center rounded-l-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
-                              aria-label="Decrease quantity"
-                            >
-                              <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M20 12H4"
-                                />
-                              </svg>
-                            </button>
-                            <span className="flex flex-1 items-center justify-center gap-1.5 text-sm font-semibold text-[var(--coffee-brown)]">
-                              <span>{getCartQuantity(item._id)}</span>
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                                />
-                              </svg>
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateCartQuantity(item, 1);
-                              }}
-                              className="flex h-10 w-10 items-center justify-center rounded-r-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
-                              aria-label="Increase quantity"
-                            >
-                              <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 4v16m8-8H4"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        )
-                      ) : (
-                        <p className="mt-2 text-xs text-red-600">
-                          Currently Unavailable
-                        </p>
-                      )}
+                          <p className="text-xs text-red-600">
+                            Currently Unavailable
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}

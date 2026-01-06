@@ -107,7 +107,7 @@ export const modifierGroups = [
     options: [
       { name: "No Ice", price: 0, available: true },
       { name: "Light Ice", price: 0, available: true },
-      { name: "Medium Ice", price: 0, available: true },
+      { name: "Regular Ice", price: 0, available: true },
       { name: "Extra Ice", price: 0, available: true },
     ],
   },
