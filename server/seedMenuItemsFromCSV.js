@@ -522,7 +522,7 @@ export const menuItemsFromCSV = [
     section: "Bakery & Pastries",
     tags: ["bakery", "croissant", "chocolate"],
     allergens: ["Gluten", "Dairy"],
-    image: "/images/menu/Bakery/ChocolateCroissantland.png",
+    image: "/images/menu/Bakery/ChocolateCroissantLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Warmed"],
