@@ -438,7 +438,7 @@ export const menuItemsFromCSV = [
     section: "Oatmeals",
     tags: ["oatmeal", "protein", "healthy", "breakfast"],
     allergens: ["Dairy", "Peanuts"],
-    image: "/images/menu/Oatmeals/ProteinPacked.png",
+    image: "/images/menu/Oatmeals/PowerBreakfastOatmeal.png",
     available: true,
     active: true,
     modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],

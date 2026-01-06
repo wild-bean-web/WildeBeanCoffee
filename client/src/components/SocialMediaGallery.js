@@ -120,14 +120,14 @@ export default function SocialMediaGallery() {
     },
     {
       id: 2,
-      src: "/images/menu/Coffee/Cappuccino.png",
-      alt: "Cappuccino",
+      src: "/images/menu/Oatmeals/PowerBreakfastOatmeal.png",
+      alt: "PowerBreakfastOatmeal",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 3,
-      src: "/images/menu/Bakery/Croissant.jpeg",
+      src: "/images/menu/Bakery/ButterCroissantLand.png",
       alt: "Bakery",
       platform: "facebook",
       link: SOCIAL_MEDIA_LINKS.facebook,
@@ -137,23 +137,23 @@ export default function SocialMediaGallery() {
     },
     {
       id: 4,
-      src: "/images/menu/Smoothies/TropicalBliss.jpeg",
+      src: "/images/menu/Smoothies/TropicalBlissLand.png",
       alt: "Smoothie",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 5,
-      src: "/images/menu/Coffee/Mocha.png",
-      alt: "Mocha",
+      src: "/images/menu/Favorites/IcedMatchaLatteLand.png",
+      alt: "Iced Matcha Latte",
       platform: "facebook",
       link: SOCIAL_MEDIA_LINKS.facebook,
     },
     {
       id: 6,
-      src: "/images/menu/Favorites/ChaiLatte.png",
+      src: "/images/menu/Coffee/EspressoMacchiatoLand.png",
       alt: "Chai Latte",
-      platform: "instagram",
+      platform: "Espresso Macchiato",
       link: SOCIAL_MEDIA_LINKS.instagram,
       title: "Tag @loveWildBeanCoffee",
       text: "Espresso yourself… we won't judge",
@@ -161,15 +161,15 @@ export default function SocialMediaGallery() {
     },
     {
       id: 7,
-      src: "/images/menu/Smoothies/BerryBoost.jpeg",
+      src: "/images/menu/Smoothies/BerryBoostLand.png",
       alt: "Smoothie",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 8,
-      src: "/images/menu/Bakery/Muffin.jpeg",
-      alt: "Muffin",
+      src: "/images/menu/Bakery/ChocolateMuffinLand.png",
+      alt: "ChocolateMuffin",
       platform: "facebook",
       link: SOCIAL_MEDIA_LINKS.facebook,
     },
@@ -306,7 +306,9 @@ export default function SocialMediaGallery() {
                   href={image.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative block w-full overflow-hidden rounded-t-lg"
+                  className={`relative block w-full overflow-hidden ${
+                    isShortImage ? "rounded-t-lg" : "rounded-lg"
+                  }`}
                   style={{
                     aspectRatio: aspectRatio,
                     maxHeight: "392px",
