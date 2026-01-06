@@ -112,12 +112,24 @@ export default function CustomizationModal({
   };
 
   // Handle modifier selection
-  const handleModifierChange = (groupName, optionName, groupType, maxSelections) => {
+  const handleModifierChange = (groupName, optionName, groupType, maxSelections, isRequired = false) => {
     setSelectedModifiers((prev) => {
       const current = prev[groupName] || [];
       
       if (groupType === "single") {
         // Single selection (radio)
+        // If optional and already selected, allow deselecting
+        if (!isRequired && current.includes(optionName)) {
+          // Deselect - also remove quantity
+          const quantityKey = `${groupName}_${optionName}`;
+          setModifierQuantities((prevQty) => {
+            const updated = { ...prevQty };
+            delete updated[quantityKey];
+            return updated;
+          });
+          return { ...prev, [groupName]: [] };
+        }
+        // Otherwise, select the option
         return { ...prev, [groupName]: [optionName] };
       } else {
         // Multiple selection (checkbox)
@@ -348,12 +360,13 @@ export default function CustomizationModal({
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => {
                                   if (!isDisabled && group.type === "single") {
-                                    // For radio buttons, clicking the row selects it
+                                    // For radio buttons, clicking the row selects/deselects it (if optional)
                                     handleModifierChange(
                                       group.name,
                                       option.name,
                                       group.type,
-                                      group.maxSelections
+                                      group.maxSelections,
+                                      group.required
                                     );
                                   } else if (!isDisabled && group.type === "multiple") {
                                     // For checkboxes, clicking the row toggles it
@@ -361,7 +374,8 @@ export default function CustomizationModal({
                                       group.name,
                                       option.name,
                                       group.type,
-                                      group.maxSelections
+                                      group.maxSelections,
+                                      group.required
                                     );
                                   }
                                 }}
@@ -384,7 +398,8 @@ export default function CustomizationModal({
                                           group.name,
                                           option.name,
                                           group.type,
-                                          group.maxSelections
+                                          group.maxSelections,
+                                          group.required
                                         )
                                       }
                                       onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly
@@ -401,7 +416,8 @@ export default function CustomizationModal({
                                           group.name,
                                           option.name,
                                           group.type,
-                                          group.maxSelections
+                                          group.maxSelections,
+                                          group.required
                                         )
                                       }
                                       onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly

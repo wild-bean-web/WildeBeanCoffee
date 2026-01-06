@@ -25,15 +25,16 @@ function MenuPageContent() {
   // Define the desired order for filter buttons
   const sectionOrder = [
     "Coffee & Espresso",
+    "Tea",
     "Smoothies (Organic & Fresh)",
     "Oatmeals",
     "Bakery & Pastries",
-    "Tea",
   ];
 
   // Map section names to display names for filter buttons
   const sectionDisplayNames = {
     "Smoothies (Organic & Fresh)": "Smoothies",
+    "Tea": "Tea & Milk",
   };
 
   // Get unique sections and order them according to sectionOrder
