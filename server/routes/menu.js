@@ -38,6 +38,26 @@ router.get("/", async (req, res, next) => {
       .populate("modifierGroups", "name description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
+    
+    // For Coffee & Espresso section, sort hot items before iced/cold items
+    if (section === "Coffee & Espresso" || (!section && items.some(item => item.section === "Coffee & Espresso"))) {
+      items.sort((a, b) => {
+        // Only apply custom sorting to Coffee & Espresso items
+        if (a.section === "Coffee & Espresso" && b.section === "Coffee & Espresso") {
+          const aIsCold = a.name.toLowerCase().startsWith("iced") || a.name.toLowerCase().startsWith("cold");
+          const bIsCold = b.name.toLowerCase().startsWith("iced") || b.name.toLowerCase().startsWith("cold");
+          
+          // Hot items come first
+          if (aIsCold && !bIsCold) return 1;
+          if (!aIsCold && bIsCold) return -1;
+          
+          // If both are same type (both hot or both cold), sort alphabetically
+          return a.name.localeCompare(b.name);
+        }
+        // For items in different sections, maintain original order
+        return 0;
+      });
+    }
     res.json({ data: items });
   } catch (err) {
     next(err);

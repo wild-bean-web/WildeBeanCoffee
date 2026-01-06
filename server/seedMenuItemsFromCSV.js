@@ -9,15 +9,19 @@ export const menuItemsFromCSV = [
   {
     name: "Americano",
     description: "Espresso shot filled with hot water for a smooth finish.",
-    price: 3.60,
+    price: 3.6,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
     allergens: [],
-    image: "/images/menu/Coffee/RegularCoffee.jpeg", // Update image path if needed
+    image: "/images/menu/Coffee/AmericanoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Extra Single Shots (Hot)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (12-16)",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Cappuccino",
@@ -27,10 +31,17 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "foam"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/Cappuccino.png",
+    image: "/images/menu/Coffee/CappuccinoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Cup Size (12-16)",
+      "Extra Single Shots (Hot)",
+      "Milk Choice",
+    ],
   },
   {
     name: "Doppio",
@@ -40,7 +51,7 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
     allergens: [],
-    image: "/images/menu/Coffee/RegularCoffee.jpeg", // Update if you have a specific image
+    image: "/images/menu/Coffee/DoppioLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
@@ -53,7 +64,7 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
     allergens: [],
-    image: "/images/menu/Coffee/RegularCoffee.jpeg",
+    image: "/images/menu/Coffee/EspressoLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
@@ -61,15 +72,22 @@ export const menuItemsFromCSV = [
   {
     name: "Flat White",
     description: "Espresso with velvety, lightly textured milk.",
-    price: 5.10,
+    price: 5.1,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/Latte.png", // Update if you have a specific image
+    image: "/images/menu/Coffee/LatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Cup Size (12-16)",
+      "Extra Single Shots (Hot)",
+      "Milk Choice",
+    ],
   },
   {
     name: "Latte",
@@ -79,10 +97,17 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/Latte.png",
+    image: "/images/menu/Coffee/LatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (12-16)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Milk Choice",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Mocha",
@@ -92,10 +117,17 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "chocolate"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/Mocha.png",
+    image: "/images/menu/Coffee/MochaLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Cup Size (12-16)", "Extra Single Shots (Hot)", "Milk Choice"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Cup Size (12-16)",
+      "Extra Single Shots (Hot)",
+      "Milk Choice",
+    ],
   },
   {
     name: "Espresso Macchiato",
@@ -105,7 +137,7 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
     allergens: [],
-    image: "/images/menu/Coffee/Latte.png", // Update if you have a specific image
+    image: "/images/menu/Coffee/EspressoMacchiatoLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
@@ -113,15 +145,22 @@ export const menuItemsFromCSV = [
   {
     name: "Caramel Macchiato",
     description: "Layered espresso and milk with caramel.",
-    price: 5.60,
+    price: 5.6,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "caramel"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/Latte.png", // Update if you have a specific image
+    image: "",
     available: true,
-    active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (12-16)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Milk Choice", "Extra Single Shots (Hot)"],
+    active: false,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (12-16)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Milk Choice",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Filtered Coffee",
@@ -131,12 +170,12 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "coffee"],
     allergens: [],
-    image: "/images/menu/Coffee/RegularCoffee.jpeg",
+    image: "/images/menu/Coffee/RegularCoffeeLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Filtered Coffee Refill", "Cup Size (12-16)"],
   },
-  
+
   // Cold Coffee
   {
     name: "Cold Brew",
@@ -146,10 +185,15 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "coffee", "cold"],
     allergens: [],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedAmericanoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Cup Size (16-20)", "Ice Level", "Milk Choice", "Syrup Pumps (+$0.20 each)"],
+    modifierGroupNames: [
+      "Cup Size (16-20)",
+      "Ice Level",
+      "Milk Choice",
+      "Syrup Pumps (+$0.20 each)",
+    ],
   },
   {
     name: "Iced Americano",
@@ -159,10 +203,15 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
     allergens: [],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedAmericanoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Ice Level", "Extra Single Shots (Iced)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Ice Level",
+      "Extra Single Shots (Iced)",
+    ],
   },
   {
     name: "Iced Cappuccino",
@@ -172,10 +221,18 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedCappuccinoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Extra Single Shots (Iced)",
+    ],
   },
   {
     name: "Iced Coffee",
@@ -185,23 +242,36 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "coffee", "cold"],
     allergens: [],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedCoffeeLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Cup Size (16-20)", "Ice Level", "Milk Choice", "Syrup Pumps (+$0.20 each)"],
+    modifierGroupNames: [
+      "Cup Size (16-20)",
+      "Ice Level",
+      "Milk Choice",
+      "Syrup Pumps (+$0.20 each)",
+    ],
   },
   {
     name: "Iced Caramel Macchiato",
     description: "Layered espresso and milk served over ice.",
-    price: 5.60,
+    price: 5.6,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedCaramelMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Extra Single Shots (Iced)",
+    ],
   },
   {
     name: "Iced Latte",
@@ -211,10 +281,18 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedLatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Extra Single Shots (Iced)",
+    ],
   },
   {
     name: "Iced Flat White",
@@ -224,10 +302,18 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedFlatWhiteLand.png",
     available: true,
-    active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    active: false,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Extra Single Shots (Iced)",
+    ],
   },
   {
     name: "Iced Mocha",
@@ -237,16 +323,25 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "chocolate", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedCoffee.png",
+    image: "/images/menu/Coffee/IcedMochaLand.png",
     available: true,
-    active: true,
-    modifierGroupNames: ["Shot Preference", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
+    active: false,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Extra Single Shots (Iced)",
+    ],
   },
-  
+
   // Smoothies
   {
     name: "Espresso Energy",
-    description: "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
+    description:
+      "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
     price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -255,11 +350,17 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/EspressoEnergyLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Milk Choice",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
   {
     name: "Berry Boost",
-    description: "Strawberry, blueberry, raspberry, vanilla yogurt, almond milk\nAllergens: Dairy, tree nuts",
+    description:
+      "Strawberry, blueberry, raspberry, vanilla yogurt, almond milk\nAllergens: Dairy, tree nuts",
     price: 8.95,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -272,7 +373,8 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Tropical Bliss",
-    description: "Mango, pineapple, banana, orange juice, coconut milk, fresh lime\nAllergens: Coconut",
+    description:
+      "Mango, pineapple, banana, orange juice, coconut milk, fresh lime\nAllergens: Coconut",
     price: 8.25,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -285,7 +387,8 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Green Glow",
-    description: "Spinach, kale, banana, avocado, chia seeds, almond milk, honey\nAllergens: Tree Nuts",
+    description:
+      "Spinach, kale, banana, avocado, chia seeds, almond milk, honey\nAllergens: Tree Nuts",
     price: 8.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -298,7 +401,8 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Nutty Banana Bliss",
-    description: "Banana, peanut butter, chia seeds, almonds, cinnamon, and almond milk\nAllergens: Peanuts, Tree Nuts",
+    description:
+      "Banana, peanut butter, chia seeds, almonds, cinnamon, and almond milk\nAllergens: Peanuts, Tree Nuts",
     price: 8.25,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -311,8 +415,9 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Guava Cream",
-    description: "Guava, yogurt, almond milk, avocado, fresh lime\nAllergens: Dairy, Tree Nuts",
-    price: 8.50,
+    description:
+      "Guava, yogurt, almond milk, avocado, fresh lime\nAllergens: Dairy, Tree Nuts",
+    price: 8.5,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical", "guava"],
@@ -322,11 +427,12 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
   },
-  
+
   // Oatmeals
   {
     name: "Power Breakfast Oatmeal",
-    description: "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Strawberries, Blueberries, Banana, Peanut Butter\nAllergens: Dairy, Peanuts",
+    description:
+      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Strawberries, Blueberries, Banana, Peanut Butter\nAllergens: Dairy, Peanuts",
     price: 8.95,
     currency: "USD",
     section: "Oatmeals",
@@ -339,7 +445,8 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Tropical Berry Crunch",
-    description: "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raspberries, Blueberries, Granola, Coconut Flakes\nAllergens: Dairy, Coconut, Gluten",
+    description:
+      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raspberries, Blueberries, Granola, Coconut Flakes\nAllergens: Dairy, Coconut, Gluten",
     price: 7.95,
     currency: "USD",
     section: "Oatmeals",
@@ -352,8 +459,9 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Nutty Harvest Oatmeal",
-    description: "Cooked Oatmeal, Chia Seeds Pudding,  Yogurt, Pecans, Walnuts, Dried Cranberries, Coconut Flakes\nAllergens: Dairy, Tree Nuts, Coconut",
-    price: 8.50,
+    description:
+      "Cooked Oatmeal, Chia Seeds Pudding,  Yogurt, Pecans, Walnuts, Dried Cranberries, Coconut Flakes\nAllergens: Dairy, Tree Nuts, Coconut",
+    price: 8.5,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "nuts", "harvest", "healthy", "breakfast"],
@@ -365,8 +473,9 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Nut Free Oatmeal",
-    description: "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raisins, Sunflower Seeds, Coconut Flakes, Banana\nAllergens: Dairy, Coconut",
-    price: 7.50,
+    description:
+      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raisins, Sunflower Seeds, Coconut Flakes, Banana\nAllergens: Dairy, Coconut",
+    price: 7.5,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "nut-free", "healthy", "breakfast"],
@@ -378,8 +487,9 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Custom Oatmeal",
-    description: "Build your own bowl.\nRequired: choose a base (Oats and/or Chia Seeds)\nAny additional add-ons are $0.75 each.",
-    price: 5.00,
+    description:
+      "Build your own bowl.\nRequired: choose a base (Oats and/or Chia Seeds)\nAny additional add-ons are $0.75 each.",
+    price: 5.0,
     currency: "USD",
     section: "Oatmeals",
     tags: ["oatmeal", "custom", "healthy", "breakfast"],
@@ -389,7 +499,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
   },
-  
+
   // Bakery & Pastries
   {
     name: "B-Berry Muffin",
@@ -433,7 +543,7 @@ export const menuItemsFromCSV = [
   {
     name: "Peach Betty",
     description: "Warm peach dessert with a crumb topping.",
-    price: 4.00,
+    price: 4.0,
     currency: "USD",
     section: "Bakery & Pastries",
     tags: ["bakery", "dessert"],
@@ -459,7 +569,7 @@ export const menuItemsFromCSV = [
   {
     name: "Plain Croissant",
     description: "Buttery, flaky classic croissant.",
-    price: 3.50,
+    price: 3.5,
     currency: "USD",
     section: "Bakery & Pastries",
     tags: ["bakery", "croissant"],
@@ -469,7 +579,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: ["Warmed"],
   },
-  
+
   // Tea
   {
     name: "Assorted Tea",
@@ -495,7 +605,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/ChaiLatte.jpg",
     available: true,
     active: true,
-    modifierGroupNames: ["Syrup Pumps (+$0.20 each)", "Cup Size (12-16)", "Milk Choice"],
+    modifierGroupNames: [
+      "Syrup Pumps (+$0.20 each)",
+      "Cup Size (12-16)",
+      "Milk Choice",
+    ],
   },
   {
     name: "Matcha Latte (Hot)",
@@ -508,7 +622,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/ChaiLatte.jpg", // Update if you have a specific image
     available: true,
     active: true,
-    modifierGroupNames: ["Syrup Pumps (+$0.20 each)", "Cup Size (12-16)", "Milk Choice"],
+    modifierGroupNames: [
+      "Syrup Pumps (+$0.20 each)",
+      "Cup Size (12-16)",
+      "Milk Choice",
+    ],
   },
   {
     name: "Iced Tea",
@@ -534,7 +652,12 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/IcedTea.jpg", // Update if you have a specific image
     available: true,
     active: true,
-    modifierGroupNames: ["Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Ice Level", "Milk Choice"],
+    modifierGroupNames: [
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Ice Level",
+      "Milk Choice",
+    ],
   },
   {
     name: "Iced Matcha Latte",
@@ -547,7 +670,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/IcedTea.jpg", // Update if you have a specific image
     available: true,
     active: true,
-    modifierGroupNames: ["Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Ice Level", "Milk Choice"],
+    modifierGroupNames: [
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.20 each)",
+      "Ice Level",
+      "Milk Choice",
+    ],
   },
 ];
-
