@@ -58,6 +58,26 @@ router.get("/", async (req, res, next) => {
         return 0;
       });
     }
+
+    // For Oatmeals section, sort "Custom Oatmeal" to appear last
+    if (section === "Oatmeals" || (!section && items.some(item => item.section === "Oatmeals"))) {
+      items.sort((a, b) => {
+        // Only apply custom sorting to Oatmeals items
+        if (a.section === "Oatmeals" && b.section === "Oatmeals") {
+          const aIsCustom = a.name.toLowerCase() === "custom oatmeal";
+          const bIsCustom = b.name.toLowerCase() === "custom oatmeal";
+          
+          // Custom Oatmeal comes last
+          if (aIsCustom && !bIsCustom) return 1;
+          if (!aIsCustom && bIsCustom) return -1;
+          
+          // If neither or both are custom, sort alphabetically
+          return a.name.localeCompare(b.name);
+        }
+        // For items in different sections, maintain original order
+        return 0;
+      });
+    }
     res.json({ data: items });
   } catch (err) {
     next(err);

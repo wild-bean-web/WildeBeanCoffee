@@ -151,7 +151,7 @@ export const menuItemsFromCSV = [
     tags: ["hot", "espresso", "caramel"],
     allergens: ["Dairy"],
     image: "",
-    available: true,
+    available: false,
     active: false,
     modifierGroupNames: [
       "Shot Preference",
@@ -522,7 +522,7 @@ export const menuItemsFromCSV = [
     section: "Bakery & Pastries",
     tags: ["bakery", "bread"],
     allergens: [],
-    image: "/images/menu/Bakery/Muffin.jpeg", // Update if you have a specific image
+    image: "/images/menu/Bakery/Muffin.jpeg",
     available: true,
     active: true,
     modifierGroupNames: ["Warmed"],
@@ -548,7 +548,7 @@ export const menuItemsFromCSV = [
     section: "Bakery & Pastries",
     tags: ["bakery", "dessert"],
     allergens: [],
-    image: "/images/menu/Bakery/Muffin.jpeg", // Update if you have a specific image
+    image: "/images/menu/Bakery/Muffin.jpeg",
     available: true,
     active: true,
     modifierGroupNames: ["Warmed"],
@@ -589,7 +589,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "hot"],
     allergens: [],
-    image: "/images/menu/Favorites/ChaiLatte.jpg", // Update if you have a specific image
+    image: "/images/menu/Favorites/AssortedTeasLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Tea Selection"],
@@ -602,7 +602,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "hot", "spiced"],
     allergens: [],
-    image: "/images/menu/Favorites/ChaiLatte.jpg",
+    image: "/images/menu/Favorites/ChaiLatteLand.png",
     available: true,
     active: true,
     modifierGroupNames: [
@@ -619,7 +619,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "hot", "matcha"],
     allergens: [],
-    image: "/images/menu/Favorites/ChaiLatte.jpg", // Update if you have a specific image
+    image: "/images/menu/Favorites/MatchaLatteLand.png",
     available: true,
     active: true,
     modifierGroupNames: [
@@ -636,7 +636,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "iced", "cold"],
     allergens: [],
-    image: "/images/menu/Favorites/IcedTea.jpg",
+    image: "/images/menu/Favorites/IcedTeaLand.png",
     available: true,
     active: true,
     modifierGroupNames: ["Cup Size (16-20)", "Ice Level"],
@@ -649,7 +649,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "iced", "spiced"],
     allergens: [],
-    image: "/images/menu/Favorites/IcedTea.jpg", // Update if you have a specific image
+    image: "/images/menu/Favorites/IcedChaiLatteLand.png",
     available: true,
     active: true,
     modifierGroupNames: [
@@ -667,7 +667,7 @@ export const menuItemsFromCSV = [
     section: "Tea",
     tags: ["tea", "iced", "matcha"],
     allergens: [],
-    image: "/images/menu/Favorites/IcedTea.jpg", // Update if you have a specific image
+    image: "/images/menu/Favorites/IcedMatchaLatteLand.png",
     available: true,
     active: true,
     modifierGroupNames: [
