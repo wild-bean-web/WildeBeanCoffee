@@ -8,10 +8,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Explicitly specify the path to .env file to ensure it's loaded correctly
+// Only load .env file if it exists (for local development)
+// In production (Railway), environment variables are set via the platform
+import { existsSync } from "fs";
 const envPath = join(__dirname, ".env");
-const result = dotenv.config({ path: envPath });
-if (result.error) {
-  console.error("[SERVER] Error loading .env file:", result.error);
+if (existsSync(envPath)) {
+  const result = dotenv.config({ path: envPath });
+  if (result.error) {
+    console.error("[SERVER] Error loading .env file:", result.error);
+  } else {
+    console.log("[SERVER] Loaded .env file from:", envPath);
+  }
+} else {
+  console.log("[SERVER] No .env file found. Using environment variables from platform (Railway/production).");
 }
 
 import express from "express";
