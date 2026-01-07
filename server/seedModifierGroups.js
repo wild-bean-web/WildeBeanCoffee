@@ -39,7 +39,7 @@ export const modifierGroups = [
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 10,
+    maxSelections: 3, // Updated to match available options (Vanilla, Caramel, Hazelnut)
     options: [
       { name: "Vanilla Syrup Pump", price: 0.2, available: true },
       { name: "Caramel Syrup Pump", price: 0.2, available: true },
@@ -57,7 +57,7 @@ export const modifierGroups = [
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 5,
+    maxSelections: 3, // Updated to match available options (Whipped Cream, Cinnamon Powder, Cocoa Powder)
     options: [
       { name: "Whipped Cream (+$0.50)", price: 0.5, available: true },
       { name: "Cinnamon Powder", price: 0, available: true },
@@ -70,7 +70,7 @@ export const modifierGroups = [
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 5,
+    maxSelections: 1, // Updated to match available options (only 1 option available)
     options: [
       { name: "Extra Single Shot", price: 0.6, available: true },
     ],
@@ -81,7 +81,7 @@ export const modifierGroups = [
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 5,
+    maxSelections: 1, // Updated to match available options (only 1 option available)
     options: [
       { name: "Extra Single Shot", price: 1.0, available: true },
     ],
@@ -172,7 +172,7 @@ export const modifierGroups = [
     type: "multiple",
     required: false, // Add-ons are typically optional, even if marked "Yes" in Clover
     minSelections: 0,
-    maxSelections: 10,
+    maxSelections: 5, // Updated to match available options (Chia Seeds, Peanut Butter, Almonds, Cinnamon, Honey)
     options: [
       { name: "Chia Seeds", price: 0.25, available: true },
       { name: "Peanut Butter", price: 0.5, available: true },

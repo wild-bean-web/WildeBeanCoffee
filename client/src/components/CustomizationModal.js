@@ -533,7 +533,7 @@ export default function CustomizationModal({
                           })}
                         </div>
 
-                        {group.type === "multiple" && group.maxSelections && (
+                        {group.type === "multiple" && group.maxSelections && availableOptions.length >= 2 && (
                           <p className="text-xs text-gray-500">
                             Select up to {group.maxSelections} option(s)
                           </p>
