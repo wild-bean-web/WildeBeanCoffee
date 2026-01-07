@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AddToCartButton from "@/components/AddToCartButton";
 import Modal from "@/components/Modal";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -11,6 +12,8 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import { useProducts } from "@/hooks/useProducts";
 
 export default function ShopPage() {
+  const router = useRouter();
+  
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -168,6 +171,28 @@ export default function ShopPage() {
       {/* Header - Full Width */}
       <div className="bg-[var(--coffee-brown-very-light)] py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="mb-4 flex items-center gap-2 text-[var(--coffee-brown)] hover:text-[var(--coffee-brown-dark)] transition-colors"
+            aria-label="Go back"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            <span className="text-sm font-medium">Back</span>
+          </button>
+
           <div className="text-center">
             <h1 className="mb-4 text-4xl font-bold text-[var(--coffee-brown)] sm:text-5xl">
               Shop Coffee Beans
@@ -182,84 +207,88 @@ export default function ShopPage() {
       <div className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
 
-        {/* Filters and Sort */}
-        <div className="mb-8 rounded-lg bg-white p-4 shadow-md">
-          <div className="grid gap-4 md:grid-cols-4">
-            {/* Search */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                Search
-              </label>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search coffee beans..."
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                Category
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
-              >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                Sort By
-              </label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
-              >
-                <option value="name">Name (A-Z)</option>
-                <option value="price-low">Price (Low to High)</option>
-                <option value="price-high">Price (High to Low)</option>
-              </select>
-            </div>
-
-            {/* In Stock Toggle */}
-            <div className="flex flex-col">
-              <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                Filter
-              </label>
-              <div className="flex h-[42px] items-center">
-                <label className="flex cursor-pointer items-center gap-2">
+        {/* Filters and Sort - Only show if there are more than 2 products */}
+        {products.length > 2 && (
+          <>
+            <div className="mb-8 rounded-lg bg-white p-4 shadow-md">
+              <div className="grid gap-4 md:grid-cols-4">
+                {/* Search */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Search
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={showInStockOnly}
-                    onChange={(e) => setShowInStockOnly(e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 text-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search coffee beans..."
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
                   />
-                  <span className="text-sm font-medium text-[var(--coffee-brown)]">
-                    In Stock Only
-                  </span>
-                </label>
+                </div>
+
+                {/* Category Filter */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sort */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
+                  >
+                    <option value="name">Name (A-Z)</option>
+                    <option value="price-low">Price (Low to High)</option>
+                    <option value="price-high">Price (High to Low)</option>
+                  </select>
+                </div>
+
+                {/* In Stock Toggle */}
+                <div className="flex flex-col">
+                  <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Filter
+                  </label>
+                  <div className="flex h-[42px] items-center">
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={showInStockOnly}
+                        onChange={(e) => setShowInStockOnly(e.target.checked)}
+                        className="h-5 w-5 rounded border-gray-300 text-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                      />
+                      <span className="text-sm font-medium text-[var(--coffee-brown)]">
+                        In Stock Only
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Results Count */}
-        <p className="mb-6 text-sm text-gray-600">
-          Showing {filteredProducts.length} of {products.length} products
-        </p>
+            {/* Results Count */}
+            <p className="mb-6 text-sm text-gray-600">
+              Showing {filteredProducts.length} of {products.length} products
+            </p>
+          </>
+        )}
 
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (

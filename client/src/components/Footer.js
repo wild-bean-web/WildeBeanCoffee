@@ -195,7 +195,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-8 border-t border-gray-700 pt-8 text-center text-sm text-gray-400">
+        <div className="mt-8 border-t border-gray-700 pt-8 pb-[60px] text-center text-sm text-gray-400">
           <p>&copy; {currentYear} Wild Bean Coffee. All rights reserved.</p>
         </div>
       </div>

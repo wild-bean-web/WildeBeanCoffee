@@ -309,7 +309,7 @@ function MenuPageContent() {
         </div>
       </div>
 
-      <div className="py-8 px-4 sm:px-6 lg:px-8">
+      <div className={`py-8 px-4 sm:px-6 lg:px-8 ${cart.length > 0 ? 'pb-24' : ''}`}>
         <div className="mx-auto max-w-7xl">
 
         {/* Menu Items by Section */}

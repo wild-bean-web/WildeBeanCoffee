@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useLocation } from "@/hooks/useLocation";
 import { locationApi } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -23,6 +24,7 @@ const formatTime12Hour = (time24) => {
 };
 
 export default function LocationPage() {
+  const router = useRouter();
   const [userCoords, setUserCoords] = useState(null);
   const [distance, setDistance] = useState(null);
   const [geoError, setGeoError] = useState(null);
@@ -189,6 +191,28 @@ export default function LocationPage() {
       {/* Header - Full Width */}
       <div className="bg-[var(--coffee-brown-very-light)] py-8">
         <div className="mx-auto max-w-6xl px-6">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="mb-4 flex items-center gap-2 text-[var(--coffee-brown)] hover:text-[var(--coffee-brown-dark)] transition-colors"
+            aria-label="Go back"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            <span className="text-sm font-medium">Back</span>
+          </button>
+
           <motion.header
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
