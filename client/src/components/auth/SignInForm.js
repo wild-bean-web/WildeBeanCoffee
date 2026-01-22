@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-export default function SignInForm({ onSuccess, onError, switchToSignUp }) {
+export default function SignInForm({ onSuccess, onError, switchToSignUp, switchToForgotPassword }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -175,6 +175,19 @@ export default function SignInForm({ onSuccess, onError, switchToSignUp }) {
       >
         {loading ? "Signing In..." : "Sign In"}
       </button>
+
+      {/* Forgot Password Link */}
+      {switchToForgotPassword && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={switchToForgotPassword}
+            className="text-sm text-[var(--coffee-brown)] hover:text-[var(--lime-green)] transition-colors"
+          >
+            Forgot Password?
+          </button>
+        </div>
+      )}
 
       {/* Switch to Sign Up */}
       <p className="mt-4 text-center text-sm text-[var(--coffee-brown)]">

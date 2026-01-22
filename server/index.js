@@ -35,6 +35,7 @@ import orderRoutes from "./routes/orders.js";
 import locationRoutes from "./routes/location.js";
 import authRoutes from "./routes/auth.js";
 import paymentRoutes from "./routes/payments.js";
+import emailVerificationRoutes from "./routes/emailVerification.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -128,6 +129,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/email-verification", emailVerificationRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({

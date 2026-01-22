@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SignUpForm from "@/components/auth/SignUpForm";
 import SignInForm from "@/components/auth/SignInForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import Toast from "@/components/Toast";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState("signin"); // "signin" or "signup"
+  const [mode, setMode] = useState("signin"); // "signin", "signup", or "forgot-password"
   const [toast, setToast] = useState(null);
   const { user, signUp, signIn, refetch } = useAuth();
   const router = useRouter();
@@ -161,11 +162,29 @@ export default function AuthPage() {
             onError={handleError}
             switchToSignIn={() => setMode("signin")}
           />
+        ) : mode === "forgot-password" ? (
+          <ForgotPasswordForm
+            onSuccess={(data) => {
+              setToast({
+                message: data?.message || "Password reset successfully! You can now sign in with your new password.",
+                type: "success",
+                position: "center",
+                autoClose: false,
+              });
+              // After showing success, switch to sign in
+              setTimeout(() => {
+                setMode("signin");
+              }, 2000);
+            }}
+            onError={handleError}
+            switchToSignIn={() => setMode("signin")}
+          />
         ) : (
           <SignInForm
             onSuccess={handleSuccess}
             onError={handleError}
             switchToSignUp={() => setMode("signup")}
+            switchToForgotPassword={() => setMode("forgot-password")}
           />
         )}
       </div>

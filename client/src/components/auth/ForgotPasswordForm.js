@@ -4,10 +4,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 
-export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
-  // Step management: 'email' -> 'code' -> 'signup'
+export default function ForgotPasswordForm({ onSuccess, onError, switchToSignIn }) {
+  // Step management: 'email' -> 'code' -> 'password'
   const [step, setStep] = useState("email");
   const [verifiedEmail, setVerifiedEmail] = useState("");
+
+  // Animation state
+  const [forgotPasswordAnimation, setForgotPasswordAnimation] = useState(null);
+  const [passwordAnimation, setPasswordAnimation] = useState(null);
 
   // Email verification state
   const [email, setEmail] = useState("");
@@ -17,23 +21,20 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
   const [codeSent, setCodeSent] = useState(false);
   const [verificationError, setVerificationError] = useState("");
 
-  // Signup form state
+  // Password reset state
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    password: "",
+    newPassword: "",
     confirmPassword: "",
-    phone: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [signUpAnimation, setSignUpAnimation] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Load SignUp animation
+  // Load animations
   useEffect(() => {
-    fetch("/animations/SignUp.json")
+    // Load ForgotPassword animation
+    fetch("/animations/ForgotPassword.json")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.text();
@@ -41,12 +42,28 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
       .then((text) => {
         try {
           const data = JSON.parse(text);
-          setSignUpAnimation(data);
+          setForgotPasswordAnimation(data);
         } catch (parseError) {
-          console.error("Failed to parse SignUp Lottie JSON:", parseError);
+          console.error("Failed to parse ForgotPassword Lottie JSON:", parseError);
         }
       })
-      .catch((err) => console.error("Failed to load SignUp Lottie animation:", err));
+      .catch((err) => console.error("Failed to load ForgotPassword Lottie animation:", err));
+
+    // Load Password animation
+    fetch("/animations/Password.json")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        try {
+          const data = JSON.parse(text);
+          setPasswordAnimation(data);
+        } catch (parseError) {
+          console.error("Failed to parse Password Lottie JSON:", parseError);
+        }
+      })
+      .catch((err) => console.error("Failed to load Password Lottie animation:", err));
   }, []);
 
   const validateEmail = (email) => {
@@ -67,7 +84,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
     return null;
   };
 
-  // Step 1: Send verification code
+  // Step 1: Send reset code
   const handleSendCode = async (e) => {
     e?.preventDefault();
     setVerificationError("");
@@ -86,7 +103,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/email-verification/send`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/forgot-password`,
         {
           method: "POST",
           headers: {
@@ -99,7 +116,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send verification code");
+        throw new Error(data.error || "Failed to send reset code");
       }
 
       setCodeSent(true);
@@ -107,7 +124,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
       setVerificationError("");
     } catch (error) {
       console.error("Send code error:", error);
-      setVerificationError(error.message || "Failed to send verification code");
+      setVerificationError(error.message || "Failed to send reset code");
     } finally {
       setSendingCode(false);
     }
@@ -132,7 +149,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/email-verification/verify`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/verify-reset-code`,
         {
           method: "POST",
           headers: {
@@ -151,9 +168,9 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
         throw new Error(data.error || "Invalid verification code");
       }
 
-      // Email verified, proceed to signup form
+      // Code verified, proceed to password reset
       setVerifiedEmail(email.trim());
-      setStep("signup");
+      setStep("password");
       setVerificationError("");
     } catch (error) {
       console.error("Verify code error:", error);
@@ -163,39 +180,30 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
     }
   };
 
-  // Step 3: Signup form validation
+  // Step 3: Reset password validation
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
+    if (!formData.newPassword) {
+      newErrors.newPassword = "New password is required";
     } else {
-      const passwordError = validatePassword(formData.password);
+      const passwordError = validatePassword(formData.newPassword);
       if (passwordError) {
-        newErrors.password = passwordError;
+        newErrors.newPassword = passwordError;
       }
     }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Step 3: Submit signup
-  const handleSubmit = async (e) => {
+  // Step 3: Reset password
+  const handleResetPassword = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -207,16 +215,17 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/signup`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth/reset-password`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
           body: JSON.stringify({
-            ...formData,
             email: verifiedEmail,
+            code: verificationCode.trim(),
+            newPassword: formData.newPassword,
+            confirmPassword: formData.confirmPassword,
           }),
         }
       );
@@ -225,22 +234,16 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
       if (!response.ok) {
         const errorInfo = {
-          message: data.error || "Sign up failed",
+          message: data.error || "Failed to reset password",
           status: response.status,
-          email: verifiedEmail,
         };
         throw errorInfo;
       }
 
-      // Store token if provided
-      if (data.data?.token) {
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-      }
-
-      onSuccess?.(data.data);
+      // Password reset successful
+      onSuccess?.({ message: "Password reset successfully! You can now sign in with your new password." });
     } catch (error) {
-      console.error("Sign up error:", error);
+      console.error("Reset password error:", error);
       onError?.(error);
     } finally {
       setLoading(false);
@@ -272,19 +275,30 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* SignUp Animation */}
+      {/* Animation */}
       <div className="mb-6 flex justify-center">
-        {signUpAnimation ? (
+        {step === "email" && forgotPasswordAnimation ? (
           <div className="h-32 w-32">
             <Lottie
-              animationData={signUpAnimation}
+              animationData={forgotPasswordAnimation}
+              loop={true}
+              autoplay={true}
+              className="h-full w-full"
+            />
+          </div>
+        ) : step === "password" && passwordAnimation ? (
+          <div className="h-32 w-32">
+            <Lottie
+              animationData={passwordAnimation}
               loop={true}
               autoplay={true}
               className="h-full w-full"
             />
           </div>
         ) : (
-          <div className="h-32 w-32 flex items-center justify-center text-6xl">📝</div>
+          <div className="h-32 w-32 flex items-center justify-center text-6xl">
+            {step === "email" ? "🔑" : step === "code" ? "📧" : "🔒"}
+          </div>
         )}
       </div>
 
@@ -299,10 +313,10 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
             transition={{ duration: 0.3 }}
           >
             <h2 className="mb-6 text-3xl font-bold text-center text-[var(--coffee-brown)]">
-              Verify Your Email
+              Forgot Password
             </h2>
             <p className="mb-6 text-center text-gray-600">
-              Enter your email address to receive a verification code
+              Enter your email address and we'll send you a code to reset your password
             </p>
 
             <form onSubmit={handleSendCode}>
@@ -341,7 +355,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
                 disabled={sendingCode}
                 className="w-full rounded-lg bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-all hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {sendingCode ? "Sending Code..." : "Send Verification Code"}
+                {sendingCode ? "Sending Code..." : "Send Reset Code"}
               </button>
             </form>
           </motion.div>
@@ -424,93 +438,45 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
           </motion.div>
         )}
 
-        {/* Step 3: Signup Form */}
-        {step === "signup" && (
+        {/* Step 3: Reset Password */}
+        {step === "password" && (
           <motion.form
-            key="signup"
+            key="password"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            onSubmit={handleSubmit}
+            onSubmit={handleResetPassword}
           >
             <h2 className="mb-2 text-3xl font-bold text-center text-[var(--coffee-brown)]">
-              Create Account
+              Reset Password
             </h2>
             <p className="mb-6 text-center text-sm text-gray-600">
               Email verified: <span className="font-semibold text-[var(--lime-green)]">{verifiedEmail}</span>
             </p>
 
-            {/* First Name */}
+            {/* New Password */}
             <div className="mb-4">
               <label
-                htmlFor="firstName"
+                htmlFor="newPassword"
                 className="block mb-2 text-sm font-medium text-[var(--coffee-brown)]"
               >
-                First Name *
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                  errors.firstName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-[var(--coffee-brown-light)] focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
-                }`}
-                required
-                autoFocus
-              />
-              {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-            </div>
-
-            {/* Last Name */}
-            <div className="mb-4">
-              <label
-                htmlFor="lastName"
-                className="block mb-2 text-sm font-medium text-[var(--coffee-brown)]"
-              >
-                Last Name *
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                  errors.lastName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-[var(--coffee-brown-light)] focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
-                }`}
-                required
-              />
-              {errors.lastName && <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>}
-            </div>
-
-            {/* Password */}
-            <div className="mb-4">
-              <label
-                htmlFor="password"
-                className="block mb-2 text-sm font-medium text-[var(--coffee-brown)]"
-              >
-                Password *
+                New Password *
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  value={formData.password}
+                  id="newPassword"
+                  name="newPassword"
+                  value={formData.newPassword}
                   onChange={handleChange}
                   className={`w-full rounded-lg border px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                    errors.password
+                    errors.newPassword
                       ? "border-red-500 focus:ring-red-500"
                       : "border-[var(--coffee-brown-light)] focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
                   }`}
                   required
+                  autoFocus
                 />
                 <button
                   type="button"
@@ -545,19 +511,21 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
                   )}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.newPassword && (
+                <p className="mt-1 text-sm text-red-500">{errors.newPassword}</p>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 Must be at least 8 characters with one letter and one number
               </p>
             </div>
 
             {/* Confirm Password */}
-            <div className="mb-4">
+            <div className="mb-6">
               <label
                 htmlFor="confirmPassword"
                 className="block mb-2 text-sm font-medium text-[var(--coffee-brown)]"
               >
-                Confirm Password *
+                Confirm New Password *
               </label>
               <div className="relative">
                 <input
@@ -611,45 +579,21 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
               )}
             </div>
 
-            {/* Phone */}
-            <div className="mb-6">
-              <label
-                htmlFor="phone"
-                className="block mb-2 text-sm font-medium text-[var(--coffee-brown)]"
-              >
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
-                  errors.phone
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-[var(--coffee-brown-light)] focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
-                }`}
-                required
-              />
-              {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-lg bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-all hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating Account..." : "Sign Up"}
+              {loading ? "Resetting Password..." : "Reset Password"}
             </button>
           </motion.form>
         )}
       </AnimatePresence>
 
-      {/* Switch to Sign In */}
+      {/* Back to Sign In */}
       <p className="mt-4 text-center text-sm text-[var(--coffee-brown)]">
-        Already have an account?{" "}
+        Remember your password?{" "}
         <button
           type="button"
           onClick={switchToSignIn}
@@ -661,3 +605,4 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
     </div>
   );
 }
+
