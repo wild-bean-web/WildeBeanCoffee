@@ -17,6 +17,10 @@ export default function Nav() {
   const [userAvatarAnimation, setUserAvatarAnimation] = useState(null);
   const [toast, setToast] = useState(null);
 
+  // Admin emails
+  const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+  const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+
   // Load userAvatar animation
   useEffect(() => {
     fetch("/animations/userAvatar.json")
@@ -118,6 +122,19 @@ export default function Nav() {
             >
               Order Online
             </Link>
+            {/* Kitchen Dashboard - Admin Only */}
+            {isAdmin && (
+              <Link
+                href="/kitchen"
+                className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors ${
+                  isActive("/kitchen")
+                    ? "bg-[var(--coffee-brown-dark)]"
+                    : "bg-[var(--coffee-brown)] hover:bg-[var(--coffee-brown-dark)]"
+                }`}
+              >
+                Kitchen Dashboard
+              </Link>
+            )}
             {/* Auth Section */}
             {user ? (
               <ProfileDropdown
@@ -234,6 +251,20 @@ export default function Nav() {
               >
                 Order Online
               </Link>
+              {/* Kitchen Dashboard - Admin Only (Mobile) */}
+              {isAdmin && (
+                <Link
+                  href="/kitchen"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`mt-2 rounded-full px-4 py-2 text-center text-base font-semibold text-white transition-colors ${
+                    isActive("/kitchen")
+                      ? "bg-[var(--coffee-brown-dark)]"
+                      : "bg-[var(--coffee-brown)] hover:bg-[var(--coffee-brown-dark)]"
+                  }`}
+                >
+                  Kitchen Dashboard
+                </Link>
+              )}
               {/* Mobile Auth Section */}
               {user ? (
                 <div className="mt-2 flex justify-center">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ordersApi } from "@/lib/api";
 
 export default function KitchenDashboard() {
@@ -11,6 +12,8 @@ export default function KitchenDashboard() {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const eventSourceRef = useRef(null);
   const [newOrderIds, setNewOrderIds] = useState(new Set());
+  const [isReadyCollapsed, setIsReadyCollapsed] = useState(false);
+  const [isPendingCollapsed, setIsPendingCollapsed] = useState(false);
 
   // Separate orders into pending and ready
   const pendingOrders = orders.filter(
@@ -85,6 +88,7 @@ export default function KitchenDashboard() {
     try {
       const data = await ordersApi.getKitchenOrders();
       setOrders(data);
+      setLastUpdate(new Date());
     } catch (error) {
       console.error("Failed to load orders:", error);
     }
@@ -191,6 +195,26 @@ export default function KitchenDashboard() {
                  <p className="text-sm text-white/80">Last updated</p>
                  <p className="text-lg font-semibold">{formatTime(lastUpdate)}</p>
                </div>
+               <button
+                 onClick={loadOrders}
+                 className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
+                 title="Refresh orders"
+               >
+                 <svg
+                   className="h-4 w-4"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                     strokeWidth={2}
+                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                   />
+                 </svg>
+                 Refresh
+               </button>
                <Link
                  href="/kitchen/previous"
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"
@@ -206,54 +230,84 @@ export default function KitchenDashboard() {
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-bold text-[var(--coffee-brown)]">
-              Ready for Pickup ({readyOrders.length})
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <AnimatePresence>
-                 {readyOrders.map((order) => (
-                   <OrderCard
-                     key={order._id}
-                     order={order}
-                     isNew={false}
-                     formatTime={formatTime}
-                     formatDate={formatDate}
-                     getTimeAgo={getTimeAgo}
-                     isReady={true}
-                     onMarkPickedUp={handleMarkPickedUp}
-                   />
-                 ))}
-              </AnimatePresence>
-            </div>
+            <button
+              onClick={() => setIsReadyCollapsed(!isReadyCollapsed)}
+              className="mb-4 flex w-full items-center gap-2 text-left hover:opacity-80 transition-opacity"
+            >
+              <h2 className="text-2xl font-bold text-[var(--coffee-brown)]">
+                Ready for Pickup ({readyOrders.length})
+              </h2>
+              <Image
+                src={isReadyCollapsed ? "/images/icons/caret-double-down.svg" : "/images/icons/caret-double-up.svg"}
+                alt={isReadyCollapsed ? "Expand" : "Collapse"}
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
+            </button>
+            {!isReadyCollapsed && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <AnimatePresence>
+                  {readyOrders.map((order) => (
+                    <OrderCard
+                      key={order._id}
+                      order={order}
+                      isNew={false}
+                      formatTime={formatTime}
+                      formatDate={formatDate}
+                      getTimeAgo={getTimeAgo}
+                      isReady={true}
+                      onMarkPickedUp={handleMarkPickedUp}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
         )}
 
         {/* Pending Orders Section */}
         <div>
-          <h2 className="mb-4 text-2xl font-bold text-[var(--coffee-brown)]">
-            Pending Orders ({pendingOrders.length})
-          </h2>
-          {pendingOrders.length === 0 ? (
-            <div className="rounded-lg bg-white p-12 text-center shadow-md">
-              <p className="text-lg text-gray-500">No pending orders</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <AnimatePresence>
-                {pendingOrders.map((order) => (
-                  <OrderCard
-                    key={order._id}
-                    order={order}
-                    isNew={newOrderIds.has(order._id)}
-                    formatTime={formatTime}
-                    formatDate={formatDate}
-                    getTimeAgo={getTimeAgo}
-                    onMarkReady={handleMarkReady}
-                    isReady={false}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
+          <button
+            onClick={() => setIsPendingCollapsed(!isPendingCollapsed)}
+            className="mb-4 flex w-full items-center gap-2 text-left hover:opacity-80 transition-opacity"
+          >
+            <h2 className="text-2xl font-bold text-[var(--coffee-brown)]">
+              Pending Orders ({pendingOrders.length})
+            </h2>
+            <Image
+              src={isPendingCollapsed ? "/images/icons/caret-double-down.svg" : "/images/icons/caret-double-up.svg"}
+              alt={isPendingCollapsed ? "Expand" : "Collapse"}
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+          </button>
+          {!isPendingCollapsed && (
+            <>
+              {pendingOrders.length === 0 ? (
+                <div className="rounded-lg bg-white p-12 text-center shadow-md">
+                  <p className="text-lg text-gray-500">No pending orders</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <AnimatePresence>
+                    {pendingOrders.map((order) => (
+                      <OrderCard
+                        key={order._id}
+                        order={order}
+                        isNew={newOrderIds.has(order._id)}
+                        formatTime={formatTime}
+                        formatDate={formatDate}
+                        getTimeAgo={getTimeAgo}
+                        onMarkReady={handleMarkReady}
+                        isReady={false}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
