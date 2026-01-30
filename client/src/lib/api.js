@@ -215,6 +215,34 @@ export const ordersApi = {
     });
     return result.data;
   },
+
+  /**
+   * Get orders for kitchen dashboard
+   * @returns {Promise<Array>} Array of orders
+   */
+  getKitchenOrders: async () => {
+    const result = await fetchJson("/api/orders/kitchen");
+    return result.data || [];
+  },
+
+  /**
+   * Get previous (completed) orders for kitchen dashboard
+   * @param {string} date - Optional date filter (YYYY-MM-DD format)
+   * @param {boolean} all - If true, return all completed orders regardless of date
+   * @returns {Promise<Array>} Array of completed orders
+   */
+  getPreviousKitchenOrders: async (date = null, all = false) => {
+    const params = new URLSearchParams();
+    if (all) {
+      params.append("all", "true");
+    } else if (date) {
+      params.append("date", date);
+    }
+    const queryString = params.toString();
+    const url = `/api/orders/kitchen/previous${queryString ? `?${queryString}` : ""}`;
+    const result = await fetchJson(url);
+    return result.data || [];
+  },
 };
 
 /**

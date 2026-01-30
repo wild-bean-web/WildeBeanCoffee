@@ -3,8 +3,12 @@ import mongoose from "mongoose";
 import { Order } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
 import { optionalAuth } from "../middleware/auth.js";
+import { EventEmitter } from "events";
 
 const router = express.Router();
+
+// Event emitter for real-time order updates
+export const orderEventEmitter = new EventEmitter();
 
 const allowedStatuses = ["placed", "preparing", "ready", "completed", "cancelled"];
 const allowedPaymentStatuses = ["pending", "authorized", "paid", "failed", "refunded"];
@@ -111,10 +115,124 @@ router.post("/", optionalAuth, async (req, res, next) => {
       }
     }
 
+    // Emit event for real-time dashboard updates
+    orderEventEmitter.emit("order:created", order);
+
     res.status(201).json({ data: order });
   } catch (err) {
     next(err);
   }
+});
+
+// GET /api/orders/kitchen
+// Get orders for kitchen dashboard (paid orders that are not completed or cancelled)
+// Must be before /:id route to avoid conflicts
+router.get("/kitchen", async (req, res, next) => {
+  try {
+    const orders = await Order.find({
+      paymentStatus: "paid",
+      status: { $nin: ["completed", "cancelled"] },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ data: orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/orders/kitchen/previous
+// Get completed (picked up) orders for previous orders page
+// Supports date filtering via query params: ?date=YYYY-MM-DD
+// Supports show all via query params: ?all=true
+router.get("/kitchen/previous", async (req, res, next) => {
+  try {
+    const { date, all } = req.query;
+    
+    const query = {
+      paymentStatus: "paid",
+      status: "completed",
+    };
+
+    // If "all" is true, don't filter by date - show all completed orders
+    if (all === "true") {
+      // No date filtering, just get all completed orders
+    } else if (date) {
+      // If date is provided, filter by that date
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Filter by updatedAt (when it was marked as completed) or createdAt
+      // Use $or to match orders that were either completed on this date or created on this date
+      query.$or = [
+        { updatedAt: { $gte: startOfDay, $lte: endOfDay } },
+        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+      ];
+    } else {
+      // Default to today if no date specified and "all" is not true
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      
+      query.$or = [
+        { updatedAt: { $gte: today, $lte: endOfToday } },
+        { createdAt: { $gte: today, $lte: endOfToday } },
+      ];
+    }
+
+    const orders = await Order.find(query)
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .lean();
+
+    res.json({ data: orders });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/orders/kitchen/stream
+// Server-Sent Events endpoint for real-time order updates
+router.get("/kitchen/stream", (req, res) => {
+  // Set headers for SSE
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering
+
+  // Send initial connection message
+  res.write(`: connected\n\n`);
+
+  // Event handlers
+  const onOrderCreated = (order) => {
+    res.write(`event: order:created\n`);
+    res.write(`data: ${JSON.stringify(order)}\n\n`);
+  };
+
+  const onOrderUpdated = (order) => {
+    res.write(`event: order:updated\n`);
+    res.write(`data: ${JSON.stringify(order)}\n\n`);
+  };
+
+  // Register event listeners
+  orderEventEmitter.on("order:created", onOrderCreated);
+  orderEventEmitter.on("order:updated", onOrderUpdated);
+
+  // Send heartbeat every 30 seconds to keep connection alive
+  const heartbeat = setInterval(() => {
+    res.write(`: heartbeat\n\n`);
+  }, 30000);
+
+  // Cleanup on client disconnect
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    orderEventEmitter.off("order:created", onOrderCreated);
+    orderEventEmitter.off("order:updated", onOrderUpdated);
+    res.end();
+  });
 });
 
 // GET /api/orders/:id
@@ -177,6 +295,9 @@ router.patch("/:id/status", async (req, res, next) => {
     if (!order) {
       return errorResponse(res, 404, "Order not found");
     }
+
+    // Emit event for real-time dashboard updates
+    orderEventEmitter.emit("order:updated", order);
 
     res.json({ data: order });
   } catch (err) {
