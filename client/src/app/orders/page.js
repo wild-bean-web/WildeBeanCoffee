@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Redirect to auth if not signed in
@@ -26,6 +27,25 @@ export default function OrdersPage() {
       fetchOrders();
     }
   }, [user, authLoading, router]);
+
+  // Scroll to specific order if orderId is in URL
+  useEffect(() => {
+    const orderId = searchParams?.get("orderId");
+    if (orderId && orders.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const element = document.getElementById(`order-${orderId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Highlight the order briefly
+          element.classList.add("ring-4", "ring-[var(--lime-green)]", "ring-opacity-50");
+          setTimeout(() => {
+            element.classList.remove("ring-4", "ring-[var(--lime-green)]", "ring-opacity-50");
+          }, 2000);
+        }
+      }, 100);
+    }
+  }, [orders, searchParams]);
 
   const fetchOrders = async () => {
     try {
@@ -52,15 +72,29 @@ export default function OrdersPage() {
     });
   };
 
+  // Get customer-friendly status display
+  const getCustomerStatus = (status) => {
+    // "placed" should not be shown - show "In Progress" instead
+    if (status === "placed" || status === "preparing") {
+      return "In Progress";
+    }
+    if (status === "ready") {
+      return "Ready for pick up";
+    }
+    // For other statuses, capitalize first letter
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   const getStatusColor = (status) => {
+    // Map internal status to display status for colors
+    const displayStatus = status === "placed" || status === "preparing" ? "preparing" : status;
     const colors = {
-      placed: "bg-blue-100 text-blue-800",
       preparing: "bg-yellow-100 text-yellow-800",
       ready: "bg-green-100 text-green-800",
       completed: "bg-gray-100 text-gray-800",
       cancelled: "bg-red-100 text-red-800",
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
+    return colors[displayStatus] || "bg-gray-100 text-gray-800";
   };
 
   if (authLoading || loading) {
@@ -92,6 +126,7 @@ export default function OrdersPage() {
           <div className="space-y-4">
             {orders.map((order) => (
               <div
+                id={`order-${order._id}`}
                 key={order._id}
                 className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
               >
@@ -108,7 +143,7 @@ export default function OrdersPage() {
                         order.status
                       )}`}
                     >
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      {getCustomerStatus(order.status)}
                     </span>
                     <span className="text-lg font-bold text-[var(--coffee-brown)]">
                       ${order.totals.total.toFixed(2)}
@@ -145,6 +180,23 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--lime-green)] border-r-transparent"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <OrdersPageContent />
+    </Suspense>
   );
 }
 

@@ -55,12 +55,14 @@ function validateOrderPayload(body) {
   }
 
   // Require payment to be completed before order can be created
+  // Exception: Admin orders with ADMIN_DISCOUNT paymentRef don't need actual payment
+  const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
   if (paymentStatus !== "paid") {
     errors.push("Payment must be completed before order can be created. paymentStatus must be 'paid'");
   }
 
-  // If payment is paid, paymentRef should be provided
-  if (paymentStatus === "paid" && !paymentRef) {
+  // If payment is paid, paymentRef should be provided (unless it's an admin order)
+  if (paymentStatus === "paid" && !paymentRef && !isAdminOrder) {
     errors.push("paymentRef is required when paymentStatus is 'paid'");
   }
 
@@ -82,7 +84,20 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
-    const totals = computeTotals(items, taxRate);
+    
+    // Check if this is an admin order (paymentRef === "ADMIN_DISCOUNT")
+    const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
+    
+    // Calculate totals - apply 100% discount for admin orders
+    let totals = computeTotals(items, taxRate);
+    if (isAdminOrder) {
+      totals = {
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        total: 0, // Admin orders are free
+        currency: totals.currency,
+      };
+    }
 
     // Check if user is authenticated (req.user is set by optionalAuth middleware if token is valid)
     // If no req.user, it's a guest order

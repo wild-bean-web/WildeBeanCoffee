@@ -96,6 +96,10 @@ function OrderPageContent() {
   // Tax rate (6% - adjust as needed)
   const taxRate = 0.06;
 
+  // Admin emails - users with these emails get 100% discount
+  const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+  const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+
   useEffect(() => {
     // Load cart from localStorage or state
     const savedCart = localStorage.getItem("cart");
@@ -445,8 +449,13 @@ function OrderPageContent() {
       return sum + itemPrice * item.quantity;
     }, 0);
     const tax = subtotal * taxRate;
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
+    const beforeDiscount = subtotal + tax;
+    
+    // Apply 100% discount for admins
+    const discount = isAdmin ? beforeDiscount : 0;
+    const total = isAdmin ? 0 : beforeDiscount;
+    
+    return { subtotal, tax, discount, total, isAdmin };
   };
 
   const formatPrice = (price, currency = "USD") => {
@@ -535,7 +544,13 @@ function OrderPageContent() {
     setPaymentProcessing(true);
 
     try {
-      const { subtotal, tax, total } = calculateTotals();
+      const { subtotal, tax, total, isAdmin: isAdminDiscount } = calculateTotals();
+      
+      // If admin, skip payment and create order directly
+      if (isAdminDiscount && total === 0) {
+        await handleAdminOrder();
+        return;
+      }
 
       // Prepare order items with modifiers
       const orderItems = cart.map((item) => {
@@ -643,6 +658,69 @@ function OrderPageContent() {
     }
   };
 
+  const handleAdminOrder = async () => {
+    setPaymentProcessing(true);
+    setError(null);
+
+    try {
+      const { subtotal, tax, total } = calculateTotals();
+
+      // Prepare order items with modifiers
+      const orderItems = cart.map((item) => {
+        const basePrice = item.price || 0;
+        const modifierTotal = item.modifierTotal || 0;
+        const itemPrice = basePrice + modifierTotal;
+        
+        return {
+          itemType: item.itemType || "product",
+          itemId: item._id,
+          name: item.name,
+          price: itemPrice,
+          quantity: item.quantity,
+          modifiers: item.modifiers || [],
+          modifierTotal: modifierTotal,
+        };
+      });
+
+      // Use user info if signed in, otherwise use form data
+      const customerData = user
+        ? {
+            name: `${user.firstName} ${user.lastName}`,
+            phone: user.phone,
+            email: user.email || undefined,
+          }
+        : {
+            name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+            phone: customerInfo.phone,
+            email: customerInfo.email || undefined,
+          };
+
+      const orderData = {
+        customer: customerData,
+        items: orderItems,
+        taxRate,
+        pickupTime: pickupTime || undefined,
+        notes: notes || undefined,
+        paymentStatus: "paid", // Admin orders are automatically paid
+        paymentRef: "ADMIN_DISCOUNT", // Special identifier for admin orders
+      };
+
+      setLoading(true);
+      const result = await ordersApi.create(orderData);
+      setOrderId(result._id);
+      setOrderPlaced(true);
+      
+      // Clear cart
+      localStorage.removeItem("cart");
+      setCart([]);
+    } catch (err) {
+      setError(err.message || 'Failed to create order. Please try again.');
+    } finally {
+      setLoading(false);
+      setPaymentProcessing(false);
+    }
+  };
+
   const handlePaymentSuccess = async (paymentResult) => {
     setPaymentData(paymentResult);
     setPaymentProcessing(true);
@@ -738,6 +816,61 @@ function OrderPageContent() {
     }
   }, [searchParams, router]);
 
+  // Get directions to cafe
+  const handleGetDirections = async () => {
+    try {
+      const location = await locationApi.getLocation();
+      if (!location?.address1) {
+        setError("Location information not available");
+        return;
+      }
+
+      const address = `${location.address1}, ${location.city}, ${location.state} ${location.postalCode}`;
+      const encodedAddress = encodeURIComponent(address);
+
+      // Detect mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const userAgent = navigator.userAgent.toLowerCase();
+
+      if (isMobile) {
+        if (/iphone|ipad|ipod/.test(userAgent)) {
+          // iOS - try Apple Maps first
+          const appleMapsUrl = `maps://maps.apple.com/?daddr=${encodedAddress}&dirflg=d`;
+          window.location.href = appleMapsUrl;
+          
+          // Fallback to Google Maps
+          setTimeout(() => {
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+            window.open(googleMapsUrl, '_blank');
+          }, 500);
+        } else if (/android/.test(userAgent)) {
+          // Android - use Google Maps navigation intent
+          const intentUrl = location?.coordinates?.lat && location?.coordinates?.lng
+            ? `google.navigation:q=${location.coordinates.lat},${location.coordinates.lng}`
+            : `google.navigation:q=${encodedAddress}`;
+          window.location.href = intentUrl;
+          
+          // Fallback to web
+          setTimeout(() => {
+            const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+            window.open(webUrl, '_blank');
+          }, 500);
+        } else {
+          // Other mobile devices
+          const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+          window.open(googleMapsUrl, '_blank');
+        }
+      } else {
+        // Desktop - open Google Maps in new tab
+        const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+        window.open(googleMapsUrl, '_blank');
+      }
+    } catch (err) {
+      console.error("Error getting directions:", err);
+      setError("Failed to get directions. Please try again.");
+    }
+  };
+
   if (orderPlaced) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -791,8 +924,20 @@ function OrderPageContent() {
 
             <div className="space-y-3">
               <Link
-                href="/"
+                href={`/orders?orderId=${orderId}`}
                 className="block rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              >
+                Track Order
+              </Link>
+              <button
+                onClick={handleGetDirections}
+                className="w-full rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              >
+                Get Directions
+              </button>
+              <Link
+                href="/"
+                className="block rounded-full border-2 border-gray-300 px-6 py-3 text-gray-700 font-semibold transition-colors hover:bg-gray-50"
               >
                 Return to Home
               </Link>
@@ -1058,12 +1203,25 @@ function OrderPageContent() {
                     <span className="text-gray-600">Tax</span>
                     <span className="font-medium">{formatPrice(tax)}</span>
                   </div>
+                  {isAdmin && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[var(--lime-green)] font-semibold">Owner Discount</span>
+                      <span className="text-[var(--lime-green)] font-semibold">
+                        -{formatPrice(subtotal + tax)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-t border-gray-200 pt-2 text-lg font-bold">
                     <span className="text-[var(--coffee-brown)]">Total</span>
                     <span className="text-[var(--coffee-brown)]">
                       {formatPrice(total)}
                     </span>
                   </div>
+                  {isAdmin && (
+                    <p className="text-xs text-center text-[var(--lime-green)] font-medium mt-2">
+                      Owner Order - No Payment Required
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1367,7 +1525,7 @@ function OrderPageContent() {
                       disabled={loading || !selectedDate || !selectedTime}
                       className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Continue to Payment
+                      {isAdmin ? "Place Order" : "Continue to Payment"}
                     </button>
                     {(!selectedDate || !selectedTime) && (
                       <p className="text-center text-xs text-gray-500 mt-2">
@@ -1377,26 +1535,44 @@ function OrderPageContent() {
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
-                      <p className="mb-4 text-gray-700">
-                        You will be redirected to Clover's secure payment page to complete your order.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleCreateCheckout}
-                        disabled={paymentProcessing || loading}
-                        className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {paymentProcessing ? "Processing..." : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPayment(false)}
-                      className="w-full rounded-full border-2 border-gray-300 px-6 py-2 text-gray-700 font-semibold transition-colors hover:bg-gray-50"
-                    >
-                      Back to Order Details
-                    </button>
+                    {isAdmin ? (
+                      <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
+                        <p className="mb-4 text-gray-700">
+                          Owner Order - No payment required. Click below to place your order.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleCreateCheckout}
+                          disabled={paymentProcessing || loading}
+                          className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {paymentProcessing ? "Processing..." : "Place Order"}
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
+                          <p className="mb-4 text-gray-700">
+                            You will be redirected to Clover's secure payment page to complete your order.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleCreateCheckout}
+                            disabled={paymentProcessing || loading}
+                            className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {paymentProcessing ? "Processing..." : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPayment(false)}
+                          className="w-full rounded-full border-2 border-gray-300 px-6 py-2 text-gray-700 font-semibold transition-colors hover:bg-gray-50"
+                        >
+                          Back to Order Details
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
