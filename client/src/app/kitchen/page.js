@@ -175,8 +175,63 @@ export default function KitchenDashboard() {
 
        {/* Header */}
        <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
-         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-           <div className="flex items-center justify-between">
+         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+           {/* Mobile Layout: Stacked */}
+           <div className="flex flex-col gap-4 sm:hidden">
+             {/* Title and Status */}
+             <div>
+               <h1 className="text-2xl font-bold">Kitchen Dashboard</h1>
+               <p className="mt-1 text-sm text-white/80">
+                 {isConnected ? (
+                   <span className="flex items-center gap-2">
+                     <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--lime-green)]"></span>
+                     Connected
+                   </span>
+                 ) : (
+                   <span className="text-yellow-300">Reconnecting...</span>
+                 )}
+               </p>
+             </div>
+             
+             {/* Last Updated and Refresh */}
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-xs text-white/80">Last updated</p>
+                 <p className="text-base font-semibold">{formatTime(lastUpdate)}</p>
+               </div>
+               <button
+                 onClick={loadOrders}
+                 className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
+                 title="Refresh orders"
+               >
+                 <svg
+                   className="h-4 w-4"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                     strokeWidth={2}
+                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                   />
+                 </svg>
+                 Refresh
+               </button>
+             </div>
+
+             {/* Previous Orders Button */}
+             <Link
+               href="/kitchen/previous"
+               className="w-full rounded-lg bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 text-center"
+             >
+               Previous Orders
+             </Link>
+           </div>
+
+           {/* Desktop Layout: Horizontal */}
+           <div className="hidden sm:flex sm:items-center sm:justify-between">
              <div>
                <h1 className="text-3xl font-bold">Kitchen Dashboard</h1>
                <p className="mt-1 text-sm text-white/80">
@@ -226,7 +281,7 @@ export default function KitchenDashboard() {
          </div>
        </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
