@@ -14,12 +14,59 @@ export default function KitchenDashboard() {
   const [newOrderIds, setNewOrderIds] = useState(new Set());
   const [isReadyCollapsed, setIsReadyCollapsed] = useState(false);
   const [isPendingCollapsed, setIsPendingCollapsed] = useState(false);
+  
+  // Audio state
+  const audioContextRef = useRef(null);
+  const [audioEnabled, setAudioEnabled] = useState(() => {
+    // Check localStorage for user preference
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("kitchen-audio-enabled");
+      return saved !== null ? saved === "true" : true; // Default to enabled
+    }
+    return true;
+  });
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  const [audioError, setAudioError] = useState(null);
 
   // Separate orders into pending and ready
   const pendingOrders = orders.filter(
     (order) => order.status !== "ready" && order.status !== "completed"
   );
   const readyOrders = orders.filter((order) => order.status === "ready");
+
+  // Initialize audio on first user interaction if enabled
+  useEffect(() => {
+    if (audioEnabled && !audioInitialized) {
+      // Try to initialize on any user interaction
+      const handleUserInteraction = async () => {
+        await initializeAudio();
+        // Remove listeners after first interaction
+        document.removeEventListener("click", handleUserInteraction);
+        document.removeEventListener("touchstart", handleUserInteraction);
+        document.removeEventListener("keydown", handleUserInteraction);
+      };
+
+      document.addEventListener("click", handleUserInteraction, { once: true });
+      document.addEventListener("touchstart", handleUserInteraction, { once: true });
+      document.addEventListener("keydown", handleUserInteraction, { once: true });
+
+      return () => {
+        document.removeEventListener("click", handleUserInteraction);
+        document.removeEventListener("touchstart", handleUserInteraction);
+        document.removeEventListener("keydown", handleUserInteraction);
+      };
+    }
+  }, [audioEnabled, audioInitialized]);
+
+  // Cleanup audio context on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
 
   // Load initial orders
   useEffect(() => {
@@ -94,26 +141,113 @@ export default function KitchenDashboard() {
     }
   };
 
-  const playNotificationSound = () => {
+  // Initialize audio context (requires user interaction)
+  const initializeAudio = async () => {
+    if (audioContextRef.current) {
+      return audioContextRef.current;
+    }
+
     try {
-      // Create a simple beep sound using Web Audio API
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        throw new Error("Web Audio API not supported");
+      }
+
+      const context = new AudioContext();
+      
+      // Resume context if suspended (required for some browsers)
+      if (context.state === "suspended") {
+        await context.resume();
+      }
+
+      audioContextRef.current = context;
+      setAudioInitialized(true);
+      setAudioError(null);
+      return context;
+    } catch (error) {
+      console.error("Failed to initialize audio:", error);
+      setAudioError("Audio not available. Please enable audio permissions.");
+      return null;
+    }
+  };
+
+  // Enable audio (requires user interaction)
+  const handleEnableAudio = async () => {
+    const context = await initializeAudio();
+    if (context) {
+      setAudioEnabled(true);
+      localStorage.setItem("kitchen-audio-enabled", "true");
+      // Play a test sound to confirm it works
+      playNotificationSound();
+    }
+  };
+
+  // Toggle audio on/off
+  const toggleAudio = () => {
+    const newState = !audioEnabled;
+    setAudioEnabled(newState);
+    localStorage.setItem("kitchen-audio-enabled", newState.toString());
+    
+    if (newState && !audioInitialized) {
+      // Try to initialize if enabling
+      handleEnableAudio();
+    }
+  };
+
+  const playNotificationSound = () => {
+    if (!audioEnabled) {
+      return;
+    }
+
+    try {
+      const context = audioContextRef.current;
+      
+      // If context not initialized, try to initialize (may fail without user interaction)
+      if (!context) {
+        initializeAudio().then((ctx) => {
+          if (ctx) {
+            playSound(ctx);
+          }
+        });
+        return;
+      }
+
+      // Resume context if suspended
+      if (context.state === "suspended") {
+        context.resume().then(() => {
+          playSound(context);
+        }).catch((error) => {
+          console.log("Could not resume audio context:", error);
+          setAudioError("Audio blocked. Click 'Enable Sounds' to allow.");
+        });
+        return;
+      }
+
+      playSound(context);
+    } catch (error) {
+      console.log("Could not play notification sound:", error);
+      setAudioError("Failed to play sound");
+    }
+  };
+
+  const playSound = (context) => {
+    try {
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(context.destination);
 
       oscillator.frequency.value = 800; // Frequency in Hz
       oscillator.type = "sine";
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.3, context.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.start(context.currentTime);
+      oscillator.stop(context.currentTime + 0.3);
     } catch (error) {
-      console.log("Could not play notification sound:", error);
+      console.error("Error playing sound:", error);
     }
   };
 
@@ -175,8 +309,97 @@ export default function KitchenDashboard() {
 
        {/* Header */}
        <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
-         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-           <div className="flex items-center justify-between">
+         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+           {/* Mobile Layout: Stacked */}
+           <div className="flex flex-col gap-4 sm:hidden">
+             {/* Title and Status */}
+             <div>
+               <h1 className="text-2xl font-bold">Kitchen Dashboard</h1>
+               <p className="mt-1 text-sm text-white/80">
+                 {isConnected ? (
+                   <span className="flex items-center gap-2">
+                     <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--lime-green)]"></span>
+                     Connected
+                   </span>
+                 ) : (
+                   <span className="text-yellow-300">Reconnecting...</span>
+                 )}
+               </p>
+             </div>
+             
+             {/* Last Updated and Refresh */}
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-xs text-white/80">Last updated</p>
+                 <p className="text-base font-semibold">{formatTime(lastUpdate)}</p>
+               </div>
+               <button
+                 onClick={loadOrders}
+                 className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
+                 title="Refresh orders"
+               >
+                 <svg
+                   className="h-4 w-4"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     strokeLinecap="round"
+                     strokeLinejoin="round"
+                     strokeWidth={2}
+                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                   />
+                 </svg>
+                 Refresh
+               </button>
+             </div>
+
+             {/* Audio Control and Previous Orders */}
+             <div className="flex flex-col gap-2">
+               {/* Audio Toggle */}
+               {!audioInitialized && !audioEnabled ? (
+                 <button
+                   onClick={handleEnableAudio}
+                   className="w-full rounded-lg bg-[var(--lime-green)] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[var(--lime-green-dark)] flex items-center justify-center gap-2"
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                   </svg>
+                   Enable Sound Alerts
+                 </button>
+               ) : (
+                 <button
+                   onClick={toggleAudio}
+                   className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${
+                     audioEnabled
+                       ? "bg-white/20 hover:bg-white/30"
+                       : "bg-white/10 hover:bg-white/20"
+                   }`}
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     {audioEnabled ? (
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                     ) : (
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                     )}
+                   </svg>
+                   {audioEnabled ? "Sounds: On" : "Sounds: Off"}
+                 </button>
+               )}
+               
+               {/* Previous Orders Button */}
+               <Link
+                 href="/kitchen/previous"
+                 className="w-full rounded-lg bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 text-center"
+               >
+                 Previous Orders
+               </Link>
+             </div>
+           </div>
+
+           {/* Desktop Layout: Horizontal */}
+           <div className="hidden sm:flex sm:items-center sm:justify-between">
              <div>
                <h1 className="text-3xl font-bold">Kitchen Dashboard</h1>
                <p className="mt-1 text-sm text-white/80">
@@ -190,11 +413,45 @@ export default function KitchenDashboard() {
                  )}
                </p>
              </div>
-             <div className="flex items-center gap-4">
+             <div className="flex items-center gap-3">
                <div className="text-right">
                  <p className="text-sm text-white/80">Last updated</p>
                  <p className="text-lg font-semibold">{formatTime(lastUpdate)}</p>
                </div>
+               
+               {/* Audio Toggle */}
+               {!audioInitialized && !audioEnabled ? (
+                 <button
+                   onClick={handleEnableAudio}
+                   className="rounded-lg bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-[var(--lime-green-dark)] flex items-center gap-2"
+                   title="Enable sound alerts"
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                   </svg>
+                   Enable Sounds
+                 </button>
+               ) : (
+                 <button
+                   onClick={toggleAudio}
+                   className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-200 flex items-center gap-2 ${
+                     audioEnabled
+                       ? "bg-white/20 hover:bg-white/30"
+                       : "bg-white/10 hover:bg-white/20"
+                   }`}
+                   title={audioEnabled ? "Disable sound alerts" : "Enable sound alerts"}
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     {audioEnabled ? (
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                     ) : (
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                     )}
+                   </svg>
+                   {audioEnabled ? "Sounds On" : "Sounds Off"}
+                 </button>
+               )}
+               
                <button
                  onClick={loadOrders}
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
@@ -226,7 +483,7 @@ export default function KitchenDashboard() {
          </div>
        </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
