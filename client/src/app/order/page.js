@@ -964,19 +964,27 @@ function OrderPageContent() {
           <p className="mb-8 text-lg text-gray-600">
             Add items from our shop or menu to get started.
           </p>
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link
-              href="/shop"
-              className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
-            >
-              Shop Coffee Beans
-            </Link>
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center sm:items-stretch">
             <Link
               href="/menu"
-              className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50 inline-flex items-center justify-center"
             >
               View Menu
             </Link>
+            <div className="relative inline-flex flex-col items-center justify-center">
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                aria-describedby="shop-coming-soon-desc"
+                className="cursor-not-allowed rounded-full border-2 border-gray-300 bg-gray-100 px-6 py-3 text-gray-500 font-semibold transition-none hover:bg-gray-100 hover:border-gray-300 inline-flex flex-col items-center justify-center gap-0.5"
+              >
+                <span>Shop Coffee Beans</span>
+                <span id="shop-coming-soon-desc" className="text-xs font-normal text-gray-400">
+                  Coming soon
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
