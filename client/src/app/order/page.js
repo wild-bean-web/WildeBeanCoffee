@@ -15,9 +15,9 @@ function OrderPageContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   
-  // Feature flag: Enable/disable online ordering
-  const ONLINE_ORDERING_ENABLED = process.env.NEXT_PUBLIC_ONLINE_ORDERING_ENABLED === 'true';
-  
+  // Feature flag: Enable/disable online ordering (set to true when ready to accept online orders)
+  const ONLINE_ORDERING_ENABLED = false; // process.env.NEXT_PUBLIC_ONLINE_ORDERING_ENABLED === 'true';
+
   // Show disabled message if online ordering is turned off
   if (!ONLINE_ORDERING_ENABLED) {
     return (
@@ -30,13 +30,13 @@ function OrderPageContent() {
               </svg>
             </div>
             <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)]">
-              Online Ordering Temporarily Unavailable
+              Online Ordering Unavailable
             </h1>
             <p className="mb-6 text-lg text-gray-700">
-              We're currently updating our payment system. Online ordering will be back soon!
+              We're opening soon! Online ordering will be available once we're up and running.
             </p>
             <p className="mb-8 text-sm text-gray-600">
-              In the meantime, please visit us in-store or call us to place your order.
+              We can't wait to serve you. Visit us in-store or call us once we open to place your order.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Link
