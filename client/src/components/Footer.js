@@ -122,13 +122,32 @@ export default function Footer() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
+                >
+                  Terms of Use
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
             <h3 className="mb-4 text-lg font-semibold">Contact</h3>
+            <p className="mb-2 text-sm text-gray-300">
+              <a href="tel:+13012724794" className="transition-colors hover:text-[var(--lime-green)]">
+                +1 301-272-4794
+              </a>
+            </p>
             <p className="mb-4 text-sm text-gray-300">
-              Visit our location page for address, hours, and contact
-              information.
+              <a href="mailto:wildbeancoffeellc@gmail.com" className="transition-colors hover:text-[var(--lime-green)]">
+                wildbeancoffeellc@gmail.com
+              </a>
+            </p>
+            <p className="mb-8 text-sm text-gray-300">
+              <Link href="/location" className="transition-colors hover:text-[var(--lime-green)]">
+                Location, hours & directions
+              </Link>
             </p>
             {/* Social Media Icons */}
             <div className="flex items-center gap-4">
