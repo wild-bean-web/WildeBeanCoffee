@@ -83,7 +83,7 @@ function OrderPageContent() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notes, setNotes] = useState("");
-  const [storeHours, setStoreHours] = useState({ open: 6, close: 19 }); // Default fallback (6am-7pm)
+  const [storeHours, setStoreHours] = useState({ open: 6, close: 17 }); // Default fallback (6am-5pm)
   const [successAnimation, setSuccessAnimation] = useState(null);
   
   // Customization modal state
