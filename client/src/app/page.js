@@ -38,12 +38,12 @@ export default function Home() {
         } catch (parseError) {
           console.error(
             "Failed to parse fresh-roasted Lottie JSON:",
-            parseError
+            parseError,
           );
         }
       })
       .catch((err) =>
-        console.error("Failed to load fresh-roasted Lottie animation:", err)
+        console.error("Failed to load fresh-roasted Lottie animation:", err),
       );
 
     // Load artOfBrewing animation
@@ -61,12 +61,12 @@ export default function Home() {
         } catch (parseError) {
           console.error(
             "Failed to parse artOfBrewing Lottie JSON:",
-            parseError
+            parseError,
           );
         }
       })
       .catch((err) =>
-        console.error("Failed to load artOfBrewing Lottie animation:", err)
+        console.error("Failed to load artOfBrewing Lottie animation:", err),
       );
   }, []);
 
