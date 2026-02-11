@@ -369,12 +369,12 @@ export const menuItemsFromCSV = [
   {
     name: "Tropical Bliss",
     description:
-      "Mango, pineapple, banana, orange juice, coconut milk, fresh lime\nAllergens: Coconut",
+      "Mango, pineapple, banana, orange juice, almond milk, fresh lime, Coconut Cream\nAllergens: Coconut, Tree Nuts",
     price: 8.25,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical"],
-    allergens: ["Coconut"],
+    allergens: ["Coconut", "Tree Nuts"],
     image: "/images/menu/Smoothies/TropicalBlissLand.png",
     available: true,
     active: true,
@@ -428,76 +428,26 @@ export const menuItemsFromCSV = [
     ],
   },
 
-  // Oatmeals
-  {
-    name: "Power Breakfast Oatmeal",
-    description:
-      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Strawberries, Blueberries, Banana, Peanut Butter\nAllergens: Dairy, Peanuts",
-    price: 8.95,
-    currency: "USD",
-    section: "Oatmeals",
-    tags: ["oatmeal", "protein", "healthy", "breakfast"],
-    allergens: ["Dairy", "Peanuts"],
-    image: "/images/menu/Oatmeals/PowerBreakfastOatmeal.png",
-    available: true,
-    active: true,
-    modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
-  },
-  {
-    name: "Tropical Berry Crunch",
-    description:
-      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raspberries, Blueberries, Granola, Coconut Flakes\nAllergens: Dairy, Coconut, Gluten",
-    price: 7.95,
-    currency: "USD",
-    section: "Oatmeals",
-    tags: ["oatmeal", "tropical", "healthy", "breakfast"],
-    allergens: ["Dairy", "Coconut", "Gluten"],
-    image: "/images/menu/Oatmeals/TropicalFlavor.png",
-    available: true,
-    active: true,
-    modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
-  },
-  {
-    name: "Nutty Harvest Oatmeal",
-    description:
-      "Cooked Oatmeal, Chia Seeds Pudding,  Yogurt, Pecans, Walnuts, Dried Cranberries, Coconut Flakes\nAllergens: Dairy, Tree Nuts, Coconut",
-    price: 8.5,
-    currency: "USD",
-    section: "Oatmeals",
-    tags: ["oatmeal", "nuts", "harvest", "healthy", "breakfast"],
-    allergens: ["Dairy", "Tree Nuts", "Coconut"],
-    image: "/images/menu/Oatmeals/NuttyHarvest.png",
-    available: true,
-    active: true,
-    modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
-  },
-  {
-    name: "Nut Free Oatmeal",
-    description:
-      "Cooked Oatmeal, Chia Seeds Pudding, Yogurt, Raisins, Sunflower Seeds, Coconut Flakes, Banana\nAllergens: Dairy, Coconut",
-    price: 7.5,
-    currency: "USD",
-    section: "Oatmeals",
-    tags: ["oatmeal", "nut-free", "healthy", "breakfast"],
-    allergens: ["Dairy", "Coconut"],
-    image: "/images/menu/Oatmeals/NutFree.png",
-    available: true,
-    active: true,
-    modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
-  },
+  // Oatmeals (build-your-own only; matches POS Wild Bowl / Custom Oatmeal Bowl)
   {
     name: "Custom Oatmeal",
     description:
-      "Build your own bowl.\nRequired: choose a base (Oats and/or Chia Seeds)\nAny additional add-ons are $0.75 each.",
-    price: 5.0,
+      "Build your own bowl. Required: choose a base (Oats, Chia pudding, Yogurt), 2 Choice of fresh Fruits and Any dry toppings, and Any Drizzles",
+    price: 9.99,
     currency: "USD",
     section: "Oatmeals",
-    tags: ["oatmeal", "custom", "healthy", "breakfast"],
+    tags: ["oatmeal", "custom", "healthy", "breakfast", "build your own"],
     allergens: [],
-    image: "/images/menu/Oatmeals/NutFree.png", // Update if you have a specific image
+    image: "/images/menu/Oatmeals/NutFree.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Oatmeal Add-Ons (+$0.75 each)"],
+    modifierGroupNames: [
+      "Oatmeal Base",
+      "Oatmeal Dried Toppings",
+      "Oatmeal Drizzels",
+      "Oatmeal Fruit Toppings",
+      "Oatmeal EXTRA Add-Ons",
+    ],
   },
 
   // Bakery & Pastries
@@ -650,9 +600,9 @@ export const menuItemsFromCSV = [
     available: true,
     active: true,
     modifierGroupNames: [
-      "Syrup Pumps (+$0.20 each)",
-      "Cup Size (12-16)",
+      "Hot Cup Size",
       "Milk Choice",
+      "Syrup Pumps (+$0.20 each)",
     ],
   },
   {
@@ -698,10 +648,10 @@ export const menuItemsFromCSV = [
     available: true,
     active: true,
     modifierGroupNames: [
-      "Cup Size (16-20)",
+      "Cold Cup Size",
       "Syrup Pumps (+$0.20 each)",
-      "Ice Level",
       "Milk Choice",
+      "Ice Level",
     ],
   },
 ];

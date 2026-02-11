@@ -400,7 +400,7 @@ function MenuPageContent() {
                               }}
                               className="w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                             >
-                              Add to Cart
+                              {item.name === "Custom Oatmeal" && item.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
                             </button>
                           ) : (
                             <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
@@ -660,7 +660,7 @@ function MenuPageContent() {
                           onClick={() => handleAddToCartClick(selectedMenuItem)}
                           className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                         >
-                          Add to Cart
+                          {selectedMenuItem.name === "Custom Oatmeal" && selectedMenuItem.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
                         </button>
                       ) : (
                         <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
