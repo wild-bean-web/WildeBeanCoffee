@@ -1591,6 +1591,10 @@ function OrderPageContent() {
                 )}
               </div>
             </form>
+            <p className="mt-4 text-center text-xs text-gray-500">
+              Allergen info is for awareness only. Cross-contamination may occur.{" "}
+              <Link href="/terms" className="underline hover:text-gray-700">Terms of Use</Link>
+            </p>
           </div>
         </div>
       </div>

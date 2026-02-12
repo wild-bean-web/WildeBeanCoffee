@@ -27,7 +27,7 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
-    "Oatmeals",
+    "Wild Bowl",
     "Bakery & Pastries",
   ];
 
@@ -83,7 +83,7 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
-    "Oatmeals",
+    "Wild Bowl",
     "Bakery & Pastries",
   ];
 
@@ -381,6 +381,12 @@ function MenuPageContent() {
                               ))}
                             </div>
                           </div>
+                        ) : item.name === "Build Your Own Bowl" ? (
+                          <div className="border-t border-gray-100 pt-2">
+                            <p className="text-xs text-gray-500">
+                              Allergen info for add-ons varies. Cross-contamination may occur.
+                            </p>
+                          </div>
                         ) : (
                           <div className="border-t border-gray-100 pt-2">
                             {/* Empty space to maintain consistent height */}
@@ -400,7 +406,7 @@ function MenuPageContent() {
                               }}
                               className="w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                             >
-                              {item.name === "Custom Oatmeal" && item.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
+                              {item.name === "Build Your Own Bowl" && item.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
                             </button>
                           ) : (
                             <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
@@ -639,6 +645,13 @@ function MenuPageContent() {
                       </div>
                     )}
 
+                  {selectedMenuItem.name === "Build Your Own Bowl" && (
+                    <p className="mb-4 text-xs text-gray-500">
+                      Allergen info for add-ons varies. Cross-contamination may occur. See{" "}
+                      <Link href="/terms" className="underline hover:text-gray-700">Terms of Use</Link>.
+                    </p>
+                  )}
+
                   {/* Availability and Add to Cart */}
                   <div className="mt-6 flex items-center justify-between border-t pt-4">
                     <div>
@@ -660,7 +673,7 @@ function MenuPageContent() {
                           onClick={() => handleAddToCartClick(selectedMenuItem)}
                           className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                         >
-                          {selectedMenuItem.name === "Custom Oatmeal" && selectedMenuItem.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
+                          {selectedMenuItem.name === "Build Your Own Bowl" && selectedMenuItem.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
                         </button>
                       ) : (
                         <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
@@ -742,6 +755,13 @@ function MenuPageContent() {
           menuItem={itemToCustomize}
           onAddToCart={handleCustomizationAddToCart}
         />
+
+        <p className="mt-8 text-center text-xs text-gray-500">
+          Allergen information is for awareness only. Cross-contamination may occur.{" "}
+          <Link href="/terms" className="underline hover:text-gray-700">
+            Terms of Use
+          </Link>
+        </p>
         </div>
       </div>
     </div>
