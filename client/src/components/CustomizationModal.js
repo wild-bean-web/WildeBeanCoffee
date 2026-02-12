@@ -82,7 +82,11 @@ export default function CustomizationModal({
 
   // Check if a modifier group supports quantities (like Syrup Pumps)
   const isQuantityBased = (groupName) => {
-    return groupName.includes("Syrup Pumps") || groupName.includes("Pumps");
+    return (
+      groupName.includes("Syrup Pumps") ||
+      groupName.includes("Pumps") ||
+      groupName.includes("Extra Single Shot")
+    );
   };
 
   // Calculate total price including modifiers
@@ -562,6 +566,18 @@ export default function CustomizationModal({
                       </span>
                     ))}
                   </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    For awareness only. Cross-contamination may occur. See <a href="/terms" className="underline hover:text-gray-700">Terms of Use</a>.
+                  </p>
+                </div>
+              )}
+
+              {/* Wild Bowl / Build Your Own Bowl – subtle warning (shown when item has no allergen list) */}
+              {menuItem.name === "Build Your Own Bowl" && (!menuItem.allergens || menuItem.allergens.length === 0) && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    Allergen info for add-ons varies. Cross-contamination may occur. See <a href="/terms" className="underline hover:text-gray-700">Terms of Use</a>.
+                  </p>
                 </div>
               )}
             </div>

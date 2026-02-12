@@ -107,7 +107,19 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                6. Intellectual Property
+                6. Food Allergen and Cross-Contamination Notice
+              </h2>
+              <p className="mb-4 leading-relaxed">
+                Many of our menu items contain or may contain allergens (including but not limited to dairy, eggs, tree nuts, peanuts, wheat/gluten, soy, and coconut). We provide allergen information on our menu and in product descriptions for general customer awareness only. This information may not be complete or current, and we do not guarantee its accuracy.
+              </p>
+              <p className="mb-4 leading-relaxed">
+                <strong>Cross-contamination is possible in our establishment.</strong> We use shared equipment, prep areas, and storage. We cannot guarantee that any item is free of any particular allergen or that it has not come into contact with allergens during preparation, handling, or serving. If you have a food allergy or sensitivity, you should be aware of these risks and make your own decision about ordering. We do not assume any liability for allergic reactions or other adverse effects resulting from consumption of our products.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
+                7. Intellectual Property
               </h2>
               <p className="mb-4 leading-relaxed">
                 The Site and its entire contents, features, and functionality (including but not limited to text, graphics, logos, images, and software) are owned by Wild Bean Coffee or its licensors and are protected by United States and international copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or create derivative works from any part of the Site or our content without our prior written consent.
@@ -116,7 +128,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                7. Disclaimers
+                8. Disclaimers
               </h2>
               <p className="mb-4 leading-relaxed">
                 THE SITE AND SERVICES ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR COURSE OF PERFORMANCE. WE DO NOT WARRANT THAT THE SITE OR SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS. WE DO NOT CONTROL AND ARE NOT RESPONSIBLE FOR THE AVAILABILITY, CONTENT, OR CONDUCT OF THIRD-PARTY SERVICES SUCH AS CLOVER.
@@ -125,7 +137,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                8. Limitation of Liability
+                9. Limitation of Liability
               </h2>
               <p className="mb-4 leading-relaxed">
                 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, WILD BEAN COFFEE AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, USE, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SITE OR SERVICES, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE), OR ANY OTHER LEGAL THEORY, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
@@ -140,7 +152,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                9. Indemnification
+                10. Indemnification
               </h2>
               <p className="leading-relaxed">
                 You agree to indemnify, defend, and hold harmless Wild Bean Coffee and its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to (a) your use of the Site or Services, (b) your violation of these Terms, (c) your violation of any third-party right, or (d) any dispute between you and a third party, including Clover, to the extent arising from your use of the Services.
@@ -149,7 +161,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                10. Third-Party Services
+                11. Third-Party Services
               </h2>
               <p className="mb-4 leading-relaxed">
                 Our Services may integrate or link to third-party services, including Clover for payment processing. Your use of such third-party services is subject to their respective terms and privacy policies. We are not responsible for the content, privacy practices, or availability of third-party services. Links to third-party sites or services do not constitute our endorsement. Clover's terms and privacy policy are available at{" "}
@@ -175,7 +187,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                11. Governing Law and Disputes
+                12. Governing Law and Disputes
               </h2>
               <p className="mb-4 leading-relaxed">
                 These Terms and any dispute or claim arising out of or related to them or the Site or Services shall be governed by and construed in accordance with the laws of the State in which Wild Bean Coffee operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the state and federal courts located in that State for the resolution of any disputes.
@@ -184,7 +196,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                12. Changes to These Terms
+                13. Changes to These Terms
               </h2>
               <p className="leading-relaxed">
                 We may revise these Terms at any time. We will post the updated Terms on this page and update the "Last updated" date. Your continued use of the Site or Services after the posting of changes constitutes your acceptance of the revised Terms. If you do not agree to the new Terms, you must stop using the Site and Services.
@@ -193,7 +205,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                13. Severability
+                14. Severability
               </h2>
               <p className="leading-relaxed">
                 If any provision of these Terms is held to be invalid or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable while preserving the parties' intent, or if modification is not possible, severed from these Terms. The remaining provisions shall remain in full force and effect.
@@ -202,7 +214,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                14. Entire Agreement
+                15. Entire Agreement
               </h2>
               <p className="leading-relaxed">
                 These Terms, together with our Privacy Policy and any other policies or guidelines we post on the Site, constitute the entire agreement between you and Wild Bean Coffee regarding the Site and Services and supersede any prior agreements.
@@ -211,7 +223,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                15. Contact Us
+                16. Contact Us
               </h2>
               <p className="mb-4 leading-relaxed">
                 If you have questions about these Terms of Use, please contact us:

@@ -88,24 +88,24 @@ export const modifierGroups = [
   },
   {
     name: "Extra Single Shots (Hot)",
-    description: "Add extra espresso shots",
+    description: "Add extra espresso shots ($1.25 per shot)",
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 1, // Updated to match available options (only 1 option available)
+    maxSelections: 5,
     options: [
-      { name: "Extra Single Shot", price: 0.6, available: true },
+      { name: "Extra Single Shot", price: 1.25, available: true },
     ],
   },
   {
     name: "Extra Single Shots (Iced)",
-    description: "Add extra espresso shots",
+    description: "Add extra espresso shots ($1.25 per shot)",
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 1, // Updated to match available options (only 1 option available)
+    maxSelections: 5,
     options: [
-      { name: "Extra Single Shot", price: 1.0, available: true },
+      { name: "Extra Single Shot", price: 1.25, available: true },
     ],
   },
   {
@@ -133,15 +133,6 @@ export const modifierGroups = [
       { name: "Extra Ice", price: 0, available: true },
     ],
   },
-  {
-    name: "Filtered Coffee Refill",
-    description: "Add a refill",
-    type: "single",
-    required: false,
-    options: [
-      { name: "Paid Refill (+$0.50)", price: 0.5, available: true },
-    ],
-  },
   // Build-your-own oatmeal modifier groups (matches POS inventory-export-v2)
   {
     name: "Oatmeal Base",
@@ -156,6 +147,7 @@ export const modifierGroups = [
       { name: "Yogurt", price: 0, available: true },
       { name: "Oatmeal & Yogurt", price: 0, available: true },
       { name: "Oatmeal & Chia Seeds Pudding", price: 0, available: true },
+      { name: "Chia Seeds Pudding & Yogurt", price: 0, available: true },
     ],
   },
   {
@@ -172,7 +164,7 @@ export const modifierGroups = [
       { name: "Dried cranberries", price: 0, available: true },
       { name: "Raisins", price: 0, available: true },
       { name: "Coconut flakes", price: 0, available: true },
-      { name: "Cinnamon", price: 0, available: true },
+      { name: "Sunflower Seeds", price: 0, available: true },
       { name: "Granola", price: 0, available: true },
     ],
   },

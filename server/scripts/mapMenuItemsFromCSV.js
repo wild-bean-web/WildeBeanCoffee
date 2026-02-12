@@ -26,7 +26,7 @@ const sectionMapping = {
   "Cold Coffee": "Coffee & Espresso",
   "Filtered Coffee": "Coffee & Espresso",
   "Smoothies": "Smoothies (Organic & Fresh)",
-  "Oatmeal Bar": "Oatmeals",
+  "Oatmeal Bar": "Wild Bowl",
   "Pastries": "Bakery & Pastries",
   "Tea": "Tea",
 };
@@ -241,7 +241,7 @@ function parseCSVData() {
       description: "Fresh filtered coffee. Select your cup size.",
       price: 2.55,
       section: "Filtered Coffee",
-      modifierGroups: ["Cup Size (Filtered Coffee)", "Filtered Coffee Refill", "Cup Size (12-16)"],
+      modifierGroups: ["Cup Size (Filtered Coffee)", "Cup Size (12-16)"],
       allergens: [],
     },
     {
@@ -269,8 +269,8 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Custom Oatmeal",
-      alternateName: "Custom Oatmeal Bowl",
+      name: "Build Your Own Bowl",
+      alternateName: "Wild Bowl",
       description: "Build your own bowl.\nRequired: choose a base (Oats, Chia pudding, Yogurt) extra base: $2\n2 Choice of fresh Fruits and Any dry toppings. extra fruits: $0.75 extra dry topping: $0.50",
       price: 9.99,
       section: "Oatmeal Bar",
