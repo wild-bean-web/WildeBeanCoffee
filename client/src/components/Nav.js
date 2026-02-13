@@ -85,7 +85,7 @@ export default function Nav() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full max-w-full overflow-hidden bg-white shadow-md">
+    <nav className="sticky top-0 z-50 w-full max-w-full bg-white shadow-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 min-w-0 items-center justify-between gap-2">
           <Link href="/" className="flex flex-shrink-0 items-center gap-2 overflow-hidden">

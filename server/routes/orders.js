@@ -159,40 +159,43 @@ router.get("/kitchen", async (req, res, next) => {
 
 // GET /api/orders/kitchen/previous
 // Get completed (picked up) orders for previous orders page
-// Supports date filtering via query params: ?date=YYYY-MM-DD
-// Supports show all via query params: ?all=true
+// Supports date range: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+// Legacy single date: ?date=YYYY-MM-DD
+// Show all: ?all=true
 router.get("/kitchen/previous", async (req, res, next) => {
   try {
-    const { date, all } = req.query;
-    
+    const { date, startDate, endDate, all } = req.query;
+
     const query = {
       paymentStatus: "paid",
       status: "completed",
     };
 
-    // If "all" is true, don't filter by date - show all completed orders
     if (all === "true") {
-      // No date filtering, just get all completed orders
+      // No date filtering
+    } else if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      query.$or = [
+        { updatedAt: { $gte: start, $lte: end } },
+        { createdAt: { $gte: start, $lte: end } },
+      ];
     } else if (date) {
-      // If date is provided, filter by that date
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
-      
-      // Filter by updatedAt (when it was marked as completed) or createdAt
-      // Use $or to match orders that were either completed on this date or created on this date
       query.$or = [
         { updatedAt: { $gte: startOfDay, $lte: endOfDay } },
         { createdAt: { $gte: startOfDay, $lte: endOfDay } },
       ];
     } else {
-      // Default to today if no date specified and "all" is not true
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const endOfToday = new Date();
       endOfToday.setHours(23, 59, 59, 999);
-      
       query.$or = [
         { updatedAt: { $gte: today, $lte: endOfToday } },
         { createdAt: { $gte: today, $lte: endOfToday } },

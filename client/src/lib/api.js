@@ -227,16 +227,20 @@ export const ordersApi = {
 
   /**
    * Get previous (completed) orders for kitchen dashboard
-   * @param {string} date - Optional date filter (YYYY-MM-DD format)
+   * @param {string} startDate - Start of range (YYYY-MM-DD)
+   * @param {string} endDate - End of range (YYYY-MM-DD)
    * @param {boolean} all - If true, return all completed orders regardless of date
    * @returns {Promise<Array>} Array of completed orders
    */
-  getPreviousKitchenOrders: async (date = null, all = false) => {
+  getPreviousKitchenOrders: async (startDate = null, endDate = null, all = false) => {
     const params = new URLSearchParams();
     if (all) {
       params.append("all", "true");
-    } else if (date) {
-      params.append("date", date);
+    } else if (startDate && endDate) {
+      params.append("startDate", startDate);
+      params.append("endDate", endDate);
+    } else if (startDate) {
+      params.append("date", startDate);
     }
     const queryString = params.toString();
     const url = `/api/orders/kitchen/previous${queryString ? `?${queryString}` : ""}`;
