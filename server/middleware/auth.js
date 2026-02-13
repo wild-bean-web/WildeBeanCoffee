@@ -49,6 +49,40 @@ export async function authenticate(req, res, next) {
 }
 
 /**
+ * Authenticate allowing token from query (for EventSource/SSE which can't send headers)
+ * Checks req.query.token first, then Authorization header, then cookie.
+ */
+export async function authenticateWithQueryToken(req, res, next) {
+  try {
+    let token = null;
+    if (req.query && req.query.token) {
+      token = req.query.token;
+    }
+    if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.substring(7);
+    }
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+    if (!token) {
+      return errorResponse(res, 401, "Authentication required");
+    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.userId).select("-password");
+    if (!user) {
+      return errorResponse(res, 401, "User not found");
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return errorResponse(res, 401, "Invalid or expired token");
+    }
+    return errorResponse(res, 500, "Authentication error", error.message);
+  }
+}
+
+/**
  * Optional authentication middleware
  * Sets req.user if token is valid, but doesn't fail if no token (for guest access)
  */
