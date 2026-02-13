@@ -88,6 +88,7 @@ function validateOrderPayload(body) {
 
 // POST /api/orders
 // Use optionalAuth to support both authenticated and guest orders
+// Admin comped orders (ADMIN_DISCOUNT) allowed only for authenticated admin users
 router.post("/", optionalAuth, async (req, res, next) => {
   try {
     const errors = validateOrderPayload(req.body);
@@ -97,10 +98,18 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
-    
-    // Check if this is an admin order (paymentRef === "ADMIN_DISCOUNT")
+
     const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
-    
+    if (isAdminOrder) {
+      if (!req.user) {
+        return errorResponse(res, 401, "Authentication required for admin orders");
+      }
+      const adminEmail = (req.user.email || "").toLowerCase();
+      if (!KITCHEN_ADMIN_EMAILS.includes(adminEmail)) {
+        return errorResponse(res, 403, "Only authorized admins can place comped orders");
+      }
+    }
+
     // Calculate totals - apply 100% discount for admin orders
     let totals = computeTotals(items, taxRate);
     if (isAdminOrder) {
