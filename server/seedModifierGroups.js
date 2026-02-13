@@ -34,6 +34,18 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Cold Brew Cup Size (16-20)",
+    displayName: "Cup Size (16-20)",
+    description: "Select your cup size",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Medium (16oz)", price: 0, available: true },
+      { name: "Large (20oz)", price: 0.25, available: true },
+      { name: "Small (12oz) (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
     name: "Hot Cup Size",
     description: "Select your hot cup size",
     type: "single",
@@ -118,6 +130,19 @@ export const modifierGroups = [
       { name: "Oat Milk", price: 0.5, available: true },
       { name: "No Milk", price: 0, available: true },
       { name: "Almond Milk", price: 0.5, available: true },
+      { name: "Whole Milk (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Milk Choice (Smoothies)",
+    description: "Select your milk preference",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Almond Milk", price: 0, available: true },
+      { name: "2% Milk", price: 0, available: true },
+      { name: "Oat Milk", price: 0.5, available: true },
+      { name: "No Milk", price: 0, available: true },
       { name: "Whole Milk (Disabled)", price: 0, available: false },
     ],
   },

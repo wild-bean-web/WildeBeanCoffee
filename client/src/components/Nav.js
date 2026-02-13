@@ -85,10 +85,10 @@ export default function Nav() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-md">
+    <nav className="sticky top-0 z-50 w-full max-w-full overflow-hidden bg-white shadow-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between overflow-visible">
-          <Link href="/" className="flex items-center gap-2 overflow-visible">
+        <div className="flex h-16 min-w-0 items-center justify-between gap-2">
+          <Link href="/" className="flex flex-shrink-0 items-center gap-2 overflow-hidden">
             <Image
               src="/images/logo/LogoWtext.png"
               alt="Wild Bean Coffee"
@@ -99,7 +99,7 @@ export default function Nav() {
               unoptimized
             />
           </Link>
-          <div className="hidden md:flex md:items-center md:gap-6">
+          <div className="hidden lg:flex lg:items-center lg:gap-6 lg:flex-shrink-0">
             <Link href="/" className={linkClass("/")}>
               Home
             </Link>
@@ -152,9 +152,9 @@ export default function Nav() {
               </Link>
             )}
           </div>
-          {/* Mobile menu button */}
+          {/* Mobile/tablet menu button (shown below lg breakpoint) */}
           <button
-            className="md:hidden"
+            className="lg:hidden"
             aria-label="Menu"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
@@ -191,9 +191,9 @@ export default function Nav() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile/tablet menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <div className="border-t border-gray-200 bg-white px-4 py-4 shadow-lg">
             <div className="flex flex-col space-y-4">
               <Link

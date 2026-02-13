@@ -170,11 +170,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen min-w-0 max-w-full bg-white overflow-x-hidden">
       {/* Advanced Carousel Hero Section */}
       <section
         ref={heroRef}
-        className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
+        className="relative flex min-h-[90vh] w-full max-w-full items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
       >
         <AnimatePresence initial={false} custom={direction}>
           {slides.map((slide, index) => {
@@ -393,7 +393,7 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl overflow-visible">
+        <div className="mx-auto max-w-6xl w-full overflow-hidden">
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -484,10 +484,10 @@ export default function Home() {
                   className="group rounded-xl border-2 border-gray-200 bg-white p-6 text-center shadow-md transition-shadow hover:shadow-lg"
                 >
                   {/* Icon */}
-                  <div className="mb-4 flex h-20 items-center justify-center overflow-visible">
+                  <div className="mb-4 flex h-20 items-center justify-center overflow-hidden">
                     {feature.icon === "/animations/fresh-roasted.json" ? (
                       freshRoastedAnimation ? (
-                        <div className="h-20 w-20 transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                           <Lottie
                             animationData={freshRoastedAnimation}
                             loop={true}
@@ -502,7 +502,7 @@ export default function Home() {
                       )
                     ) : feature.icon === "/animations/artOfBrewing.json" ? (
                       artOfBrewingAnimation ? (
-                        <div className="h-20 w-20 transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                           <Lottie
                             animationData={artOfBrewingAnimation}
                             loop={true}
@@ -521,11 +521,11 @@ export default function Home() {
                         alt={feature.title}
                         width={80}
                         height={80}
-                        className="h-20 w-20 object-contain transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl"
+                        className="h-20 w-20 flex-shrink-0 object-contain overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl"
                         unoptimized
                       />
                     ) : (
-                      <div className="text-5xl leading-none transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                      <div className="text-5xl leading-none transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                         {feature.icon}
                       </div>
                     )}

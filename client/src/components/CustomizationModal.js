@@ -54,7 +54,7 @@ export default function CustomizationModal({
             // Find the default option based on group name and option name
             let defaultOption = null;
             
-            if (group.name === "Cup Size (16-20)") {
+            if (group.name === "Cup Size (16-20)" || group.name === "Cold Brew Cup Size (16-20)") {
               defaultOption = group.options.find(opt => opt.name === "Medium (16oz)" && opt.available);
             } else if (group.name === "Cup Size (12-16)") {
               defaultOption = group.options.find(opt => opt.name === "Small (12oz)" && opt.available);
@@ -362,7 +362,7 @@ export default function CustomizationModal({
                       <div key={group._id || group.name} className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-base font-semibold text-gray-900">
-                            {group.name}
+                            {group.displayName || group.name}
                             {group.required && (
                               <span className="text-red-500 ml-1">*</span>
                             )}

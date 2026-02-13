@@ -108,9 +108,9 @@ function parseCSVData() {
     {
       name: "Cold Brew",
       description: "Slow-steeped cold brew for a smooth, rich taste.",
-      price: 3.85,
+      price: 4.65,
       section: "Cold Coffee",
-      modifierGroups: [],
+      modifierGroups: ["Cold Brew Cup Size (16-20)", "Ice Level", "Milk Choice", "Syrup Pumps (+$0.20 each)"],
       allergens: [],
     },
     {
@@ -172,28 +172,12 @@ function parseCSVData() {
       allergens: ["Dairy"],
     },
     {
-      name: "Iced Coffee",
-      description: "Freshly brewed coffee served over ice.",
-      price: 3.65,
-      section: "Cold Coffee",
-      modifierGroups: [],
-      allergens: [],
-    },
-    {
       name: "Iced Caramel Macchiato",
       description: "Layered espresso and milk served over ice.",
       price: 5.60,
       section: "Cold Coffee",
       modifierGroups: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
       allergens: ["Dairy"],
-    },
-    {
-      name: "Iced Tea",
-      description: "Chilled brewed tea served over ice.",
-      price: 3.95,
-      section: "Tea",
-      modifierGroups: [],
-      allergens: [],
     },
     {
       name: "Latte",

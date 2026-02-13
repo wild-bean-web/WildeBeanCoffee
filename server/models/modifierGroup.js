@@ -14,6 +14,7 @@ const ModifierOptionSchema = new mongoose.Schema(
 const ModifierGroupSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, unique: true }, // e.g., "Cup Size", "Milk Choice"
+    displayName: { type: String, trim: true }, // Optional customer-facing label (e.g. "Cup Size (16-20)")
     description: { type: String, trim: true }, // Optional description
     type: {
       type: String,

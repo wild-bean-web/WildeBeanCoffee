@@ -35,7 +35,7 @@ router.get("/", async (req, res, next) => {
     }
 
     const items = await MenuItem.find(query)
-      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
     
@@ -118,7 +118,7 @@ router.get("/:id", async (req, res, next) => {
       return errorResponse(res, 400, "Invalid menu item id");
     }
     const item = await MenuItem.findById(id)
-      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .lean();
     if (!item) {
       return errorResponse(res, 404, "Menu item not found");
