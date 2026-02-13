@@ -94,7 +94,7 @@ export default function ProfileDropdown({ user, onSignOut, userAvatarAnimation, 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg border border-gray-200 overflow-hidden z-50"
+            className="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg border border-gray-200 overflow-hidden z-[100]"
           >
             {/* User Info */}
             <div className="px-4 py-3 border-b border-gray-200 bg-[var(--coffee-brown-very-light)]">

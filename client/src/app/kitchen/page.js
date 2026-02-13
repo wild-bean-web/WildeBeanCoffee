@@ -14,7 +14,11 @@ export default function KitchenDashboard() {
   const [newOrderIds, setNewOrderIds] = useState(new Set());
   const [isReadyCollapsed, setIsReadyCollapsed] = useState(false);
   const [isPendingCollapsed, setIsPendingCollapsed] = useState(false);
-  
+
+  // New order alert modal (pops up center screen, alarm loops until dismissed)
+  const [newOrderAlert, setNewOrderAlert] = useState(null);
+  const alarmIntervalRef = useRef(null);
+
   // Audio state
   const audioContextRef = useRef(null);
   const [audioEnabled, setAudioEnabled] = useState(() => {
@@ -58,9 +62,13 @@ export default function KitchenDashboard() {
     }
   }, [audioEnabled, audioInitialized]);
 
-  // Cleanup audio context on unmount
+  // Cleanup audio context and alarm on unmount
   useEffect(() => {
     return () => {
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+        alarmIntervalRef.current = null;
+      }
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(console.error);
         audioContextRef.current = null;
@@ -90,6 +98,8 @@ export default function KitchenDashboard() {
       setOrders((prev) => [newOrder, ...prev]);
       setNewOrderIds((prev) => new Set([...prev, newOrder._id]));
       setLastUpdate(new Date());
+      setNewOrderAlert(newOrder);
+      startAlarmLoop();
       playNotificationSound();
     });
 
@@ -182,6 +192,13 @@ export default function KitchenDashboard() {
     }
   };
 
+  const handleDeclineSound = () => {
+    setAudioEnabled(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kitchen-audio-enabled", "false");
+    }
+  };
+
   // Toggle audio on/off
   const toggleAudio = () => {
     const newState = !audioEnabled;
@@ -251,6 +268,79 @@ export default function KitchenDashboard() {
     }
   };
 
+  // Loud two-tone alarm for new order (like order printer alarms)
+  const playAlarmSound = (context) => {
+    try {
+      const now = context.currentTime;
+      const osc1 = context.createOscillator();
+      const osc2 = context.createOscillator();
+      const gainNode = context.createGain();
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(context.destination);
+
+      osc1.frequency.setValueAtTime(880, now);
+      osc1.frequency.setValueAtTime(660, now + 0.15);
+      osc2.frequency.setValueAtTime(880, now);
+      osc2.frequency.setValueAtTime(660, now + 0.15);
+      osc1.type = "sine";
+      osc2.type = "sine";
+
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.5, now + 0.02);
+      gainNode.gain.setValueAtTime(0.5, now + 0.28);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.35);
+      osc2.stop(now + 0.35);
+    } catch (error) {
+      console.error("Error playing alarm:", error);
+    }
+  };
+
+  const startAlarmLoop = () => {
+    if (!audioEnabled) return;
+    stopAlarmLoop();
+    const context = audioContextRef.current;
+    if (!context) {
+      initializeAudio().then((ctx) => {
+        if (ctx) {
+          playAlarmSound(ctx);
+          alarmIntervalRef.current = setInterval(() => {
+            if (audioContextRef.current && audioContextRef.current.state === "running") {
+              playAlarmSound(audioContextRef.current);
+            }
+          }, 1200);
+        }
+      });
+      return;
+    }
+    if (context.state === "suspended") {
+      context.resume().then(() => {
+        playAlarmSound(context);
+        alarmIntervalRef.current = setInterval(() => playAlarmSound(context), 1200);
+      });
+      return;
+    }
+    playAlarmSound(context);
+    alarmIntervalRef.current = setInterval(() => playAlarmSound(context), 1200);
+  };
+
+  const stopAlarmLoop = () => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
+  const dismissNewOrderAlert = () => {
+    stopAlarmLoop();
+    setNewOrderAlert(null);
+  };
+
   const handleMarkReady = async (orderId) => {
     try {
       await ordersApi.updateStatus(orderId, "ready");
@@ -307,11 +397,85 @@ export default function KitchenDashboard() {
   return (
     <div className="min-h-screen bg-[var(--coffee-brown-very-light)]">
 
+       {/* New order alert modal - center screen, alarm loops until dismissed */}
+       <AnimatePresence>
+         {newOrderAlert && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+             onClick={(e) => e.target === e.currentTarget && dismissNewOrderAlert()}
+           >
+             <motion.div
+               initial={{ scale: 0.9, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               exit={{ scale: 0.9, opacity: 0 }}
+               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+               onClick={(e) => e.stopPropagation()}
+               className="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-4 ring-[var(--lime-green)] overflow-hidden"
+             >
+               <div className="bg-[var(--lime-green)] px-6 py-4 text-center">
+                 <h2 className="text-xl font-bold text-white">New order</h2>
+                 <p className="text-sm text-white/90 mt-0.5">
+                   Order #{newOrderAlert._id.toString().slice(-8).toUpperCase()}
+                 </p>
+               </div>
+               <div className="max-h-[60vh] overflow-y-auto p-6">
+                 <div className="mb-4">
+                   <p className="font-semibold text-[var(--coffee-brown)]">{newOrderAlert.customer?.name}</p>
+                   <p className="text-sm text-gray-600">{newOrderAlert.customer?.phone}</p>
+                   {newOrderAlert.customer?.email && (
+                     <p className="text-sm text-gray-600">{newOrderAlert.customer.email}</p>
+                   )}
+                 </div>
+                 <div className="mb-4">
+                   <h4 className="mb-2 font-semibold text-[var(--coffee-brown)]">Items</h4>
+                   <ul className="space-y-1.5 text-sm">
+                     {(newOrderAlert.items || []).map((item, idx) => (
+                       <li key={idx}>
+                         <span className="font-medium">{item.quantity}x {item.name}</span>
+                         {(item.modifiers || []).length > 0 && (
+                           <span className="text-gray-600 ml-1">
+                             — {(item.modifiers || []).map((m) => (m.selectedOptions || []).map((o) => o.name).join(", ")).join("; ")}
+                           </span>
+                         )}
+                       </li>
+                     ))}
+                   </ul>
+                 </div>
+                 {newOrderAlert.notes && (
+                   <div className="mb-4 rounded-lg bg-amber-50 p-2">
+                     <p className="text-xs font-semibold text-amber-800">Note</p>
+                     <p className="text-sm text-amber-900">{newOrderAlert.notes}</p>
+                   </div>
+                 )}
+                 <div className="flex justify-between border-t border-gray-200 pt-3">
+                   <span className="font-semibold text-[var(--coffee-brown)]">Total</span>
+                   <span className="text-lg font-bold text-[var(--coffee-brown)]">
+                     ${newOrderAlert.totals?.total?.toFixed(2) ?? "0.00"}
+                   </span>
+                 </div>
+               </div>
+               <div className="p-6 pt-0">
+                 <button
+                   type="button"
+                   onClick={dismissNewOrderAlert}
+                   className="w-full rounded-xl bg-[var(--coffee-brown)] px-6 py-4 text-lg font-bold text-white transition-all hover:bg-[var(--coffee-brown-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2"
+                 >
+                   Got it — stop alarm
+                 </button>
+               </div>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+
        {/* Header */}
        <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-           {/* Mobile Layout: Stacked */}
-           <div className="flex flex-col gap-4 sm:hidden">
+           {/* Mobile/tablet Layout: Stacked (screens under 900px) */}
+           <div className="flex flex-col gap-4 min-[900px]:hidden">
              {/* Title and Status */}
              <div>
                <h1 className="text-2xl font-bold">Kitchen Dashboard</h1>
@@ -327,32 +491,36 @@ export default function KitchenDashboard() {
                </p>
              </div>
              
-             {/* Last Updated and Refresh */}
-             <div className="flex items-center justify-between">
+             {/* Last Updated, Refresh, and Test Sound */}
+             <div className="flex items-center justify-between gap-3">
                <div>
                  <p className="text-xs text-white/80">Last updated</p>
                  <p className="text-base font-semibold">{formatTime(lastUpdate)}</p>
                </div>
-               <button
-                 onClick={loadOrders}
-                 className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
-                 title="Refresh orders"
-               >
-                 <svg
-                   className="h-4 w-4"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
+               <div className="flex flex-col gap-2">
+                 <button
+                   onClick={loadOrders}
+                   className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center justify-center gap-2 w-full min-w-[7rem]"
+                   title="Refresh orders"
                  >
-                   <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                   />
-                 </svg>
-                 Refresh
-               </button>
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                   </svg>
+                   Refresh
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => playNotificationSound()}
+                   disabled={!audioEnabled}
+                   className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-[7rem] disabled:hover:bg-white/20"
+                   title="Play test sound"
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                   </svg>
+                   Test sound
+                 </button>
+               </div>
              </div>
 
              {/* Audio Control and Previous Orders */}
@@ -371,10 +539,10 @@ export default function KitchenDashboard() {
                ) : (
                  <button
                    onClick={toggleAudio}
-                   className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${
+                   className={`w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                      audioEnabled
-                       ? "bg-white/20 hover:bg-white/30"
-                       : "bg-white/10 hover:bg-white/20"
+                       ? "bg-[var(--lime-green)] text-white hover:bg-[var(--lime-green-dark)]"
+                       : "bg-white/10 text-white/60 hover:bg-white/15"
                    }`}
                  >
                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,8 +566,8 @@ export default function KitchenDashboard() {
              </div>
            </div>
 
-           {/* Desktop Layout: Horizontal */}
-           <div className="hidden sm:flex sm:items-center sm:justify-between">
+           {/* Desktop Layout: Horizontal (screens ≥ 900px) */}
+           <div className="hidden min-[900px]:flex min-[900px]:items-center min-[900px]:justify-between">
              <div>
                <h1 className="text-3xl font-bold">Kitchen Dashboard</h1>
                <p className="mt-1 text-sm text-white/80">
@@ -434,10 +602,10 @@ export default function KitchenDashboard() {
                ) : (
                  <button
                    onClick={toggleAudio}
-                   className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all duration-200 flex items-center gap-2 ${
+                   className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
                      audioEnabled
-                       ? "bg-white/20 hover:bg-white/30"
-                       : "bg-white/10 hover:bg-white/20"
+                       ? "bg-[var(--lime-green)] text-white hover:bg-[var(--lime-green-dark)]"
+                       : "bg-white/10 text-white/60 hover:bg-white/15"
                    }`}
                    title={audioEnabled ? "Disable sound alerts" : "Enable sound alerts"}
                  >
@@ -451,27 +619,31 @@ export default function KitchenDashboard() {
                    {audioEnabled ? "Sounds On" : "Sounds Off"}
                  </button>
                )}
-               
-               <button
-                 onClick={loadOrders}
-                 className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
-                 title="Refresh orders"
-               >
-                 <svg
-                   className="h-4 w-4"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
+
+               <div className="flex flex-col gap-2">
+                 <button
+                   onClick={loadOrders}
+                   className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
+                   title="Refresh orders"
                  >
-                   <path
-                     strokeLinecap="round"
-                     strokeLinejoin="round"
-                     strokeWidth={2}
-                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                   />
-                 </svg>
-                 Refresh
-               </button>
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                   </svg>
+                   Refresh
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => playNotificationSound()}
+                   disabled={!audioEnabled}
+                   className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 disabled:hover:bg-white/20"
+                   title="Play test sound"
+                 >
+                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                   </svg>
+                   Test sound
+                 </button>
+               </div>
                <Link
                  href="/kitchen/previous"
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"

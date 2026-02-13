@@ -15,6 +15,7 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const [devCode, setDevCode] = useState(""); // When server returns code (e.g. dev mode when email failed)
   const [verificationError, setVerificationError] = useState("");
 
   // Signup form state
@@ -84,6 +85,9 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
 
     setSendingCode(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/email-verification/send`,
@@ -93,10 +97,13 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email: email.trim() }),
+          signal: controller.signal,
         }
       );
 
-      const data = await response.json();
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to send verification code");
@@ -105,10 +112,16 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
       setCodeSent(true);
       setStep("code");
       setVerificationError("");
+      setDevCode(data.devCode || "");
     } catch (error) {
       console.error("Send code error:", error);
-      setVerificationError(error.message || "Failed to send verification code");
+      if (error.name === "AbortError") {
+        setVerificationError("Request timed out. Check your connection or try again.");
+      } else {
+        setVerificationError(error.message || "Failed to send verification code");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setSendingCode(false);
     }
   };
@@ -365,6 +378,11 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
             <p className="mb-4 text-center font-semibold text-[var(--coffee-brown)]">
               {email}
             </p>
+            {devCode && (
+              <p className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-center text-sm text-amber-800">
+                Development: Your code is <strong>{devCode}</strong>
+              </p>
+            )}
             <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-3">
               <p className="text-sm text-blue-800 text-center">
                 <span className="font-semibold">Can't find the email?</span> Please check your spam or junk folder. 
