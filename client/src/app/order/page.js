@@ -9,13 +9,17 @@ import { locationApi, ordersApi, paymentsApi, menuApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 import CustomizationModal from "@/components/CustomizationModal";
+import { GRAND_OPENING_DATE } from "@/lib/constants";
 
 function OrderPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
-  // Admin emails - only admins can place orders; their orders are comped for QA/testing
+  const [now, setNow] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
+  const isOrderingOpenToAll = now >= GRAND_OPENING_DATE.getTime();
+
+  // Admin emails - only admins can place orders before grand opening; their orders are comped for QA/testing
   const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
   const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
@@ -56,6 +60,13 @@ function OrderPageContent() {
 
   // Tax rate (6% - adjust as needed)
   const taxRate = 0.06;
+
+  // Update "now" every second so ordering opens to all automatically when grand opening time is reached
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Load cart from localStorage or state
@@ -827,6 +838,54 @@ function OrderPageContent() {
       setError("Failed to get directions. Please try again.");
     }
   };
+
+  // Online ordering is disabled for everyone except admins (return after all hooks)
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[var(--coffee-brown-light)] border-t-[var(--lime-green)]" />
+      </div>
+    );
+  }
+
+  if (!isAdmin && !isOrderingOpenToAll) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="rounded-xl border-2 border-yellow-200 bg-yellow-50 p-8 shadow-sm">
+            <div className="mb-4 flex justify-center">
+              <svg className="h-16 w-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)]">
+              Online Ordering Unavailable
+            </h1>
+            <p className="mb-6 text-lg text-gray-700">
+              We're opening soon! Online ordering will be available Monday, February 16 at 6:00 AM.
+            </p>
+            <p className="mb-8 text-sm text-gray-600">
+              We can't wait to serve you. Visit us in-store or call us once we open to place your order.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                href="/shop"
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              >
+                Continue Shopping
+              </Link>
+              <Link
+                href="/menu"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              >
+                View Menu
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (orderPlaced) {
     return (
