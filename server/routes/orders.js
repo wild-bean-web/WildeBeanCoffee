@@ -2,10 +2,23 @@ import express from "express";
 import mongoose from "mongoose";
 import { Order } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
-import { optionalAuth } from "../middleware/auth.js";
+import { optionalAuth, authenticate, authenticateWithQueryToken } from "../middleware/auth.js";
 import { EventEmitter } from "events";
 
 const router = express.Router();
+
+const KITCHEN_ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+
+function requireKitchenAdmin(req, res, next) {
+  if (!req.user) {
+    return errorResponse(res, 401, "Authentication required");
+  }
+  const email = (req.user.email || "").toLowerCase();
+  if (!KITCHEN_ADMIN_EMAILS.includes(email)) {
+    return errorResponse(res, 403, "Access denied. Kitchen dashboard is restricted to authorized users.");
+  }
+  next();
+}
 
 // Event emitter for real-time order updates
 export const orderEventEmitter = new EventEmitter();
@@ -75,6 +88,7 @@ function validateOrderPayload(body) {
 
 // POST /api/orders
 // Use optionalAuth to support both authenticated and guest orders
+// Admin comped orders (ADMIN_DISCOUNT) allowed only for authenticated admin users
 router.post("/", optionalAuth, async (req, res, next) => {
   try {
     const errors = validateOrderPayload(req.body);
@@ -84,10 +98,18 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
-    
-    // Check if this is an admin order (paymentRef === "ADMIN_DISCOUNT")
+
     const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
-    
+    if (isAdminOrder) {
+      if (!req.user) {
+        return errorResponse(res, 401, "Authentication required for admin orders");
+      }
+      const adminEmail = (req.user.email || "").toLowerCase();
+      if (!KITCHEN_ADMIN_EMAILS.includes(adminEmail)) {
+        return errorResponse(res, 403, "Only authorized admins can place comped orders");
+      }
+    }
+
     // Calculate totals - apply 100% discount for admin orders
     let totals = computeTotals(items, taxRate);
     if (isAdminOrder) {
@@ -141,8 +163,8 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
 // GET /api/orders/kitchen
 // Get orders for kitchen dashboard (paid orders that are not completed or cancelled)
-// Must be before /:id route to avoid conflicts
-router.get("/kitchen", async (req, res, next) => {
+// Must be before /:id route to avoid conflicts. Requires admin auth.
+router.get("/kitchen", authenticate, requireKitchenAdmin, async (req, res, next) => {
   try {
     const orders = await Order.find({
       paymentStatus: "paid",
@@ -158,11 +180,11 @@ router.get("/kitchen", async (req, res, next) => {
 });
 
 // GET /api/orders/kitchen/previous
-// Get completed (picked up) orders for previous orders page
+// Get completed (picked up) orders for previous orders page. Requires admin auth.
 // Supports date range: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
 // Legacy single date: ?date=YYYY-MM-DD
 // Show all: ?all=true
-router.get("/kitchen/previous", async (req, res, next) => {
+router.get("/kitchen/previous", authenticate, requireKitchenAdmin, async (req, res, next) => {
   try {
     const { date, startDate, endDate, all } = req.query;
 
@@ -213,8 +235,9 @@ router.get("/kitchen/previous", async (req, res, next) => {
 });
 
 // GET /api/orders/kitchen/stream
-// Server-Sent Events endpoint for real-time order updates
-router.get("/kitchen/stream", (req, res) => {
+// Server-Sent Events endpoint for real-time order updates. Requires admin auth.
+// Token can be in query (?token=) since EventSource cannot send headers.
+router.get("/kitchen/stream", authenticateWithQueryToken, requireKitchenAdmin, (req, res) => {
   // Set headers for SSE
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -270,8 +293,8 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// PATCH /api/orders/:id/status
-router.patch("/:id/status", async (req, res, next) => {
+// PATCH /api/orders/:id/status (kitchen: mark ready / picked up). Requires admin auth.
+router.patch("/:id/status", authenticate, requireKitchenAdmin, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status, paymentStatus } = req.body;

@@ -80,11 +80,11 @@ export default function KitchenDashboard() {
   useEffect(() => {
     loadOrders();
 
-    // Set up Server-Sent Events connection
+    // Set up Server-Sent Events connection (token in URL; EventSource cannot send headers)
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-    const streamUrl = API_BASE_URL 
-      ? `${API_BASE_URL}/api/orders/kitchen/stream`
-      : "/api/orders/kitchen/stream";
+    const base = API_BASE_URL ? `${API_BASE_URL}/api/orders/kitchen/stream` : "/api/orders/kitchen/stream";
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("token") : null;
+    const streamUrl = token ? `${base}?token=${encodeURIComponent(token)}` : base;
     const eventSource = new EventSource(streamUrl);
 
     eventSource.onopen = () => {
