@@ -9,6 +9,7 @@ import { useMenu } from "@/hooks/useMenu";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import CustomizationModal from "@/components/CustomizationModal";
+import { GRAND_OPENING_DATE, PASTRIES_ORDERING_ENABLED, PASTRIES_SECTION_NAME } from "@/lib/constants";
 
 function MenuPageContent() {
   const searchParams = useSearchParams();
@@ -18,9 +19,20 @@ function MenuPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
   const [itemToCustomize, setItemToCustomize] = useState(null);
+  const [now, setNow] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
 
   // Fetch menu items using custom hook
   const { menuItems, loading, error } = useMenu();
+
+  const isOrderingOpenToAll = now >= GRAND_OPENING_DATE.getTime();
+  const hidePastries = isOrderingOpenToAll && !PASTRIES_ORDERING_ENABLED;
+  const visibleMenuItems = useMemo(
+    () =>
+      hidePastries
+        ? menuItems.filter((item) => item.section !== PASTRIES_SECTION_NAME)
+        : menuItems,
+    [menuItems, hidePastries]
+  );
 
   // Define the desired order for filter buttons
   const sectionOrder = [
@@ -37,9 +49,9 @@ function MenuPageContent() {
     "Tea": "Tea & Milk",
   };
 
-  // Get unique sections and order them according to sectionOrder
+  // Get unique sections and order them according to sectionOrder (from visible items only)
   const sections = useMemo(() => {
-    const uniqueSections = [...new Set(menuItems.map((item) => item.section))].filter(Boolean);
+    const uniqueSections = [...new Set(visibleMenuItems.map((item) => item.section))].filter(Boolean);
     
     // Sort sections: first by sectionOrder, then any remaining sections alphabetically
     const ordered = sectionOrder.filter((section) => uniqueSections.includes(section));
@@ -48,7 +60,7 @@ function MenuPageContent() {
       .sort();
     
     return [...ordered, ...remaining];
-  }, [menuItems]);
+  }, [visibleMenuItems]);
 
   // Helper function to get display name for a section
   const getSectionDisplayName = (section) => {
@@ -59,9 +71,9 @@ function MenuPageContent() {
   const filteredItems = useMemo(
     () =>
       selectedSection
-        ? menuItems.filter((item) => item.section === selectedSection)
-        : menuItems,
-    [menuItems, selectedSection]
+        ? visibleMenuItems.filter((item) => item.section === selectedSection)
+        : visibleMenuItems,
+    [visibleMenuItems, selectedSection]
   );
 
   // Group items by section
@@ -109,6 +121,20 @@ function MenuPageContent() {
     
     return Object.fromEntries(entries);
   }, [groupedItems]);
+
+  // Update "now" every second so pastries section hides automatically when opening time passes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // When pastries are hidden, clear Bakery & Pastries from selected section so user doesn't see empty view
+  useEffect(() => {
+    if (hidePastries && selectedSection === PASTRIES_SECTION_NAME) {
+      setSelectedSection("");
+    }
+  }, [hidePastries, selectedSection]);
 
   useEffect(() => {
     // Load cart from localStorage
