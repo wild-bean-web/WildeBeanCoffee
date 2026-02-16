@@ -135,8 +135,8 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-lg font-semibold">Contact</h3>
             <p className="mb-2 text-sm text-gray-300">
-              <a href="tel:+13012724794" className="transition-colors hover:text-[var(--lime-green)]">
-                +1 301-272-4794
+              <a href="tel:+12406466503" className="transition-colors hover:text-[var(--lime-green)]">
+                +1 240-646-6503
               </a>
             </p>
             <p className="mb-4 text-sm text-gray-300">

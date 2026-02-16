@@ -242,10 +242,10 @@ export default function TermsOfUsePage() {
                 <li>
                   Phone:{" "}
                   <a
-                    href="tel:+13012724794"
+                    href="tel:+12406466503"
                     className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                   >
-                    +1 301-272-4794
+                    +1 240-646-6503
                   </a>
                 </li>
                 <li>Visit our <Link href="/location" className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]">Location</Link> page for address, hours, and more contact information</li>
