@@ -54,7 +54,7 @@ export default function CustomizationModal({
             // Find the default option based on group name and option name
             let defaultOption = null;
             
-            if (group.name === "Cup Size (16-20)") {
+            if (group.name === "Cup Size (16-20)" || group.name === "Cold Brew Cup Size (16-20)") {
               defaultOption = group.options.find(opt => opt.name === "Medium (16oz)" && opt.available);
             } else if (group.name === "Cup Size (12-16)") {
               defaultOption = group.options.find(opt => opt.name === "Small (12oz)" && opt.available);
@@ -82,7 +82,11 @@ export default function CustomizationModal({
 
   // Check if a modifier group supports quantities (like Syrup Pumps)
   const isQuantityBased = (groupName) => {
-    return groupName.includes("Syrup Pumps") || groupName.includes("Pumps");
+    return (
+      groupName.includes("Syrup Pumps") ||
+      groupName.includes("Pumps") ||
+      groupName.includes("Extra Single Shot")
+    );
   };
 
   // Calculate total price including modifiers
@@ -358,7 +362,7 @@ export default function CustomizationModal({
                       <div key={group._id || group.name} className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-base font-semibold text-gray-900">
-                            {group.name}
+                            {group.displayName || group.name}
                             {group.required && (
                               <span className="text-red-500 ml-1">*</span>
                             )}
@@ -562,6 +566,18 @@ export default function CustomizationModal({
                       </span>
                     ))}
                   </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    For awareness only. Cross-contamination may occur. See <a href="/terms" className="underline hover:text-gray-700">Terms of Use</a>.
+                  </p>
+                </div>
+              )}
+
+              {/* Wild Bowl / Build Your Own Bowl – subtle warning (shown when item has no allergen list) */}
+              {menuItem.name === "Build Your Own Bowl" && (!menuItem.allergens || menuItem.allergens.length === 0) && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    Allergen info for add-ons varies. Cross-contamination may occur. See <a href="/terms" className="underline hover:text-gray-700">Terms of Use</a>.
+                  </p>
                 </div>
               )}
             </div>

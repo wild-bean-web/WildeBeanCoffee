@@ -35,7 +35,7 @@ router.get("/", async (req, res, next) => {
     }
 
     const items = await MenuItem.find(query)
-      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
     
@@ -59,22 +59,16 @@ router.get("/", async (req, res, next) => {
       });
     }
 
-    // For Oatmeals section, sort "Custom Oatmeal" to appear last
-    if (section === "Oatmeals" || (!section && items.some(item => item.section === "Oatmeals"))) {
+    // For Wild Bowl section, sort "Build Your Own Bowl" to appear last
+    if (section === "Wild Bowl" || (!section && items.some(item => item.section === "Wild Bowl"))) {
       items.sort((a, b) => {
-        // Only apply custom sorting to Oatmeals items
-        if (a.section === "Oatmeals" && b.section === "Oatmeals") {
-          const aIsCustom = a.name.toLowerCase() === "custom oatmeal";
-          const bIsCustom = b.name.toLowerCase() === "custom oatmeal";
-          
-          // Custom Oatmeal comes last
-          if (aIsCustom && !bIsCustom) return 1;
-          if (!aIsCustom && bIsCustom) return -1;
-          
-          // If neither or both are custom, sort alphabetically
+        if (a.section === "Wild Bowl" && b.section === "Wild Bowl") {
+          const aIsBuildYourOwn = a.name.toLowerCase() === "build your own bowl";
+          const bIsBuildYourOwn = b.name.toLowerCase() === "build your own bowl";
+          if (aIsBuildYourOwn && !bIsBuildYourOwn) return 1;
+          if (!aIsBuildYourOwn && bIsBuildYourOwn) return -1;
           return a.name.localeCompare(b.name);
         }
-        // For items in different sections, maintain original order
         return 0;
       });
     }
@@ -87,7 +81,7 @@ router.get("/", async (req, res, next) => {
         "Tropical Bliss",
         "Nutty Banana Bliss",
         "Guava Cream",
-        "Espresso Energy",
+        "Dirty Banana Smoothie",
       ];
       
       items.sort((a, b) => {
@@ -124,7 +118,7 @@ router.get("/:id", async (req, res, next) => {
       return errorResponse(res, 400, "Invalid menu item id");
     }
     const item = await MenuItem.findById(id)
-      .populate("modifierGroups", "name description type required minSelections maxSelections options available")
+      .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .lean();
     if (!item) {
       return errorResponse(res, 404, "Menu item not found");

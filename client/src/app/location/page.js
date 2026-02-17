@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useLocation } from "@/hooks/useLocation";
 import { locationApi } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -305,22 +305,21 @@ export default function LocationPage() {
                 </div>
               </motion.div>
 
-              {/* Location Image */}
+              {/* Location exterior image */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.5, ease: "easeOut" }}
-                className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-lg transition-shadow hover:shadow-xl"
+                className="relative overflow-hidden rounded-2xl border-2 border-gray-200 shadow-lg aspect-[4/3] w-full"
               >
-                <div className="relative h-64 w-full sm:h-80">
-                  <Image
-                    src="/images/location/location.jpeg"
-                    alt="Wild Bean Coffee Location"
-                    fill
-                    className="object-cover transition-transform duration-300 hover:scale-105"
-                    unoptimized
-                  />
-                </div>
+                <Image
+                  src="/images/CafeImages/ExteriorImage.jpeg"
+                  alt="Wild Bean Coffee storefront with outdoor seating and patio"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
+                />
               </motion.div>
             </div>
 

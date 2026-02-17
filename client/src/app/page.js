@@ -11,6 +11,16 @@ import {
 import { useEffect, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import SocialMediaGallery from "@/components/SocialMediaGallery";
+import { GRAND_OPENING_DATE, getGrandOpeningLabel } from "@/lib/constants";
+
+function getTimeLeft(now) {
+  const diff = Math.max(0, GRAND_OPENING_DATE.getTime() - now);
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  return { days, hours, minutes, seconds };
+}
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
@@ -20,6 +30,10 @@ export default function Home() {
   const heroRef = useRef(null);
   const [freshRoastedAnimation, setFreshRoastedAnimation] = useState(null);
   const [artOfBrewingAnimation, setArtOfBrewingAnimation] = useState(null);
+
+  const [now, setNow] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
+  const isOpen = now >= GRAND_OPENING_DATE.getTime();
+  const timeLeft = getTimeLeft(now);
 
   // Load Lottie animation data
   useEffect(() => {
@@ -122,6 +136,14 @@ export default function Home() {
     },
   ];
 
+  // Update countdown every second until grand opening
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Initialize visibility
   useEffect(() => {
     setIsVisible(true);
@@ -170,11 +192,51 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen min-w-0 max-w-full bg-white overflow-x-hidden">
+      {/* Grand opening countdown — hidden after Feb 16, 2026 6am */}
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.section
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+            transition={{ duration: 0.4 }}
+            className="relative z-30 bg-[var(--coffee-brown)] text-white shadow-lg"
+          >
+            <div className="mx-auto max-w-5xl px-4 py-4 sm:py-5">
+              <p className="text-center text-lg font-semibold sm:text-xl text-[var(--lime-green)] mb-2">
+                We're opening soon!
+              </p>
+              <p className="text-center text-base sm:text-lg text-white/95 mb-4">
+                Join us <span className="font-bold text-white">{getGrandOpeningLabel()}</span> — online ordering and in-store service will be live.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
+                <div className="flex flex-col items-center rounded-lg bg-white/15 px-4 py-2 min-w-[4rem]">
+                  <span className="text-2xl sm:text-3xl font-bold tabular-nums">{String(timeLeft.days).padStart(2, "0")}</span>
+                  <span className="text-xs sm:text-sm uppercase tracking-wider">Days</span>
+                </div>
+                <div className="flex flex-col items-center rounded-lg bg-white/15 px-4 py-2 min-w-[4rem]">
+                  <span className="text-2xl sm:text-3xl font-bold tabular-nums">{String(timeLeft.hours).padStart(2, "0")}</span>
+                  <span className="text-xs sm:text-sm uppercase tracking-wider">Hours</span>
+                </div>
+                <div className="flex flex-col items-center rounded-lg bg-white/15 px-4 py-2 min-w-[4rem]">
+                  <span className="text-2xl sm:text-3xl font-bold tabular-nums">{String(timeLeft.minutes).padStart(2, "0")}</span>
+                  <span className="text-xs sm:text-sm uppercase tracking-wider">Min</span>
+                </div>
+                <div className="flex flex-col items-center rounded-lg bg-white/15 px-4 py-2 min-w-[4rem]">
+                  <span className="text-2xl sm:text-3xl font-bold tabular-nums">{String(timeLeft.seconds).padStart(2, "0")}</span>
+                  <span className="text-xs sm:text-sm uppercase tracking-wider">Sec</span>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
       {/* Advanced Carousel Hero Section */}
       <section
         ref={heroRef}
-        className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
+        className="relative flex min-h-[90vh] w-full max-w-full items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
       >
         <AnimatePresence initial={false} custom={direction}>
           {slides.map((slide, index) => {
@@ -393,7 +455,7 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl overflow-visible">
+        <div className="mx-auto max-w-6xl w-full overflow-hidden">
           <motion.div
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -484,10 +546,10 @@ export default function Home() {
                   className="group rounded-xl border-2 border-gray-200 bg-white p-6 text-center shadow-md transition-shadow hover:shadow-lg"
                 >
                   {/* Icon */}
-                  <div className="mb-4 flex h-20 items-center justify-center overflow-visible">
+                  <div className="mb-4 flex h-20 items-center justify-center overflow-hidden">
                     {feature.icon === "/animations/fresh-roasted.json" ? (
                       freshRoastedAnimation ? (
-                        <div className="h-20 w-20 transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                           <Lottie
                             animationData={freshRoastedAnimation}
                             loop={true}
@@ -502,7 +564,7 @@ export default function Home() {
                       )
                     ) : feature.icon === "/animations/artOfBrewing.json" ? (
                       artOfBrewingAnimation ? (
-                        <div className="h-20 w-20 transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                           <Lottie
                             animationData={artOfBrewingAnimation}
                             loop={true}
@@ -521,11 +583,11 @@ export default function Home() {
                         alt={feature.title}
                         width={80}
                         height={80}
-                        className="h-20 w-20 object-contain transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl"
+                        className="h-20 w-20 flex-shrink-0 object-contain overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl"
                         unoptimized
                       />
                     ) : (
-                      <div className="text-5xl leading-none transition-all duration-500 ease-out group-hover:scale-150 group-hover:drop-shadow-2xl">
+                      <div className="text-5xl leading-none transition-all duration-500 ease-out group-hover:scale-110 group-hover:drop-shadow-2xl">
                         {feature.icon}
                       </div>
                     )}

@@ -26,7 +26,7 @@ const sectionMapping = {
   "Cold Coffee": "Coffee & Espresso",
   "Filtered Coffee": "Coffee & Espresso",
   "Smoothies": "Smoothies (Organic & Fresh)",
-  "Oatmeal Bar": "Oatmeals",
+  "Oatmeal Bar": "Wild Bowl",
   "Pastries": "Bakery & Pastries",
   "Tea": "Tea",
 };
@@ -108,9 +108,9 @@ function parseCSVData() {
     {
       name: "Cold Brew",
       description: "Slow-steeped cold brew for a smooth, rich taste.",
-      price: 3.85,
+      price: 4.65,
       section: "Cold Coffee",
-      modifierGroups: [],
+      modifierGroups: ["Cold Brew Cup Size (16-20)", "Ice Level", "Milk Choice", "Syrup Pumps (+$0.20 each)"],
       allergens: [],
     },
     {
@@ -172,28 +172,12 @@ function parseCSVData() {
       allergens: ["Dairy"],
     },
     {
-      name: "Iced Coffee",
-      description: "Freshly brewed coffee served over ice.",
-      price: 3.65,
-      section: "Cold Coffee",
-      modifierGroups: [],
-      allergens: [],
-    },
-    {
       name: "Iced Caramel Macchiato",
       description: "Layered espresso and milk served over ice.",
       price: 5.60,
       section: "Cold Coffee",
       modifierGroups: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
       allergens: ["Dairy"],
-    },
-    {
-      name: "Iced Tea",
-      description: "Chilled brewed tea served over ice.",
-      price: 3.95,
-      section: "Tea",
-      modifierGroups: [],
-      allergens: [],
     },
     {
       name: "Latte",
@@ -241,7 +225,7 @@ function parseCSVData() {
       description: "Fresh filtered coffee. Select your cup size.",
       price: 2.55,
       section: "Filtered Coffee",
-      modifierGroups: ["Cup Size (Filtered Coffee)", "Filtered Coffee Refill", "Cup Size (12-16)"],
+      modifierGroups: ["Cup Size (Filtered Coffee)", "Cup Size (12-16)"],
       allergens: [],
     },
     {
@@ -269,8 +253,8 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Custom Oatmeal",
-      alternateName: "Custom Oatmeal Bowl",
+      name: "Build Your Own Bowl",
+      alternateName: "Wild Bowl",
       description: "Build your own bowl.\nRequired: choose a base (Oats, Chia pudding, Yogurt) extra base: $2\n2 Choice of fresh Fruits and Any dry toppings. extra fruits: $0.75 extra dry topping: $0.50",
       price: 9.99,
       section: "Oatmeal Bar",
@@ -284,8 +268,8 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Espresso Energy",
-      description: "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
+      name: "Dirty Banana Smoothie",
+      description: "Espresso, Banana, Yogurt Chocolate Sauce, Honey\nAllergens: Dairy",
       price: 7.75,
       section: "Smoothies",
       modifierGroups: ["Shot Preference", "Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],

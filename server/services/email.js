@@ -32,36 +32,49 @@ function createTransporter() {
     });
   }
 
-  // Default: Use test account (for development)
-  // In production, you should set up proper SMTP credentials
-  console.warn(
-    "⚠️  No email configuration found. Using test account. Emails will not be sent in production."
-  );
-  console.warn("EMAIL_SERVICE:", process.env.EMAIL_SERVICE);
-  console.warn("EMAIL_USER:", process.env.EMAIL_USER ? "Set" : "Not set");
-  console.warn("EMAIL_PASS:", process.env.EMAIL_PASS ? "Set" : "Not set");
-  return nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: {
-      user: "ethereal.user@ethereal.email",
-      pass: "ethereal.pass",
-    },
-  });
+  // No config: caller must use getTransporterAsync() to create a real Ethereal test account
+  return null;
 }
 
-// Lazy initialization - create transporter when first needed
+// Lazy initialization - create transporter when first needed (sync path for configured email)
 let transporter = null;
+let testTransporterPromise = null;
+
 function getTransporter() {
   if (!transporter) {
     console.log("📧 Creating email transporter...");
     console.log("   EMAIL_SERVICE:", process.env.EMAIL_SERVICE || "not set");
-    console.log("   EMAIL_USER:", process.env.EMAIL_USER || "not set");
-    console.log("   EMAIL_PASS:", process.env.EMAIL_PASS ? "***" : "not set");
+    console.log("   EMAIL_USER:", process.env.EMAIL_USER ? "Set" : "Not set");
+    console.log("   EMAIL_PASS:", process.env.EMAIL_PASS ? "***" : "Not set");
     transporter = createTransporter();
   }
   return transporter;
+}
+
+/**
+ * Get transporter, creating a real Ethereal test account when no email config is set.
+ * Use this in send paths so verification emails actually send in development.
+ */
+async function getTransporterAsync() {
+  const configured = getTransporter();
+  if (configured) return configured;
+
+  if (testTransporterPromise) return testTransporterPromise;
+  console.warn(
+    "⚠️  No email config (EMAIL_USER/EMAIL_PASS or SMTP_*). Creating Ethereal test account so emails can be sent in dev."
+  );
+  testTransporterPromise = nodemailer.createTestAccount().then((account) => {
+    const t = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: { user: account.user, pass: account.pass },
+    });
+    transporter = t;
+    console.log("📧 Ethereal test account ready. View sent emails at https://ethereal.email");
+    return t;
+  });
+  return testTransporterPromise;
 }
 
 /**
@@ -132,8 +145,13 @@ export async function sendVerificationCode(email, code) {
   };
 
   try {
-    const info = await getTransporter().sendMail(mailOptions);
+    const transport = await getTransporterAsync();
+    const info = await transport.sendMail(mailOptions);
     console.log("Verification email sent:", info.messageId);
+    if (process.env.NODE_ENV === "development" && nodemailer.getTestMessageUrl) {
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) console.log("Preview:", previewUrl);
+    }
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending verification email:", error);
@@ -205,8 +223,13 @@ export async function sendPasswordResetCode(email, code) {
   };
 
   try {
-    const info = await getTransporter().sendMail(mailOptions);
+    const transport = await getTransporterAsync();
+    const info = await transport.sendMail(mailOptions);
     console.log("Password reset email sent:", info.messageId);
+    if (process.env.NODE_ENV === "development" && nodemailer.getTestMessageUrl) {
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) console.log("Preview:", previewUrl);
+    }
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Error sending password reset email:", error);
@@ -220,7 +243,8 @@ export async function sendPasswordResetCode(email, code) {
  */
 export async function verifyEmailConfig() {
   try {
-    await getTransporter().verify();
+    const transport = await getTransporterAsync();
+    await transport.verify();
     return true;
   } catch (error) {
     console.error("Email configuration error:", error);

@@ -34,6 +34,18 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Cold Brew Cup Size (16-20)",
+    displayName: "Cup Size (16-20)",
+    description: "Select your cup size",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Medium (16oz)", price: 0, available: true },
+      { name: "Large (20oz)", price: 0.25, available: true },
+      { name: "Small (12oz) (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
     name: "Hot Cup Size",
     description: "Select your hot cup size",
     type: "single",
@@ -88,24 +100,24 @@ export const modifierGroups = [
   },
   {
     name: "Extra Single Shots (Hot)",
-    description: "Add extra espresso shots",
+    description: "Add extra espresso shots ($1.25 per shot)",
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 1, // Updated to match available options (only 1 option available)
+    maxSelections: 5,
     options: [
-      { name: "Extra Single Shot", price: 0.6, available: true },
+      { name: "Extra Single Shot", price: 1.25, available: true },
     ],
   },
   {
     name: "Extra Single Shots (Iced)",
-    description: "Add extra espresso shots",
+    description: "Add extra espresso shots ($1.25 per shot)",
     type: "multiple",
     required: false,
     minSelections: 0,
-    maxSelections: 1, // Updated to match available options (only 1 option available)
+    maxSelections: 5,
     options: [
-      { name: "Extra Single Shot", price: 1.0, available: true },
+      { name: "Extra Single Shot", price: 1.25, available: true },
     ],
   },
   {
@@ -122,24 +134,28 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Ice Level",
-    description: "Select your ice preference",
+    name: "Milk Choice (Smoothies)",
+    description: "Select your milk preference",
     type: "single",
     required: true,
+    options: [
+      { name: "Almond Milk", price: 0, available: true },
+      { name: "2% Milk", price: 0, available: true },
+      { name: "Oat Milk", price: 0.5, available: true },
+      { name: "No Milk", price: 0, available: true },
+      { name: "Whole Milk (Disabled)", price: 0, available: false },
+    ],
+  },
+  {
+    name: "Ice Level",
+    description: "Select your ice preference (optional)",
+    type: "single",
+    required: false,
     options: [
       { name: "No Ice", price: 0, available: true },
       { name: "Light Ice", price: 0, available: true },
       { name: "Medium Ice", price: 0, available: true },
       { name: "Extra Ice", price: 0, available: true },
-    ],
-  },
-  {
-    name: "Filtered Coffee Refill",
-    description: "Add a refill",
-    type: "single",
-    required: false,
-    options: [
-      { name: "Paid Refill (+$0.50)", price: 0.5, available: true },
     ],
   },
   // Build-your-own oatmeal modifier groups (matches POS inventory-export-v2)
@@ -156,6 +172,18 @@ export const modifierGroups = [
       { name: "Yogurt", price: 0, available: true },
       { name: "Oatmeal & Yogurt", price: 0, available: true },
       { name: "Oatmeal & Chia Seeds Pudding", price: 0, available: true },
+      { name: "Chia Seeds Pudding & Yogurt", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Wild Vegan Base",
+    description: "Chia seed pudding made with plant-based almond milk (vegan)",
+    type: "single",
+    required: true,
+    minSelections: 1,
+    maxSelections: 1,
+    options: [
+      { name: "Chia Seeds Pudding", price: 0, available: true },
     ],
   },
   {
@@ -172,7 +200,7 @@ export const modifierGroups = [
       { name: "Dried cranberries", price: 0, available: true },
       { name: "Raisins", price: 0, available: true },
       { name: "Coconut flakes", price: 0, available: true },
-      { name: "Cinnamon", price: 0, available: true },
+      { name: "Sunflower Seeds", price: 0, available: true },
       { name: "Granola", price: 0, available: true },
     ],
   },

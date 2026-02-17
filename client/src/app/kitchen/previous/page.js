@@ -5,25 +5,82 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { ordersApi } from "@/lib/api";
 
+// Format a Date as YYYY-MM-DD in local time (avoid UTC/date-shift bugs)
+function toLocalDateString(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Parse YYYY-MM-DD as local date (not UTC midnight)
+function parseLocalDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function getRangeForPreset(preset) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const copy = (d) => new Date(d.getTime());
+
+  switch (preset) {
+    case "today":
+      return { start: toLocalDateString(today), end: toLocalDateString(today) };
+    case "yesterday": {
+      const y = copy(today);
+      y.setDate(y.getDate() - 1);
+      return { start: toLocalDateString(y), end: toLocalDateString(y) };
+    }
+    case "lastWeek": {
+      const end = copy(today);
+      const start = copy(today);
+      start.setDate(start.getDate() - 6);
+      return { start: toLocalDateString(start), end: toLocalDateString(end) };
+    }
+    case "lastMonth": {
+      const start = copy(today);
+      start.setMonth(start.getMonth() - 1);
+      start.setDate(1);
+      const end = copy(today);
+      end.setDate(0);
+      return { start: toLocalDateString(start), end: toLocalDateString(end) };
+    }
+    case "lastYear": {
+      const start = copy(today);
+      start.setFullYear(start.getFullYear() - 1);
+      start.setMonth(0);
+      start.setDate(1);
+      const end = copy(today);
+      end.setFullYear(end.getFullYear() - 1);
+      end.setMonth(11);
+      end.setDate(31);
+      return { start: toLocalDateString(start), end: toLocalDateString(end) };
+    }
+    default:
+      return null;
+  }
+}
+
 export default function PreviousKitchenOrders() {
+  const todayStr = toLocalDateString(new Date());
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    // Default to today in YYYY-MM-DD format
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
+  const [filterPreset, setFilterPreset] = useState("today");
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
 
   useEffect(() => {
     loadOrders();
-  }, [selectedDate, showAll]);
+  }, [startDate, endDate, showAll]);
 
   const loadOrders = async () => {
     setLoading(true);
     try {
       const data = await ordersApi.getPreviousKitchenOrders(
-        showAll ? null : selectedDate,
+        showAll ? null : startDate,
+        showAll ? null : endDate,
         showAll
       );
       setOrders(data);
@@ -52,44 +109,48 @@ export default function PreviousKitchenOrders() {
     });
   };
 
-  const formatDateHeader = (dateString) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selected = new Date(dateString);
-    selected.setHours(0, 0, 0, 0);
-
-    if (selected.getTime() === today.getTime()) {
-      return "Today";
+  const getFilterDescription = () => {
+    if (startDate === endDate) {
+      const d = parseLocalDate(startDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (dMidnight.getTime() === today.getTime()) return "Today";
+      if (dMidnight.getTime() === yesterday.getTime()) return "Yesterday";
+      return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
     }
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (selected.getTime() === yesterday.getTime()) {
-      return "Yesterday";
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+    return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} – ${end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+  };
+
+  const handlePresetChange = (e) => {
+    const preset = e.target.value;
+    setFilterPreset(preset);
+    setShowAll(false);
+    const range = getRangeForPreset(preset);
+    if (range) {
+      setStartDate(range.start);
+      setEndDate(range.end);
     }
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
   };
 
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
+  const handleStartDateChange = (e) => {
+    const value = e.target.value;
+    setStartDate(value);
+    setFilterPreset("");
     setShowAll(false);
+    if (value > endDate) setEndDate(value);
   };
 
-  const setToday = () => {
-    const today = new Date();
-    setSelectedDate(today.toISOString().split("T")[0]);
-  };
-
-  const setYesterday = () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    setSelectedDate(yesterday.toISOString().split("T")[0]);
+  const handleEndDateChange = (e) => {
+    const value = e.target.value;
+    setEndDate(value);
+    setFilterPreset("");
     setShowAll(false);
+    if (value < startDate) setStartDate(value);
   };
 
   const handleShowAll = () => {
@@ -147,39 +208,63 @@ export default function PreviousKitchenOrders() {
           </div>
           {!showAll && (
             <>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div className="flex-1">
-                  <label
-                    htmlFor="date-picker"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Select Date
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:flex-wrap">
+                <div className="min-w-[10rem]">
+                  <label htmlFor="filter-preset" className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Quick filter
                   </label>
-                  <input
-                    type="date"
-                    id="date-picker"
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-[var(--coffee-brown)] focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
-                  />
+                  <div className="relative">
+                    <select
+                      id="filter-preset"
+                      value={filterPreset}
+                      onChange={handlePresetChange}
+                      className="w-full appearance-none rounded-lg border-2 border-[var(--coffee-brown-light)] bg-white px-4 py-2.5 pr-10 text-[var(--coffee-brown)] transition-colors focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-opacity-40 cursor-pointer"
+                      style={{ accentColor: "var(--lime-green)" }}
+                    >
+                      <option value="today">Today</option>
+                      <option value="yesterday">Yesterday</option>
+                      <option value="lastWeek">Last Week</option>
+                      <option value="lastMonth">Last Month</option>
+                      <option value="lastYear">Last Year</option>
+                    </select>
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--coffee-brown)]" aria-hidden>
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={setToday}
-                    className="rounded-lg bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-[var(--lime-green-dark)]"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={setYesterday}
-                    className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:bg-gray-300"
-                  >
-                    Yesterday
-                  </button>
+                <div className="flex-1 flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="min-w-[10rem]">
+                    <label htmlFor="date-start" className="mb-2 block text-sm font-medium text-gray-700">
+                      From
+                    </label>
+                    <input
+                      type="date"
+                      id="date-start"
+                      value={startDate}
+                      onChange={handleStartDateChange}
+                      max={endDate}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-[var(--coffee-brown)] focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
+                    />
+                  </div>
+                  <div className="min-w-[10rem]">
+                    <label htmlFor="date-end" className="mb-2 block text-sm font-medium text-gray-700">
+                      To
+                    </label>
+                    <input
+                      type="date"
+                      id="date-end"
+                      value={endDate}
+                      onChange={handleEndDateChange}
+                      min={startDate}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-[var(--coffee-brown)] focus:border-[var(--lime-green)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)]"
+                    />
+                  </div>
                 </div>
               </div>
               <p className="mt-2 text-sm text-gray-600">
-                Showing orders from: <span className="font-semibold">{formatDateHeader(selectedDate)}</span>
+                Showing orders: <span className="font-semibold">{getFilterDescription()}</span>
               </p>
             </>
           )}
@@ -201,7 +286,7 @@ export default function PreviousKitchenOrders() {
             </div>
           ) : orders.length === 0 ? (
             <div className="rounded-lg bg-white p-12 text-center shadow-md">
-              <p className="text-lg text-gray-500">No orders found for this date</p>
+              <p className="text-lg text-gray-500">No orders found for the selected date range</p>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

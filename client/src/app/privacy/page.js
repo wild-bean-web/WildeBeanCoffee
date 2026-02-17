@@ -358,6 +358,24 @@ export default function PrivacyPolicyPage() {
                   <strong>Wild Bean Coffee</strong>
                 </p>
                 <p className="mb-2">
+                  Email:{" "}
+                  <a
+                    href="mailto:wildbeancoffeellc@gmail.com"
+                    className="text-[var(--lime-green)] hover:underline"
+                  >
+                    wildbeancoffeellc@gmail.com
+                  </a>
+                </p>
+                <p className="mb-2">
+                  Phone:{" "}
+                  <a
+                    href="tel:+12406456203"
+                    className="text-[var(--lime-green)] hover:underline"
+                  >
+                    +1 240-645-6203
+                  </a>
+                </p>
+                <p className="mb-2">
                   Visit our{" "}
                   <Link
                     href="/location"
@@ -365,12 +383,11 @@ export default function PrivacyPolicyPage() {
                   >
                     Location & Hours
                   </Link>{" "}
-                  page for our address and contact information.
+                  page for our address and hours.
                 </p>
                 <p className="text-sm text-gray-600">
-                  For privacy-related inquiries, please visit us in-store or
-                  contact us through the information provided on our location
-                  page.
+                  For privacy-related inquiries, please contact us by email or
+                  phone, or visit us in-store.
                 </p>
               </div>
             </section>

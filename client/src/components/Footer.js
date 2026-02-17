@@ -64,7 +64,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[var(--coffee-brown-dark)] text-white">
+    <footer className="w-full max-w-full overflow-x-hidden bg-[var(--coffee-brown-dark)] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -122,13 +122,32 @@ export default function Footer() {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
+                >
+                  Terms of Use
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
             <h3 className="mb-4 text-lg font-semibold">Contact</h3>
+            <p className="mb-2 text-sm text-gray-300">
+              <a href="tel:+12406456203" className="transition-colors hover:text-[var(--lime-green)]">
+                +1 240-645-6203
+              </a>
+            </p>
             <p className="mb-4 text-sm text-gray-300">
-              Visit our location page for address, hours, and contact
-              information.
+              <a href="mailto:wildbeancoffeellc@gmail.com" className="transition-colors hover:text-[var(--lime-green)]">
+                wildbeancoffeellc@gmail.com
+              </a>
+            </p>
+            <p className="mb-8 text-sm text-gray-300">
+              <Link href="/location" className="transition-colors hover:text-[var(--lime-green)]">
+                Location, hours & directions
+              </Link>
             </p>
             {/* Social Media Icons */}
             <div className="flex items-center gap-4">
