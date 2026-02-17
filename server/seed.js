@@ -180,15 +180,14 @@ const menuItems = [
     active: true,
   },
   {
-    name: "Espresso Energy",
-    description:
-      "Espresso, Oat Milk, Vanilla Yogurt, Cocoa Powder, Cinnamon, Honey (Served Over Ice)",
+    name: "Dirty Banana Smoothie",
+    description: "Espresso, Banana, Yogurt Chocolate Sauce, Honey",
     price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "espresso", "energy"],
+    tags: ["smoothie", "organic", "fresh", "espresso", "banana"],
     allergens: ["Dairy"],
-    image: "/images/menu/Smoothies/EspressoEnergyLand.png",
+    image: "/images/menu/Smoothies/DirtyBananaSmoothieLand.png",
     available: true,
     active: true,
   },
@@ -356,7 +355,7 @@ const locations = [
     postalCode: "20852",
     country: "US",
     coordinates: { lat: 39.0629, lng: -77.1291 },
-    phone: "+1 240-646-6503",
+    phone: "+1 240-645-6203",
     email: "wildbeancoffeellc@gmail.com",
     mapsUrl: "",
     hours: [
