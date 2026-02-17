@@ -176,6 +176,17 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Wild Vegan Base",
+    description: "Chia seed pudding made with plant-based almond milk (vegan)",
+    type: "single",
+    required: true,
+    minSelections: 1,
+    maxSelections: 1,
+    options: [
+      { name: "Chia Seeds Pudding", price: 0, available: true },
+    ],
+  },
+  {
     name: "Oatmeal Dried Toppings",
     description: "Choose up to 8 dried toppings",
     type: "multiple",
