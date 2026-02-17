@@ -332,7 +332,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GreenGlowLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Milk Choice (Smoothies)", "Smoothie Add-Ons", "Yogurt Choice"],
+    modifierGroupNames: [
+      "Milk Choice (Smoothies)",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
   {
     name: "Berry Boost",
@@ -346,7 +350,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/BerryBoostLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Milk Choice (Smoothies)", "Smoothie Add-Ons", "Yogurt Choice"],
+    modifierGroupNames: [
+      "Milk Choice (Smoothies)",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
   {
     name: "Tropical Bliss",
@@ -374,12 +382,15 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/NuttyBananaBlissLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Milk Choice (Smoothies)", "Smoothie Add-Ons", "Yogurt Choice"],
+    modifierGroupNames: [
+      "Milk Choice (Smoothies)",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
   {
     name: "Guava Cream",
-    description:
-      "Guava, yogurt, avocado, fresh lime\nAllergens: Dairy",
+    description: "Guava, yogurt, avocado, fresh lime\nAllergens: Dairy",
     price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -388,11 +399,16 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GuavaCreamLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Milk Choice (Smoothies)", "Smoothie Add-Ons", "Yogurt Choice"],
+    modifierGroupNames: [
+      "Milk Choice (Smoothies)",
+      "Smoothie Add-Ons",
+      "Yogurt Choice",
+    ],
   },
   {
     name: "Dirty Banana Smoothie",
-    description: "Espresso, Banana, Yogurt Chocolate Sauce, Honey\nAllergens: Dairy",
+    description:
+      "Espresso, Banana, Yogurt Chocolate Sauce, Honey\nAllergens: Dairy",
     price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -424,6 +440,26 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Oatmeal Base",
+      "Oatmeal Dried Toppings",
+      "Oatmeal Drizzels",
+      "Oatmeal Fruit Toppings",
+      "Oatmeal EXTRA Add-Ons",
+    ],
+  },
+  {
+    name: "Wild Vegan",
+    description:
+      "Vegan build-your-own bowl. Base: chia seed pudding (plant-based almond milk). Same rules as Wild Bowl: 2 choice of fresh fruits, any dry toppings, and any drizzles.",
+    price: 9.99,
+    currency: "USD",
+    section: "Wild Bowl",
+    tags: ["bowl", "custom", "healthy", "breakfast", "vegan"],
+    allergens: [],
+    image: "/images/menu/Oatmeals/NutFree.png",
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Wild Vegan Base",
       "Oatmeal Dried Toppings",
       "Oatmeal Drizzels",
       "Oatmeal Fruit Toppings",
