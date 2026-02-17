@@ -268,8 +268,8 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Espresso Energy",
-      description: "Espresso, milk, yogurt, cocoa, cinnamon, honey (served over ice)\nAllergens: Dairy",
+      name: "Dirty Banana Smoothie",
+      description: "Espresso, Banana, Yogurt Chocolate Sauce, Honey\nAllergens: Dairy",
       price: 7.75,
       section: "Smoothies",
       modifierGroups: ["Shot Preference", "Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],

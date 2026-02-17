@@ -148,9 +148,9 @@ export const modifierGroups = [
   },
   {
     name: "Ice Level",
-    description: "Select your ice preference",
+    description: "Select your ice preference (optional)",
     type: "single",
-    required: true,
+    required: false,
     options: [
       { name: "No Ice", price: 0, available: true },
       { name: "Light Ice", price: 0, available: true },

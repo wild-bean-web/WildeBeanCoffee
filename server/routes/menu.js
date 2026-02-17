@@ -81,7 +81,7 @@ router.get("/", async (req, res, next) => {
         "Tropical Bliss",
         "Nutty Banana Bliss",
         "Guava Cream",
-        "Espresso Energy",
+        "Dirty Banana Smoothie",
       ];
       
       items.sort((a, b) => {

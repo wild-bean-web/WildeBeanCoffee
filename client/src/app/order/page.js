@@ -433,6 +433,20 @@ function OrderPageContent() {
     }).format(price);
   };
 
+  // Hot coffee = Coffee & Espresso section + hot (not iced/cold)
+  const isHotCoffeeDrink = (item) => {
+    const section = (item.section || "").trim();
+    const name = (item.name || "").toLowerCase();
+    const tags = Array.isArray(item.tags) ? item.tags.map((t) => (t || "").toLowerCase()) : [];
+    if (section !== "Coffee & Espresso") return false;
+    if (tags.includes("hot")) return true;
+    if (tags.includes("iced") || tags.includes("cold")) return false;
+    if (name.startsWith("iced") || name.startsWith("cold") || name.includes("cold brew")) return false;
+    return true; // default Coffee & Espresso items to hot if no cold/iced tag
+  };
+
+  const cartHasHotCoffee = cart.some(isHotCoffeeDrink);
+
   // Validation functions
   const validatePhone = (phone) => {
     // Remove all non-digit characters for validation
@@ -1215,6 +1229,19 @@ function OrderPageContent() {
                 })}
               </div>
 
+              {cartHasHotCoffee && (
+                <div className="mt-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                  <p className="flex items-start gap-2 text-sm font-medium text-amber-900">
+                    <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      Your order includes hot coffee. We&apos;ll make it when you arrive so it stays fresh and delicious.
+                    </span>
+                  </p>
+                </div>
+              )}
+
               <div className="mt-6 border-t border-gray-200 pt-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -1575,6 +1602,11 @@ function OrderPageContent() {
                       </div>
                     ) : (
                       <>
+                        {cartHasHotCoffee && (
+                          <p className="mb-3 text-center text-sm font-medium text-amber-800">
+                            Hot coffee in your order will be made when you arrive for pickup.
+                          </p>
+                        )}
                         <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
                           <p className="mb-4 text-gray-700">
                             You will be redirected to Clover's secure payment page to complete your order.
