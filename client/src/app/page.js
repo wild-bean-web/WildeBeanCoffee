@@ -30,6 +30,7 @@ export default function Home() {
   const heroRef = useRef(null);
   const [freshRoastedAnimation, setFreshRoastedAnimation] = useState(null);
   const [artOfBrewingAnimation, setArtOfBrewingAnimation] = useState(null);
+  const [googleReviewAnimation, setGoogleReviewAnimation] = useState(null);
 
   // Time-based state: only set after mount to avoid server/client hydration mismatch
   const [mounted, setMounted] = useState(false);
@@ -84,6 +85,12 @@ export default function Home() {
       .catch((err) =>
         console.error("Failed to load artOfBrewing Lottie animation:", err),
       );
+
+    // Load Google Review Lottie
+    fetch("/animations/googleReview.json")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load"))))
+      .then((data) => setGoogleReviewAnimation(data))
+      .catch((err) => console.error("Failed to load googleReview Lottie:", err));
   }, []);
 
   const slides = [
@@ -609,6 +616,68 @@ export default function Home() {
 
       {/* Social Media Gallery Section */}
       <SocialMediaGallery />
+
+      {/* Google Review — Help us grow */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
+        <div className="mx-auto max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="overflow-hidden rounded-2xl border-2 border-[var(--lime-green)]/20 bg-gradient-to-b from-[var(--lime-green)]/5 to-white p-6 sm:p-8 shadow-lg ring-1 ring-black/5"
+          >
+            <h2 className="mb-2 text-center text-2xl font-bold text-[var(--coffee-brown)] sm:text-3xl">
+              Help us grow — leave a review
+            </h2>
+            <p className="mb-6 text-center text-gray-600">
+              Loved your visit? Scan below to leave us a review on Google. It means a lot!
+            </p>
+            {googleReviewAnimation ? (
+              <div className="mb-4 flex justify-center">
+                <Lottie
+                  animationData={googleReviewAnimation}
+                  loop={true}
+                  className="h-28 w-full max-w-xs"
+                />
+              </div>
+            ) : (
+              <p className="mb-4 text-center text-sm font-medium text-[var(--coffee-brown)]">
+                Review us on Google
+              </p>
+            )}
+            <p className="mb-4 text-center text-sm text-gray-600">
+              Scan the QR code below to leave a review
+            </p>
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[var(--lime-green)]/30 to-[var(--coffee-brown)]/10 blur-sm" aria-hidden />
+                <div className="relative flex flex-col items-center rounded-2xl border-2 border-[var(--lime-green)]/40 bg-white p-4 shadow-inner">
+                  <div className="absolute left-2 top-2 h-4 w-4 border-l-2 border-t-2 border-[var(--lime-green)]/60 rounded-tl" aria-hidden />
+                  <div className="absolute right-2 top-2 h-4 w-4 border-r-2 border-t-2 border-[var(--lime-green)]/60 rounded-tr" aria-hidden />
+                  <div className="absolute bottom-2 left-2 h-4 w-4 border-b-2 border-l-2 border-[var(--lime-green)]/60 rounded-bl" aria-hidden />
+                  <div className="absolute bottom-2 right-2 h-4 w-4 border-b-2 border-r-2 border-[var(--lime-green)]/60 rounded-br" aria-hidden />
+                  <div className="relative h-40 w-40 rounded-xl bg-white p-3">
+                    <Image
+                      src="/images/QrCodes/GoogleReviewQRCODE.png"
+                      alt="QR code to leave a Google review for Wild Bean Coffee"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[var(--coffee-brown)]">
+                    <svg className="h-4 w-4 text-[var(--lime-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Scan with your phone
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="bg-gradient-to-r from-[var(--lime-green)] to-[var(--lime-green-light)] py-20 px-4 sm:px-6 lg:px-8">
