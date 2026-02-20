@@ -64,6 +64,8 @@ export default function CustomizationModal({
               defaultOption = group.options.find(opt => opt.name === "2% Milk" && opt.available);
             } else if (group.name === "Yogurt Choice") {
               defaultOption = group.options.find(opt => opt.name === "Regular Yogurt" && opt.available);
+            } else if (group.name === "Wild Vegan Base") {
+              defaultOption = group.options.find(opt => opt.name === "Chia Seeds Pudding" && opt.available);
             }
             
             // If a default option is found and the group is required, set it
@@ -117,6 +119,22 @@ export default function CustomizationModal({
 
     return basePrice + modifierTotal;
   }, [menuItem, selectedModifiers, modifierQuantities]);
+
+  // Derive whether current selection meets all required modifier rules (for disabling Add to Cart)
+  const canAddToCart = useMemo(() => {
+    if (!menuItem?.modifierGroups) return true;
+    for (const group of menuItem.modifierGroups) {
+      if (!group.required) continue;
+      const selected = selectedModifiers[group.name] || [];
+      if (group.type === "single") {
+        if (selected.length === 0) return false;
+      } else if (group.type === "multiple") {
+        const minSelections = group.minSelections ?? 0;
+        if (selected.length < minSelections) return false;
+      }
+    }
+    return true;
+  }, [menuItem, selectedModifiers]);
 
   // Validate required modifiers
   const validateModifiers = () => {
@@ -357,21 +375,33 @@ export default function CustomizationModal({
                     const selected = selectedModifiers[group.name] || [];
                     const hasError = validationErrors[group.name];
                     const availableOptions = (group.options || []).filter((opt) => opt.available);
+                    const isWildVeganBase = group.name === "Wild Vegan Base";
 
                     return (
                       <div key={group._id || group.name} className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-base font-semibold text-gray-900">
                             {group.displayName || group.name}
-                            {group.required && (
+                            {group.required && !isWildVeganBase && (
                               <span className="text-red-500 ml-1">*</span>
                             )}
                           </label>
-                          {group.description && (
+                          {group.description && !isWildVeganBase && (
                             <span className="text-xs text-gray-500">{group.description}</span>
                           )}
                         </div>
 
+                        {isWildVeganBase ? (
+                          <div className="rounded-lg border-2 border-[var(--lime-green)]/30 bg-[var(--lime-green)]/5 p-4">
+                            <p className="text-sm font-medium text-gray-800">
+                              This bowl comes with <span className="font-semibold text-[var(--coffee-brown)]">Chia Seed Pudding</span> (made with plant-based almond milk).
+                            </p>
+                            <p className="mt-1 text-xs text-gray-600">
+                              No selection needed — just choose your dried toppings, fruits, and optional drizzles below.
+                            </p>
+                          </div>
+                        ) : (
+                        <>
                         {hasError && (
                           <p className="text-sm text-red-500">{hasError}</p>
                         )}
@@ -542,6 +572,8 @@ export default function CustomizationModal({
                             Select up to {group.maxSelections} option(s)
                           </p>
                         )}
+                        </>
+                        )}
                       </div>
                     );
                   })}
@@ -592,10 +624,16 @@ export default function CustomizationModal({
               </div>
               <button
                 onClick={handleAddToCart}
-                className="w-full rounded-lg bg-[var(--lime-green)] px-6 py-3 text-white font-semibold hover:bg-[var(--lime-green-dark)] transition-colors shadow-lg"
+                disabled={!canAddToCart}
+                className="w-full rounded-lg bg-[var(--lime-green)] px-6 py-3 text-white font-semibold hover:bg-[var(--lime-green-dark)] transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {existingCartItem ? "Update Cart" : "Add to Cart"}
               </button>
+              {!canAddToCart && (
+                <p className="mt-2 text-center text-sm text-amber-700">
+                  Please meet all requirements above (base, dried toppings, fruits) to add to cart.
+                </p>
+              )}
             </div>
           </motion.div>
         </motion.div>
