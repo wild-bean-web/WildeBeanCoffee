@@ -31,8 +31,10 @@ export default function Home() {
   const [freshRoastedAnimation, setFreshRoastedAnimation] = useState(null);
   const [artOfBrewingAnimation, setArtOfBrewingAnimation] = useState(null);
 
-  const [now, setNow] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
-  const isOpen = now >= GRAND_OPENING_DATE.getTime();
+  // Time-based state: only set after mount to avoid server/client hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState(0);
+  const isOpen = mounted && now >= GRAND_OPENING_DATE.getTime();
   const timeLeft = getTimeLeft(now);
 
   // Load Lottie animation data
@@ -136,9 +138,9 @@ export default function Home() {
     },
   ];
 
-  // Update countdown every second until grand opening
+  // After mount: set time and tick every second (avoids hydration mismatch)
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    setMounted(true);
     setNow(Date.now());
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
@@ -193,9 +195,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen min-w-0 max-w-full bg-white overflow-x-hidden">
-      {/* Grand opening countdown — hidden after Feb 16, 2026 6am */}
+      {/* Grand opening countdown — only after mount, hidden after Feb 16, 2026 6am */}
       <AnimatePresence>
-        {!isOpen && (
+        {mounted && !isOpen && (
           <motion.section
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}

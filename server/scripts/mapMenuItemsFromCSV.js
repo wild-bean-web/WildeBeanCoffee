@@ -156,14 +156,6 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Iced Cappuccino",
-      description: "Chilled espresso with milk and foam over ice.",
-      price: 4.85,
-      section: "Cold Coffee",
-      modifierGroups: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
-      allergens: ["Dairy"],
-    },
-    {
       name: "Iced Latte",
       description: "Espresso with cold milk poured over ice.",
       price: 4.65,
