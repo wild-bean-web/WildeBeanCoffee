@@ -198,7 +198,7 @@ export default function ShopPage() {
               Shop Coffee Beans
             </h1>
             <p className="text-lg text-gray-600">
-              Discover our selection of premium, fresh-roasted coffee beans
+              Discover our selection of premium coffee beans
             </p>
           </div>
         </div>

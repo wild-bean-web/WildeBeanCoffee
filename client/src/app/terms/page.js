@@ -103,6 +103,12 @@ export default function TermsOfUsePage() {
               <p className="mb-4 leading-relaxed">
                 We strive to display accurate pricing and product information. We do not warrant that descriptions, pricing, or other content on the Site are accurate, complete, or current. We reserve the right to correct errors and to change or update information at any time. If an order is placed at an incorrect price due to an error, we may cancel the order or contact you to confirm the correct price.
               </p>
+              <h3 className="mb-3 text-xl font-semibold text-[var(--coffee-brown)]">
+                5.4 Product and Menu Images (Visual Depictions)
+              </h3>
+              <p className="mb-4 leading-relaxed">
+                Images of menu items, beverages, food products, and other visual content on the Site are for <strong>illustration and display purposes only</strong>. Such images may be stylized, digitally enhanced, or otherwise representational and <strong>do not constitute a guarantee or representation that the actual products you receive will match the images shown</strong>. Actual presentation, portion size, color, and appearance may vary. By using the Site and placing orders, you acknowledge and agree that you have not relied on any image as a precise depiction of the product and that Wild Bean Coffee is not liable for any difference between depicted and actual products.
+              </p>
             </section>
 
             <section>

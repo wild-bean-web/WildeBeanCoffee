@@ -44,7 +44,7 @@ const products = [
     comingSoon: true,
   },
   {
-    name: "Ethiopia Sedamo",
+    name: "Ethiopia Sidamo",
     description:
       "Rich and full-bodied with wine-like acidity and fruity notes. A distinctive Ethiopian coffee.",
     price: 17.0,
@@ -54,7 +54,7 @@ const products = [
     flavorNotes: ["Wine", "Berry", "Citrus", "Floral"],
     inStock: true,
     inventory: 35,
-    images: ["/images/products/single-origin/ethiopia-sedamo.jpeg"],
+    images: ["/images/products/single-origin/ethiopia-sidamo.jpeg"],
     categories: ["single-origin", "medium-roast"],
     active: true,
     comingSoon: true,

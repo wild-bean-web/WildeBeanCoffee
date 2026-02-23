@@ -68,6 +68,16 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Smoothie Size",
+    description: "Choose your size (required). 20oz is +$0.75.",
+    type: "single",
+    required: true,
+    options: [
+      { name: "16oz", price: 0, available: true },
+      { name: "20oz", price: 0.75, available: true },
+    ],
+  },
+  {
     name: "Syrup Pumps (+$0.20 each)",
     description: "Add flavored syrup pumps",
     type: "multiple",
@@ -121,31 +131,42 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Extra Single Shots (Smoothie)",
+    description: "Add espresso shots to your smoothie ($1.25 per shot, max 2)",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 2,
+    options: [
+      { name: "Extra Single Shot", price: 1.25, available: true },
+    ],
+  },
+  {
     name: "Milk Choice",
-    description: "Select your milk preference",
+    description: "Select your milk preference. Non-dairy +$0.75.",
     type: "single",
     required: true,
     options: [
+      { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
-      { name: "Oat Milk", price: 0.5, available: true },
-      { name: "Soy Milk", price: 0.75, available: true },
       { name: "No Milk", price: 0, available: true },
-      { name: "Almond Milk", price: 0.5, available: true },
-      { name: "Whole Milk (Disabled)", price: 0, available: false },
+      { name: "Oat Milk", price: 0.75, available: true },
+      { name: "Soy Milk", price: 0.75, available: true },
+      { name: "Almond Milk", price: 0.75, available: true },
     ],
   },
   {
     name: "Milk Choice (Smoothies)",
-    description: "Select your milk preference",
+    description: "Select your milk preference. Non-dairy +$0.75.",
     type: "single",
     required: true,
     options: [
-      { name: "Almond Milk", price: 0, available: true },
+      { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
-      { name: "Oat Milk", price: 0.5, available: true },
-      { name: "Soy Milk", price: 0.75, available: true },
       { name: "No Milk", price: 0, available: true },
-      { name: "Whole Milk (Disabled)", price: 0, available: false },
+      { name: "Almond Milk", price: 0.75, available: true },
+      { name: "Oat Milk", price: 0.75, available: true },
+      { name: "Soy Milk", price: 0.75, available: true },
     ],
   },
   {
@@ -186,6 +207,18 @@ export const modifierGroups = [
     maxSelections: 1,
     options: [
       { name: "Chia Seeds Pudding", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Oatmeal Bowl Size",
+    description: "Choose your bowl size (required). Medium is +$1.",
+    type: "single",
+    required: true,
+    minSelections: 1,
+    maxSelections: 1,
+    options: [
+      { name: "Small (12oz)", price: 0, available: true },
+      { name: "Medium (16oz)", price: 1, available: true },
     ],
   },
   {
