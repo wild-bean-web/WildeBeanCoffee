@@ -79,7 +79,7 @@ describe("Products API", () => {
     it("should search by name", async () => {
       const p1 = await createTestProduct({ name: "Ethiopia Yirgacheffe", active: true });
       const p2 = await createTestProduct({ name: "Colombian Supremo", active: true });
-      const p3 = await createTestProduct({ name: "Ethiopia Sedamo", active: true });
+      const p3 = await createTestProduct({ name: "Ethiopia Sidamo", active: true });
 
       expect(p1._id).toBeDefined();
       expect(p2._id).toBeDefined();
