@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import { Order } from "../models/index.js";
+import { Order, Location } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
 import { optionalAuth, authenticate, authenticateWithQueryToken } from "../middleware/auth.js";
 import { EventEmitter } from "events";
@@ -86,6 +86,37 @@ function validateOrderPayload(body) {
   return errors;
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Returns an error message if pickup time is outside store hours; otherwise null. */
+async function validatePickupTimeWithinHours(pickupTime) {
+  if (!pickupTime) return null;
+  const date = new Date(pickupTime);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const location = await Location.findOne({ active: true }).lean();
+  if (!location?.hours?.length) return null;
+
+  const dayName = DAY_NAMES[date.getDay()];
+  const dayHours = location.hours.find((h) => h.day === dayName);
+  if (!dayHours?.closed && dayHours?.opens != null && dayHours?.closes != null) {
+    const [openH, openM] = (dayHours.opens || "06:00").split(":").map(Number);
+    const [closeH, closeM] = (dayHours.closes || "16:00").split(":").map(Number);
+    const openMinutes = openH * 60 + (openM || 0);
+    const closeMinutes = closeH * 60 + (closeM || 0);
+    const pickupMinutes = date.getHours() * 60 + date.getMinutes();
+    if (pickupMinutes < openMinutes) {
+      return `Pickup time is before opening (${dayHours.opens}). Please choose a time when we're open.`;
+    }
+    if (pickupMinutes >= closeMinutes) {
+      return `Pickup time is at or after closing (${dayHours.closes}). Please choose a time when we're open.`;
+    }
+  } else if (dayHours?.closed) {
+    return "We're closed on that day. Please choose another pickup date.";
+  }
+  return null;
+}
+
 // POST /api/orders
 // Use optionalAuth to support both authenticated and guest orders
 // Admin comped orders (ADMIN_DISCOUNT) allowed only for authenticated admin users
@@ -98,6 +129,11 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
+
+    const pickupTimeError = await validatePickupTimeWithinHours(pickupTime);
+    if (pickupTimeError) {
+      return errorResponse(res, 400, pickupTimeError, ["pickupTime"]);
+    }
 
     const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
     if (isAdminOrder) {
