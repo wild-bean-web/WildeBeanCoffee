@@ -16,12 +16,18 @@ function OrderPageContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
-  const [now, setNow] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
+  const [now, setNow] = useState(() =>
+    typeof window !== "undefined" ? Date.now() : 0,
+  );
   const isOrderingOpenToAll = now >= GRAND_OPENING_DATE.getTime();
 
   // Admin emails - only admins can place orders before grand opening; their orders are comped for QA/testing
-  const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
-  const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const ADMIN_EMAILS = [
+    "danielwoldehana@yahoo.com",
+    "wildbeancoffeellc@gmail.com",
+  ];
+  const isAdmin =
+    user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,9 +56,10 @@ function OrderPageContent() {
   const [notes, setNotes] = useState("");
   const [storeHours, setStoreHours] = useState({ open: 6, close: 16 }); // Default fallback (6am-4pm)
   const [successAnimation, setSuccessAnimation] = useState(null);
-  
+
   // Customization modal state
-  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] =
+    useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
 
   // Get the section to return to from URL params
@@ -82,14 +89,17 @@ function OrderPageContent() {
         if (location?.hours && location.hours.length > 0) {
           // Get hours for today (or use first day as default)
           const today = new Date();
-          const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
-          const todayHours = location.hours.find((h) => h.day === dayName) || location.hours[0];
-          
+          const dayName = today.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+          const todayHours =
+            location.hours.find((h) => h.day === dayName) || location.hours[0];
+
           if (todayHours && !todayHours.closed) {
             // Parse opening and closing times (format: "HH:mm")
             const openTime = todayHours.opens?.split(":") || ["07", "00"];
             const closeTime = todayHours.closes?.split(":") || ["20", "00"];
-            
+
             setStoreHours({
               open: parseInt(openTime[0], 10),
               close: parseInt(closeTime[0], 10),
@@ -115,10 +125,15 @@ function OrderPageContent() {
           const data = JSON.parse(text);
           setSuccessAnimation(data);
         } catch (parseError) {
-          console.error("Failed to parse SuccessToast Lottie JSON:", parseError);
+          console.error(
+            "Failed to parse SuccessToast Lottie JSON:",
+            parseError,
+          );
         }
       })
-      .catch((err) => console.error("Failed to load SuccessToast Lottie animation:", err));
+      .catch((err) =>
+        console.error("Failed to load SuccessToast Lottie animation:", err),
+      );
   }, []);
 
   // Pre-fill customer info when user is signed in
@@ -150,7 +165,10 @@ function OrderPageContent() {
     }
 
     // If before store open time + 15 minutes, start at store open time
-    if (firstHour < storeHours.open || (firstHour === storeHours.open && firstMinute < 15)) {
+    if (
+      firstHour < storeHours.open ||
+      (firstHour === storeHours.open && firstMinute < 15)
+    ) {
       firstHour = storeHours.open;
       firstMinute = 0;
     }
@@ -231,7 +249,7 @@ function OrderPageContent() {
       const day = String(date.getDate()).padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
       const slots = getTimeSlotsForDate(dateString);
-      
+
       // Only include dates that have available time slots
       if (slots.length > 0 || i > 0) {
         dates.push({
@@ -260,15 +278,28 @@ function OrderPageContent() {
   // Format date for display
   const formatDateDisplay = (dateString, isToday) => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
     // Parse date string in local time to avoid timezone issues
     const date = parseLocalDate(dateString);
-    
+
     if (isToday) {
       return `Today, ${months[date.getMonth()]} ${date.getDate()}`;
     }
-    
+
     const dayName = days[date.getDay()];
     return `${dayName}, ${months[date.getMonth()]} ${date.getDate()}`;
   };
@@ -316,30 +347,35 @@ function OrderPageContent() {
     const handleClickOutside = (event) => {
       if (showDatePicker || showTimePicker) {
         const target = event.target;
-        if (!target.closest('[data-date-picker]') && !target.closest('[data-time-picker]')) {
+        if (
+          !target.closest("[data-date-picker]") &&
+          !target.closest("[data-time-picker]")
+        ) {
           setShowDatePicker(false);
           setShowTimePicker(false);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showDatePicker, showTimePicker]);
 
   const updateQuantity = (itemKey, change) => {
     setCart((prevCart) => {
-      const updated = prevCart.map((item) => {
-        const key = item.cartKey || item._id;
-        if (key === itemKey) {
-          const newQuantity = item.quantity + change;
-          if (newQuantity <= 0) return null;
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean);
+      const updated = prevCart
+        .map((item) => {
+          const key = item.cartKey || item._id;
+          if (key === itemKey) {
+            const newQuantity = item.quantity + change;
+            if (newQuantity <= 0) return null;
+            return { ...item, quantity: newQuantity };
+          }
+          return item;
+        })
+        .filter(Boolean);
 
       localStorage.setItem("cart", JSON.stringify(updated));
       return updated;
@@ -392,7 +428,9 @@ function OrderPageContent() {
         const key = item.cartKey || item._id;
         if (key === itemKey) {
           // Update the item with new modifiers and recalculate cartKey
-          const newCartKey = updatedCartItem.cartKey || `${updatedCartItem._id}_${JSON.stringify(updatedCartItem.modifiers || [])}`;
+          const newCartKey =
+            updatedCartItem.cartKey ||
+            `${updatedCartItem._id}_${JSON.stringify(updatedCartItem.modifiers || [])}`;
           return {
             ...updatedCartItem,
             cartKey: newCartKey,
@@ -418,11 +456,11 @@ function OrderPageContent() {
     }, 0);
     const tax = subtotal * taxRate;
     const beforeDiscount = subtotal + tax;
-    
+
     // Apply 100% discount for admins
     const discount = isAdmin ? beforeDiscount : 0;
     const total = isAdmin ? 0 : beforeDiscount;
-    
+
     return { subtotal, tax, discount, total, isAdmin };
   };
 
@@ -437,11 +475,18 @@ function OrderPageContent() {
   const isHotCoffeeDrink = (item) => {
     const section = (item.section || "").trim();
     const name = (item.name || "").toLowerCase();
-    const tags = Array.isArray(item.tags) ? item.tags.map((t) => (t || "").toLowerCase()) : [];
+    const tags = Array.isArray(item.tags)
+      ? item.tags.map((t) => (t || "").toLowerCase())
+      : [];
     if (section !== "Coffee & Espresso") return false;
     if (tags.includes("hot")) return true;
     if (tags.includes("iced") || tags.includes("cold")) return false;
-    if (name.startsWith("iced") || name.startsWith("cold") || name.includes("cold brew")) return false;
+    if (
+      name.startsWith("iced") ||
+      name.startsWith("cold") ||
+      name.includes("cold brew")
+    )
+      return false;
     return true; // default Coffee & Espresso items to hot if no cold/iced tag
   };
 
@@ -464,23 +509,23 @@ function OrderPageContent() {
 
   const validateForm = () => {
     const errors = {};
-    
+
     // Only validate customer info if user is not signed in
     if (!user) {
       if (!customerInfo.firstName || !customerInfo.firstName.trim()) {
         errors.firstName = "First name is required";
       }
-      
+
       if (!customerInfo.lastName || !customerInfo.lastName.trim()) {
         errors.lastName = "Last name is required";
       }
-      
+
       if (!customerInfo.phone || !customerInfo.phone.trim()) {
         errors.phone = "Phone number is required";
       } else if (!validatePhone(customerInfo.phone)) {
         errors.phone = "Please enter a valid phone number (at least 10 digits)";
       }
-      
+
       // Email is required for payment processing
       if (!customerInfo.email || !customerInfo.email.trim()) {
         errors.email = "Email is required";
@@ -498,11 +543,11 @@ function OrderPageContent() {
     if (!selectedDate) {
       errors.pickupDate = "Please select a pickup date";
     }
-    
+
     if (!selectedTime) {
       errors.pickupTime = "Please select a pickup time";
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -526,8 +571,13 @@ function OrderPageContent() {
     setPaymentProcessing(true);
 
     try {
-      const { subtotal, tax, total, isAdmin: isAdminDiscount } = calculateTotals();
-      
+      const {
+        subtotal,
+        tax,
+        total,
+        isAdmin: isAdminDiscount,
+      } = calculateTotals();
+
       // If admin, skip payment and create order directly
       if (isAdminDiscount && total === 0) {
         await handleAdminOrder();
@@ -539,7 +589,7 @@ function OrderPageContent() {
         const basePrice = item.price || 0;
         const modifierTotal = item.modifierTotal || 0;
         const itemPrice = basePrice + modifierTotal;
-        
+
         return {
           name: item.name,
           quantity: item.quantity,
@@ -574,18 +624,26 @@ function OrderPageContent() {
       if (!customerData.email || !customerData.email.trim()) {
         throw new Error("Email is required");
       }
-      
-      console.log("[ORDER PAGE] Customer data being sent:", JSON.stringify({
-        firstName: customerData.firstName,
-        lastName: customerData.lastName,
-        email: customerData.email,
-        hasPhone: !!customerData.phone,
-      }, null, 2));
+
+      console.log(
+        "[ORDER PAGE] Customer data being sent:",
+        JSON.stringify(
+          {
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            email: customerData.email,
+            hasPhone: !!customerData.phone,
+          },
+          null,
+          2,
+        ),
+      );
 
       // Build redirect URLs using production domain
-      const baseUrl = typeof window !== "undefined" 
-        ? window.location.origin 
-        : "https://wildbeancoffeeshop.com";
+      const baseUrl =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : "https://wildbeancoffeeshop.com";
       // Include placeholder for checkout session ID (Clover replaces it with actual ID)
       const successUrl = `${baseUrl}/order/success?checkoutId={CHECKOUT_SESSION_ID}`;
       const failureUrl = `${baseUrl}/order/failure`;
@@ -611,15 +669,23 @@ function OrderPageContent() {
         email: customerData.email || undefined,
       };
 
+      // Include modifiers so kitchen/receipt have full customization (e.g. Build Your Own Bowl)
       const orderData = {
         customer: orderCustomerData,
-        items: cart.map((item) => ({
-          itemType: item.itemType || "product",
-          itemId: item._id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-        })),
+        items: cart.map((item) => {
+          const basePrice = item.price || 0;
+          const modifierTotal = item.modifierTotal || 0;
+          const itemPrice = basePrice + modifierTotal;
+          return {
+            itemType: item.itemType || "product",
+            itemId: item._id,
+            name: item.name,
+            price: itemPrice,
+            quantity: item.quantity,
+            modifiers: item.modifiers || [],
+            modifierTotal,
+          };
+        }),
         taxRate,
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
@@ -652,7 +718,7 @@ function OrderPageContent() {
         const basePrice = item.price || 0;
         const modifierTotal = item.modifierTotal || 0;
         const itemPrice = basePrice + modifierTotal;
-        
+
         return {
           itemType: item.itemType || "product",
           itemId: item._id,
@@ -691,12 +757,12 @@ function OrderPageContent() {
       const result = await ordersApi.create(orderData);
       setOrderId(result._id);
       setOrderPlaced(true);
-      
+
       // Clear cart
       localStorage.removeItem("cart");
       setCart([]);
     } catch (err) {
-      setError(err.message || 'Failed to create order. Please try again.');
+      setError(err.message || "Failed to create order. Please try again.");
     } finally {
       setLoading(false);
       setPaymentProcessing(false);
@@ -716,7 +782,7 @@ function OrderPageContent() {
         const basePrice = item.price || 0;
         const modifierTotal = item.modifierTotal || 0;
         const itemPrice = basePrice + modifierTotal;
-        
+
         return {
           itemType: item.itemType || "product", // 'product' or 'menu'
           itemId: item._id,
@@ -757,27 +823,30 @@ function OrderPageContent() {
 
       // Attempt to print receipt (non-blocking)
       try {
-        await fetch('/api/payments/print-receipt', {
-          method: 'POST',
+        await fetch("/api/payments/print-receipt", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             orderId: result._id,
           }),
         });
       } catch (printError) {
-        console.error('Receipt printing failed:', printError);
+        console.error("Receipt printing failed:", printError);
         // Don't fail the order if printing fails
       }
 
       setOrderPlaced(true);
-      
+
       // Clear cart
       localStorage.removeItem("cart");
       setCart([]);
     } catch (err) {
-      setError(err.message || 'Failed to create order. Payment was successful, please contact support.');
+      setError(
+        err.message ||
+          "Failed to create order. Payment was successful, please contact support.",
+      );
       // Payment was successful but order creation failed - this is a critical error
       // In production, you might want to implement a refund or manual order creation process
     } finally {
@@ -819,33 +888,34 @@ function OrderPageContent() {
           // iOS - try Apple Maps first
           const appleMapsUrl = `maps://maps.apple.com/?daddr=${encodedAddress}&dirflg=d`;
           window.location.href = appleMapsUrl;
-          
+
           // Fallback to Google Maps
           setTimeout(() => {
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-            window.open(googleMapsUrl, '_blank');
+            window.open(googleMapsUrl, "_blank");
           }, 500);
         } else if (/android/.test(userAgent)) {
           // Android - use Google Maps navigation intent
-          const intentUrl = location?.coordinates?.lat && location?.coordinates?.lng
-            ? `google.navigation:q=${location.coordinates.lat},${location.coordinates.lng}`
-            : `google.navigation:q=${encodedAddress}`;
+          const intentUrl =
+            location?.coordinates?.lat && location?.coordinates?.lng
+              ? `google.navigation:q=${location.coordinates.lat},${location.coordinates.lng}`
+              : `google.navigation:q=${encodedAddress}`;
           window.location.href = intentUrl;
-          
+
           // Fallback to web
           setTimeout(() => {
             const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-            window.open(webUrl, '_blank');
+            window.open(webUrl, "_blank");
           }, 500);
         } else {
           // Other mobile devices
           const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-          window.open(googleMapsUrl, '_blank');
+          window.open(googleMapsUrl, "_blank");
         }
       } else {
         // Desktop - open Google Maps in new tab
         const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-        window.open(googleMapsUrl, '_blank');
+        window.open(googleMapsUrl, "_blank");
       }
     } catch (err) {
       console.error("Error getting directions:", err);
@@ -868,18 +938,30 @@ function OrderPageContent() {
         <div className="mx-auto max-w-2xl text-center">
           <div className="rounded-xl border-2 border-yellow-200 bg-yellow-50 p-8 shadow-sm">
             <div className="mb-4 flex justify-center">
-              <svg className="h-16 w-16 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="h-16 w-16 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
             </div>
             <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)]">
               Online Ordering Unavailable
             </h1>
             <p className="mb-6 text-lg text-gray-700">
-              We're opening soon! Online ordering will be available Monday, February 16 at 6:00 AM.
+              We're opening soon! Online ordering will be available Monday,
+              February 16 at 6:00 AM.
             </p>
             <p className="mb-8 text-sm text-gray-600">
-              We can't wait to serve you. Visit us in-store or call us once we open to place your order.
+              We can't wait to serve you. Visit us in-store or call us once we
+              open to place your order.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Link
@@ -1020,7 +1102,11 @@ function OrderPageContent() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-6 flex items-center justify-between">
           <Link
-            href={fromSection ? `/menu?section=${encodeURIComponent(fromSection)}` : "/menu"}
+            href={
+              fromSection
+                ? `/menu?section=${encodeURIComponent(fromSection)}`
+                : "/menu"
+            }
             className="flex items-center gap-2 text-[var(--coffee-brown)] hover:text-[var(--coffee-brown-dark)] transition-colors"
           >
             <svg
@@ -1057,7 +1143,7 @@ function OrderPageContent() {
                   const modifierTotal = item.modifierTotal || 0;
                   const itemPrice = basePrice + modifierTotal;
                   const itemKey = item.cartKey || item._id;
-                  
+
                   return (
                     <motion.div
                       key={itemKey}
@@ -1078,7 +1164,7 @@ function OrderPageContent() {
                             />
                           </div>
                         )}
-                        
+
                         {/* Item Details - constrained width */}
                         <div className="flex-1 min-w-0 max-w-full">
                           {/* Header with name and action buttons */}
@@ -1086,26 +1172,27 @@ function OrderPageContent() {
                             <h3 className="text-lg font-bold text-[var(--coffee-brown)] flex-1 min-w-0">
                               {item.name}
                             </h3>
-                            
+
                             {/* Action Buttons */}
                             <div className="flex items-center gap-1 flex-shrink-0">
-                              {item.modifierGroups && item.modifierGroups.length > 0 && (
-                                <button
-                                  onClick={() => handleEditItem(item)}
-                                  className="p-1.5 text-gray-400 hover:text-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 rounded-lg transition-all duration-200 group"
-                                  aria-label="Edit item"
-                                  title="Edit customization"
-                                >
-                                  <Image
-                                    src="/images/icons/edit.svg"
-                                    alt="Edit"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4 transition-transform duration-200 group-hover:scale-125"
-                                    unoptimized
-                                  />
-                                </button>
-                              )}
+                              {item.modifierGroups &&
+                                item.modifierGroups.length > 0 && (
+                                  <button
+                                    onClick={() => handleEditItem(item)}
+                                    className="p-1.5 text-gray-400 hover:text-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 rounded-lg transition-all duration-200 group"
+                                    aria-label="Edit item"
+                                    title="Edit customization"
+                                  >
+                                    <Image
+                                      src="/images/icons/edit.svg"
+                                      alt="Edit"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4 transition-transform duration-200 group-hover:scale-125"
+                                      unoptimized
+                                    />
+                                  </button>
+                                )}
                               <button
                                 onClick={() => removeItem(itemKey)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
@@ -1123,24 +1210,25 @@ function OrderPageContent() {
                               </button>
                             </div>
                           </div>
-                          
+
                           {/* Base price */}
                           <div className="text-sm font-medium text-gray-700 mb-2">
                             {formatPrice(basePrice, item.currency)}
                           </div>
-                          
+
                           {/* Display modifiers - constrained to pricing width */}
                           {item.modifiers && item.modifiers.length > 0 && (
                             <div className="mt-2 space-y-1">
                               {item.modifiers.map((mod, idx) =>
                                 mod.selectedOptions.map((opt, optIdx) => {
                                   const quantity = opt.quantity || 1;
-                                  const optionTotal = (opt.price || 0) * quantity;
+                                  const optionTotal =
+                                    (opt.price || 0) * quantity;
                                   const showQuantity = quantity > 1;
-                                  
+
                                   return (
-                                    <div 
-                                      key={`${idx}-${optIdx}`} 
+                                    <div
+                                      key={`${idx}-${optIdx}`}
                                       className="text-xs text-gray-600 flex items-center justify-between gap-3"
                                     >
                                       <span className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -1149,7 +1237,9 @@ function OrderPageContent() {
                                             {quantity}
                                           </span>
                                         )}
-                                        <span className="truncate">{opt.name}</span>
+                                        <span className="truncate">
+                                          {opt.name}
+                                        </span>
                                       </span>
                                       {optionTotal > 0 && (
                                         <span className="text-gray-700 font-semibold whitespace-nowrap flex-shrink-0">
@@ -1158,11 +1248,11 @@ function OrderPageContent() {
                                       )}
                                     </div>
                                   );
-                                })
+                                }),
                               )}
                             </div>
                           )}
-                          
+
                           {/* Quantity controls and total price - below modifiers */}
                           <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
                             <div className="flex items-center gap-2">
@@ -1210,7 +1300,10 @@ function OrderPageContent() {
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-bold text-[var(--coffee-brown)]">
-                                {formatPrice(itemPrice * item.quantity, item.currency)}
+                                {formatPrice(
+                                  itemPrice * item.quantity,
+                                  item.currency,
+                                )}
                               </p>
                             </div>
                           </div>
@@ -1224,11 +1317,23 @@ function OrderPageContent() {
               {cartHasHotCoffee && (
                 <div className="mt-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
                   <p className="flex items-start gap-2 text-sm font-medium text-amber-900">
-                    <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     <span>
-                      Your order includes hot coffee. We&apos;ll make it when you arrive so it stays fresh and delicious.
+                      Your order includes hot coffee. We&apos;ll make it when
+                      you arrive so it stays fresh and delicious.
                     </span>
                   </p>
                 </div>
@@ -1238,9 +1343,7 @@ function OrderPageContent() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">
-                      {formatPrice(subtotal)}
-                    </span>
+                    <span className="font-medium">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Tax</span>
@@ -1248,7 +1351,9 @@ function OrderPageContent() {
                   </div>
                   {isAdmin && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-[var(--lime-green)] font-semibold">Admin (QA) — Comped</span>
+                      <span className="text-[var(--lime-green)] font-semibold">
+                        Admin (QA) — Comped
+                      </span>
                       <span className="text-[var(--lime-green)] font-semibold">
                         -{formatPrice(subtotal + tax)}
                       </span>
@@ -1300,9 +1405,15 @@ function OrderPageContent() {
                           required
                           value={customerInfo.firstName}
                           onChange={(e) => {
-                            setCustomerInfo({ ...customerInfo, firstName: e.target.value });
+                            setCustomerInfo({
+                              ...customerInfo,
+                              firstName: e.target.value,
+                            });
                             if (validationErrors.firstName) {
-                              setValidationErrors({ ...validationErrors, firstName: "" });
+                              setValidationErrors({
+                                ...validationErrors,
+                                firstName: "",
+                              });
                             }
                           }}
                           className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
@@ -1313,7 +1424,9 @@ function OrderPageContent() {
                           placeholder="John"
                         />
                         {validationErrors.firstName && (
-                          <p className="mt-1 text-sm text-red-600">{validationErrors.firstName}</p>
+                          <p className="mt-1 text-sm text-red-600">
+                            {validationErrors.firstName}
+                          </p>
                         )}
                       </div>
 
@@ -1326,9 +1439,15 @@ function OrderPageContent() {
                           required
                           value={customerInfo.lastName}
                           onChange={(e) => {
-                            setCustomerInfo({ ...customerInfo, lastName: e.target.value });
+                            setCustomerInfo({
+                              ...customerInfo,
+                              lastName: e.target.value,
+                            });
                             if (validationErrors.lastName) {
-                              setValidationErrors({ ...validationErrors, lastName: "" });
+                              setValidationErrors({
+                                ...validationErrors,
+                                lastName: "",
+                              });
                             }
                           }}
                           className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
@@ -1339,7 +1458,9 @@ function OrderPageContent() {
                           placeholder="Doe"
                         />
                         {validationErrors.lastName && (
-                          <p className="mt-1 text-sm text-red-600">{validationErrors.lastName}</p>
+                          <p className="mt-1 text-sm text-red-600">
+                            {validationErrors.lastName}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -1358,7 +1479,10 @@ function OrderPageContent() {
                             phone: e.target.value,
                           });
                           if (validationErrors.phone) {
-                            setValidationErrors({ ...validationErrors, phone: "" });
+                            setValidationErrors({
+                              ...validationErrors,
+                              phone: "",
+                            });
                           }
                         }}
                         className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
@@ -1369,7 +1493,9 @@ function OrderPageContent() {
                         placeholder="(555) 123-4567"
                       />
                       {validationErrors.phone && (
-                        <p className="mt-1 text-sm text-red-600">{validationErrors.phone}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {validationErrors.phone}
+                        </p>
                       )}
                     </div>
 
@@ -1387,7 +1513,10 @@ function OrderPageContent() {
                             email: e.target.value,
                           });
                           if (validationErrors.email) {
-                            setValidationErrors({ ...validationErrors, email: "" });
+                            setValidationErrors({
+                              ...validationErrors,
+                              email: "",
+                            });
                           }
                         }}
                         className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
@@ -1398,7 +1527,9 @@ function OrderPageContent() {
                         placeholder="john@example.com"
                       />
                       {validationErrors.email && (
-                        <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {validationErrors.email}
+                        </p>
                       )}
                     </div>
                   </>
@@ -1408,7 +1539,7 @@ function OrderPageContent() {
                   <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
                     Preferred Pickup Time *
                   </label>
-                  
+
                   {/* Date Picker */}
                   <div className="mb-3 relative" data-date-picker>
                     <button
@@ -1418,7 +1549,10 @@ function OrderPageContent() {
                         setShowTimePicker(false);
                         // Clear validation error when user interacts
                         if (validationErrors.pickupDate) {
-                          setValidationErrors({ ...validationErrors, pickupDate: "" });
+                          setValidationErrors({
+                            ...validationErrors,
+                            pickupDate: "",
+                          });
                         }
                       }}
                       className={`w-full rounded-lg border px-4 py-2 text-left focus:outline-none focus:ring-2 bg-white flex items-center justify-between ${
@@ -1427,9 +1561,18 @@ function OrderPageContent() {
                           : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
                       }`}
                     >
-                      <span className={selectedDate ? "text-[var(--coffee-brown)]" : "text-gray-500"}>
+                      <span
+                        className={
+                          selectedDate
+                            ? "text-[var(--coffee-brown)]"
+                            : "text-gray-500"
+                        }
+                      >
                         {selectedDate
-                          ? formatDateDisplay(selectedDate, isTodayDate(selectedDate))
+                          ? formatDateDisplay(
+                              selectedDate,
+                              isTodayDate(selectedDate),
+                            )
                           : "Select Date"}
                       </span>
                       <svg
@@ -1446,11 +1589,13 @@ function OrderPageContent() {
                         />
                       </svg>
                     </button>
-                    
+
                     {validationErrors.pickupDate && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.pickupDate}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {validationErrors.pickupDate}
+                      </p>
                     )}
-                    
+
                     {showDatePicker && (
                       <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg max-h-60 overflow-y-auto">
                         {getAvailableDates().map((date) => (
@@ -1481,7 +1626,10 @@ function OrderPageContent() {
                           setShowDatePicker(false);
                           // Clear validation error when user interacts
                           if (validationErrors.pickupTime) {
-                            setValidationErrors({ ...validationErrors, pickupTime: "" });
+                            setValidationErrors({
+                              ...validationErrors,
+                              pickupTime: "",
+                            });
                           }
                         }}
                         className={`w-full rounded-lg border px-4 py-2 text-left focus:outline-none focus:ring-2 bg-white flex items-center justify-between ${
@@ -1490,9 +1638,17 @@ function OrderPageContent() {
                             : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
                         }`}
                       >
-                        <span className={selectedTime ? "text-[var(--coffee-brown)]" : "text-gray-500"}>
+                        <span
+                          className={
+                            selectedTime
+                              ? "text-[var(--coffee-brown)]"
+                              : "text-gray-500"
+                          }
+                        >
                           {selectedTime
-                            ? getTimeSlotsForDate(selectedDate).find((slot) => slot.value === selectedTime)?.display || selectedTime
+                            ? getTimeSlotsForDate(selectedDate).find(
+                                (slot) => slot.value === selectedTime,
+                              )?.display || selectedTime
                             : "Select Time"}
                         </span>
                         <svg
@@ -1509,11 +1665,13 @@ function OrderPageContent() {
                           />
                         </svg>
                       </button>
-                      
+
                       {validationErrors.pickupTime && (
-                        <p className="mt-1 text-sm text-red-600">{validationErrors.pickupTime}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {validationErrors.pickupTime}
+                        </p>
                       )}
-                      
+
                       {showTimePicker && (
                         <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg max-h-60 overflow-y-auto">
                           {getTimeSlotsForDate(selectedDate).length > 0 ? (
@@ -1540,7 +1698,7 @@ function OrderPageContent() {
                       )}
                     </div>
                   )}
-                  
+
                   {!selectedDate && (
                     <p className="text-sm text-gray-500 mt-1">
                       Please select a date first
@@ -1581,7 +1739,8 @@ function OrderPageContent() {
                     {isAdmin ? (
                       <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
                         <p className="mb-4 text-gray-700">
-                          Admin order (QA/testing) — Comped to $0. No payment required.
+                          Admin order (QA/testing) — Comped to $0. No payment
+                          required.
                         </p>
                         <button
                           type="button"
@@ -1596,12 +1755,14 @@ function OrderPageContent() {
                       <>
                         {cartHasHotCoffee && (
                           <p className="mb-3 text-center text-sm font-medium text-amber-800">
-                            Hot coffee in your order will be made when you arrive for pickup.
+                            Hot coffee in your order will be made when you
+                            arrive for pickup.
                           </p>
                         )}
                         <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
                           <p className="mb-4 text-gray-700">
-                            You will be redirected to Clover's secure payment page to complete your order.
+                            You will be redirected to Clover's secure payment
+                            page to complete your order.
                           </p>
                           <button
                             type="button"
@@ -1609,7 +1770,9 @@ function OrderPageContent() {
                             disabled={paymentProcessing || loading}
                             className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {paymentProcessing ? "Processing..." : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
+                            {paymentProcessing
+                              ? "Processing..."
+                              : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
                           </button>
                         </div>
                         <button
@@ -1632,8 +1795,11 @@ function OrderPageContent() {
               </div>
             </form>
             <p className="mt-4 text-center text-xs text-gray-500">
-              Allergen info is for awareness only. Cross-contamination may occur.{" "}
-              <Link href="/terms" className="underline hover:text-gray-700">Terms of Use</Link>
+              Allergen info is for awareness only. Cross-contamination may
+              occur.{" "}
+              <Link href="/terms" className="underline hover:text-gray-700">
+                Terms of Use
+              </Link>
             </p>
           </div>
         </div>
@@ -1672,4 +1838,3 @@ export default function OrderPage() {
     </Suspense>
   );
 }
-
