@@ -101,7 +101,7 @@ async function validatePickupTimeWithinHours(pickupTime) {
   const dayHours = location.hours.find((h) => h.day === dayName);
   if (!dayHours?.closed && dayHours?.opens != null && dayHours?.closes != null) {
     const [openH, openM] = (dayHours.opens || "06:00").split(":").map(Number);
-    const [closeH, closeM] = (dayHours.closes || "16:00").split(":").map(Number);
+    const [closeH, closeM] = (dayHours.closes || "20:00").split(":").map(Number);
     const openMinutes = openH * 60 + (openM || 0);
     const closeMinutes = closeH * 60 + (closeM || 0);
     const pickupMinutes = date.getHours() * 60 + date.getMinutes();
