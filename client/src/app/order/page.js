@@ -54,7 +54,8 @@ function OrderPageContent() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notes, setNotes] = useState("");
-  const [storeHours, setStoreHours] = useState({ open: 6, close: 16 }); // Default fallback (6am-4pm)
+  const [storeHours, setStoreHours] = useState({ open: 6, close: 20 }); // Default fallback (6am-8pm)
+  const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
   const [successAnimation, setSuccessAnimation] = useState(null);
 
   // Customization modal state
@@ -105,6 +106,7 @@ function OrderPageContent() {
               close: parseInt(closeTime[0], 10),
             });
           }
+          setLocationHours(location.hours);
         }
       } catch (err) {
         console.error("Failed to fetch store hours:", err);
@@ -186,6 +188,21 @@ function OrderPageContent() {
     const slots = [];
     const isToday = isTodayDate(dateString);
 
+    // Resolve open/close for this date (per-day hours for future dates, e.g. Sunday 9am)
+    let openHour = storeHours.open;
+    let closeHour = storeHours.close;
+    if (!isToday && locationHours?.length) {
+      const date = new Date(dateString + "T12:00:00");
+      const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+      const dayHours = locationHours.find((h) => h.day === dayName);
+      if (dayHours && !dayHours.closed && dayHours.opens != null && dayHours.closes != null) {
+        const [oh] = (dayHours.opens || "06:00").split(":").map(Number);
+        const [ch] = (dayHours.closes || "20:00").split(":").map(Number);
+        openHour = oh;
+        closeHour = ch;
+      }
+    }
+
     if (isToday) {
       const firstTime = getFirstAvailableTime();
       if (!firstTime) {
@@ -207,11 +224,11 @@ function OrderPageContent() {
         }
       }
     } else {
-      // For future dates, start at store open time
-      let hour = storeHours.open;
+      // For future dates, use that day's open/close (e.g. Sunday 9am–8pm)
+      let hour = openHour;
       let minute = 0;
 
-      while (hour < storeHours.close) {
+      while (hour < closeHour) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
