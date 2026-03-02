@@ -17,3 +17,6 @@ export function getGrandOpeningLabel() {
 export const PASTRIES_ORDERING_ENABLED = false;
 
 export const PASTRIES_SECTION_NAME = "Bakery & Pastries";
+
+/** Google review link — used for "Leave a review" button (mobile) and can be encoded in QR. */
+export const GOOGLE_REVIEW_URL = "https://g.page/r/CZTCnS4aNEW1EBM/review";

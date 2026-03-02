@@ -27,7 +27,7 @@ describe('API Integration Smoke Tests', () => {
       // Create test products
       const product1 = await createTestProduct({
         name: 'Ethiopia Yirgacheffe',
-        categories: ['single-origin', 'light-roast'],
+        categories: ['single-origin', 'medium-roast'],
         inStock: true,
         active: true,
       })

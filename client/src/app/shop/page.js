@@ -204,6 +204,15 @@ export default function ShopPage() {
         </div>
       </div>
 
+      {/* Notice: Beans not yet available for purchase */}
+      <div className="border-b border-amber-200 bg-amber-50 px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-center text-sm font-medium text-amber-900 sm:text-base">
+            <span className="font-semibold">Coffee beans are not yet available for purchase online or in store.</span> Stay tuned for bag sales!
+          </p>
+        </div>
+      </div>
+
       <div className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
 
@@ -338,7 +347,19 @@ export default function ShopPage() {
                         </svg>
                       </div>
                     )}
-                    {!product.inStock && (
+                    {product.comingSoon && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 p-3">
+                        <span className="text-center text-sm font-bold uppercase tracking-wide text-white">
+                          Not yet for sale
+                        </span>
+                        {product.name && product.name.toLowerCase().includes("yirgacheffe") && (
+                          <span className="mt-1 text-center text-xs text-white/90">
+                            Enjoy in your drinks at the cafe
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {!product.comingSoon && !product.inStock && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                         <span className="rounded bg-red-600 px-3 py-1 text-sm font-semibold text-white">
                           Out of Stock
@@ -395,14 +416,28 @@ export default function ShopPage() {
                   {selectedProduct.images &&
                   selectedProduct.images.length > 0 &&
                   !imageErrors.has(selectedProduct._id) ? (
-                    <Image
-                      src={selectedProduct.images[0]}
-                      alt={selectedProduct.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                      onError={() => setImageErrors(prev => new Set(prev).add(selectedProduct._id))}
-                    />
+                    <>
+                      <Image
+                        src={selectedProduct.images[0]}
+                        alt={selectedProduct.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                        onError={() => setImageErrors(prev => new Set(prev).add(selectedProduct._id))}
+                      />
+                      {selectedProduct.comingSoon && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/65 p-4">
+                          <span className="text-center text-lg font-bold uppercase tracking-wide text-white">
+                            Not yet available for purchase
+                          </span>
+                          <span className="mt-2 text-center text-sm text-white/95">
+                            {selectedProduct.name && selectedProduct.name.toLowerCase().includes("yirgacheffe")
+                              ? "Enjoy this coffee in your drinks at the cafe. Bag sales coming soon!"
+                              : "Bag sales coming soon!"}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="flex h-full items-center justify-center text-gray-400">
                       <svg
@@ -505,8 +540,10 @@ export default function ShopPage() {
                         )}
                       </p>
                       {selectedProduct.comingSoon ? (
-                        <p className="mt-1 text-sm text-gray-600">
-                          Coming Soon
+                        <p className="mt-1 text-sm font-medium text-gray-600">
+                          {selectedProduct.name && selectedProduct.name.toLowerCase().includes("yirgacheffe")
+                            ? "Enjoy in your drinks at the cafe. Bag sales coming soon."
+                            : "Coming soon."}
                         </p>
                       ) : selectedProduct.inStock ? (
                         <p className="mt-1 text-sm text-[var(--lime-green)]">
