@@ -335,6 +335,15 @@ function MenuPageContent() {
         </div>
       </div>
 
+      {/* Now serving Yirgacheffe — single origin Ethiopian, medium body (served in-store only) */}
+      <div className="border-y border-[var(--lime-green)]/30 bg-gradient-to-r from-[var(--coffee-brown)]/10 to-[var(--lime-green)]/10 py-3 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl text-center">
+          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold text-[var(--lime-green)]">Now serving:</span> Yirgacheffe — single origin Ethiopian, medium body. Try it in your favorite drink at the cafe.
+          </p>
+        </div>
+      </div>
+
       <div className={`py-8 px-4 sm:px-6 lg:px-8 ${cart.length > 0 ? 'pb-24' : ''}`}>
         <div className="mx-auto max-w-7xl">
 

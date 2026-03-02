@@ -54,7 +54,7 @@ function OrderPageContent() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notes, setNotes] = useState("");
-  const [storeHours, setStoreHours] = useState({ open: 6, close: 20 }); // Default fallback (6am-8pm)
+  const [storeHours, setStoreHours] = useState({ open: 6, close: 20, closeMinute: 0 }); // Default fallback (6am-8pm)
   const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
   const [successAnimation, setSuccessAnimation] = useState(null);
 
@@ -104,6 +104,7 @@ function OrderPageContent() {
             setStoreHours({
               open: parseInt(openTime[0], 10),
               close: parseInt(closeTime[0], 10),
+              closeMinute: parseInt(closeTime[1], 10) || 0,
             });
           }
           setLocationHours(location.hours);
@@ -176,7 +177,11 @@ function OrderPageContent() {
     }
 
     // If after store close time, no slots available for today
-    if (firstHour >= storeHours.close) {
+    const closeMin = storeHours.closeMinute ?? 0;
+    if (
+      firstHour > storeHours.close ||
+      (firstHour === storeHours.close && firstMinute >= closeMin)
+    ) {
       return null;
     }
 
@@ -188,20 +193,26 @@ function OrderPageContent() {
     const slots = [];
     const isToday = isTodayDate(dateString);
 
-    // Resolve open/close for this date (per-day hours for future dates, e.g. Sunday 9am)
+    // Resolve open/close for this date (per-day hours; support half-hour close e.g. 6:30pm)
     let openHour = storeHours.open;
+    let openMinute = 0;
     let closeHour = storeHours.close;
+    let closeMinute = storeHours.closeMinute ?? 0;
     if (!isToday && locationHours?.length) {
       const date = new Date(dateString + "T12:00:00");
       const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
       const dayHours = locationHours.find((h) => h.day === dayName);
       if (dayHours && !dayHours.closed && dayHours.opens != null && dayHours.closes != null) {
-        const [oh] = (dayHours.opens || "06:00").split(":").map(Number);
-        const [ch] = (dayHours.closes || "20:00").split(":").map(Number);
-        openHour = oh;
-        closeHour = ch;
+        const openParts = (dayHours.opens || "06:00").split(":").map(Number);
+        const closeParts = (dayHours.closes || "20:00").split(":").map(Number);
+        openHour = openParts[0];
+        openMinute = openParts[1] || 0;
+        closeHour = closeParts[0];
+        closeMinute = closeParts[1] || 0;
       }
     }
+
+    const beforeClose = (h, m) => h < closeHour || (h === closeHour && m < closeMinute);
 
     if (isToday) {
       const firstTime = getFirstAvailableTime();
@@ -211,8 +222,9 @@ function OrderPageContent() {
 
       let hour = firstTime.hour;
       let minute = firstTime.minute;
+      const todayCloseMin = storeHours.closeMinute ?? 0;
 
-      while (hour < storeHours.close) {
+      while (hour < storeHours.close || (hour === storeHours.close && minute < todayCloseMin)) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
@@ -224,11 +236,19 @@ function OrderPageContent() {
         }
       }
     } else {
-      // For future dates, use that day's open/close (e.g. Sunday 9am–8pm)
+      // For future dates, use that day's open/close (e.g. Mon–Fri 6am–6:30pm, Sat 6am–8pm, Sun 9am–6:30pm)
       let hour = openHour;
-      let minute = 0;
+      let minute = openMinute;
+      // Snap to next 15-min increment if open is e.g. 9:00
+      if (minute % 15 !== 0) {
+        minute = Math.ceil(minute / 15) * 15;
+        if (minute >= 60) {
+          hour += 1;
+          minute = 0;
+        }
+      }
 
-      while (hour < closeHour) {
+      while (beforeClose(hour, minute)) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
