@@ -621,7 +621,7 @@ export default function LocationPage() {
                 </div>
               </div>
 
-              {/* Google Review QR Code + Lottie */}
+              {/* Google Review */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -642,13 +642,13 @@ export default function LocationPage() {
                   </p>
                 )}
                 <p className="mb-4 text-center text-sm text-gray-600">
-                  Scan the QR code with another device, or tap the button below on this phone.
+                  Loved your visit? Tap the button below to leave us a review on Google.
                 </p>
                 <a
                   href={GOOGLE_REVIEW_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-[var(--lime-green)] px-6 py-4 text-center font-semibold text-white shadow-lg transition-all hover:bg-[var(--lime-green-dark)] hover:shadow-xl active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[var(--lime-green)] px-6 py-4 text-center font-semibold text-white shadow-lg transition-all hover:bg-[var(--lime-green-dark)] hover:shadow-xl active:scale-[0.98]"
                 >
                   <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -658,35 +658,6 @@ export default function LocationPage() {
                   </svg>
                   Leave a review on Google
                 </a>
-                {/* Styled QR code frame */}
-                <div className="flex justify-center">
-                  <div className="relative">
-                    {/* Outer glow / frame */}
-                    <div className="absolute -inset-3 rounded-2xl bg-gradient-to-br from-[var(--lime-green)]/30 to-[var(--coffee-brown)]/10 blur-sm" aria-hidden />
-                    <div className="relative flex flex-col items-center rounded-2xl border-2 border-[var(--lime-green)]/40 bg-white p-4 shadow-inner">
-                      {/* Corner accents */}
-                      <div className="absolute left-2 top-2 h-4 w-4 border-l-2 border-t-2 border-[var(--lime-green)]/60 rounded-tl" aria-hidden />
-                      <div className="absolute right-2 top-2 h-4 w-4 border-r-2 border-t-2 border-[var(--lime-green)]/60 rounded-tr" aria-hidden />
-                      <div className="absolute bottom-2 left-2 h-4 w-4 border-b-2 border-l-2 border-[var(--lime-green)]/60 rounded-bl" aria-hidden />
-                      <div className="absolute bottom-2 right-2 h-4 w-4 border-b-2 border-r-2 border-[var(--lime-green)]/60 rounded-br" aria-hidden />
-                      <div className="relative h-40 w-40 rounded-xl bg-white p-3">
-                        <Image
-                          src="/images/QrCodes/GoogleReviewQRCODE.png"
-                          alt="QR code to leave a Google review for Wild Bean Coffee"
-                          fill
-                          className="object-contain"
-                          unoptimized
-                        />
-                      </div>
-                      <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[var(--coffee-brown)]">
-                        <svg className="h-4 w-4 text-[var(--lime-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        Scan with your phone
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </motion.div>
 
               {store.mapsUrl && (

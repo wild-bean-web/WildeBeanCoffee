@@ -70,7 +70,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-lg font-semibold">Wild Bean Coffee</h3>
             <p className="text-sm text-gray-300">
-              Fresh roasted coffee beans and handcrafted beverages. Visit us in
+              Premium coffee and handcrafted beverages. Visit us in
               store or order online for pickup.
             </p>
           </div>
@@ -128,6 +128,14 @@ export default function Footer() {
                   className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
                 >
                   Terms of Use
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms#accessibility"
+                  className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
+                >
+                  Accessibility
                 </Link>
               </li>
             </ul>
@@ -217,7 +225,11 @@ export default function Footer() {
         <div className="mt-8 border-t border-gray-700 pt-8 pb-[60px] text-center text-sm text-gray-400">
           <p className="mb-1">&copy; {currentYear} Wild Bean Coffee. All rights reserved.</p>
           <p className="text-xs text-gray-500">
-            Menu and product images are for illustration only and may not represent actual items.
+            Menu and product images are illustrative only. They may be digitally created, generated, or stock imagery and do not represent actual items.             See{" "}
+            <Link href="/terms" className="text-gray-400 underline hover:text-[var(--lime-green)]">
+              Terms of Use
+            </Link>{" "}
+            for details.
           </p>
         </div>
       </div>
