@@ -21,9 +21,9 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: "Wild Bean Coffee - Fresh Roasted Coffee & Handcrafted Beverages",
+  title: "Wild Bean Coffee - Premium Coffee & Handcrafted Beverages",
   description:
-    "Wild Bean Coffee offers fresh roasted coffee beans, handcrafted beverages, and delicious treats. Order online for pickup or visit us in store.",
+    "Wild Bean Coffee offers premium coffee, handcrafted beverages, and delicious treats. Order online for pickup or visit us in store.",
   icons: {
     icon: [
       {
