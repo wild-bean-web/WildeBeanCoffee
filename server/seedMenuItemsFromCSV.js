@@ -317,9 +317,9 @@ export const menuItemsFromCSV = [
     ],
   },
   {
-    name: "Berry Boost",
+    name: "Berry Blast",
     description:
-      "Strawberry, blueberry, raspberry, vanilla yogurt, milk",
+      "Strawberry, blueberry, raspberry, banana, milk, yogurt.",
     price: 8.2,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -336,7 +336,7 @@ export const menuItemsFromCSV = [
   {
     name: "Tropical Bliss",
     description:
-      "Mango, pineapple, banana, orange juice, milk, fresh lime, Coconut Cream",
+      "Mango, pineapple, banana, orange juice, coconut, fresh lime.",
     price: 7.5,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -347,14 +347,15 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
+  // Blends (moved from Smoothies per store menu)
   {
     name: "Nutty Banana Bliss",
     description:
-      "Banana, peanut butter, chia seeds, almonds, cinnamon, and milk",
+      "Banana, peanut butter, chia seeds, almonds, cinnamon, and milk.",
     price: 7.5,
     currency: "USD",
-    section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "nutty"],
+    section: "Blends",
+    tags: ["blend", "organic", "fresh", "nutty"],
     allergens: ["Dairy", "Peanuts", "Tree Nuts"],
     image: "/images/menu/Smoothies/NuttyBananaBlissLand.png",
     available: true,
@@ -367,11 +368,11 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Guava Cream",
-    description: "Guava, yogurt, avocado, fresh lime",
+    description: "Guava, yogurt, avocado, dash of strawberry, fresh lime.",
     price: 7.75,
     currency: "USD",
-    section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "tropical", "guava"],
+    section: "Blends",
+    tags: ["blend", "organic", "fresh", "tropical", "guava"],
     allergens: ["Dairy"],
     image: "/images/menu/Smoothies/GuavaCreamLand.png",
     available: true,
@@ -384,11 +385,11 @@ export const menuItemsFromCSV = [
   {
     name: "Dirty Banana Smoothie",
     description:
-      "Espresso, Banana, Yogurt Chocolate Sauce, Honey",
-    price: 7.75,
+      "Espresso, Banana, Yogurt Chocolate Sauce, Honey.",
+    price: 7.95,
     currency: "USD",
-    section: "Smoothies (Organic & Fresh)",
-    tags: ["smoothie", "organic", "fresh", "espresso", "banana"],
+    section: "Blends",
+    tags: ["blend", "organic", "fresh", "espresso", "banana"],
     allergens: ["Dairy"],
     image: "/images/menu/Smoothies/DirtyBananaSmoothieLand.png",
     available: true,
@@ -400,11 +401,11 @@ export const menuItemsFromCSV = [
     ],
   },
 
-  // Wild Bowl (build-your-own bowl; matches POS Wild Bowl)
+  // Wild Bowl (build-your-own and predetermined bowls)
   {
     name: "Build Your Own Bowl",
     description:
-      "Build your own bowl. Required: choose a base (Oats, Chia pudding, Yogurt), 2 Choice of fresh Fruits and Any dry toppings, and Any Drizzles",
+      "1 base, 2 fruits, up to 8 toppings & 2 drizzles. Small / Medium +$1.",
     price: 9.99,
     currency: "USD",
     section: "Wild Bowl",
@@ -425,17 +426,38 @@ export const menuItemsFromCSV = [
   {
     name: "Wild Vegan",
     description:
-      "Vegan build-your-own bowl. Base: chia seed pudding (plant-based almond milk). Same rules as Wild Bowl: 2 choice of fresh fruits, any dry toppings, and any drizzles.",
+      "Chia Seed Pudding, Granola, Coconut Flakes, Almonds, Dried Cranberries, Peanut Butter, Honey, Strawberries, Bananas. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
     price: 9.99,
     currency: "USD",
     section: "Wild Bowl",
-    tags: ["bowl", "custom", "healthy", "breakfast", "vegan"],
+    tags: ["bowl", "healthy", "breakfast", "vegan"],
     allergens: [],
     image: "/images/menu/Oatmeals/WildVegan.png",
     available: true,
     active: true,
     modifierGroupNames: [
       "Wild Vegan Base",
+      "Oatmeal Bowl Size",
+      "Oatmeal Dried Toppings",
+      "Oatmeal Drizzels",
+      "Oatmeal Fruit Toppings",
+      "Oatmeal EXTRA Add-Ons",
+    ],
+  },
+  {
+    name: "Signature Bowl",
+    description:
+      "½ Chia Seed Pudding, ½ Yogurt, Granola, Pecans, Sunflower Seeds, Coconut Flakes, Peanut Butter, Honey, Strawberries, Blueberries. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
+    price: 9.99,
+    currency: "USD",
+    section: "Wild Bowl",
+    tags: ["bowl", "healthy", "breakfast", "signature"],
+    allergens: ["Dairy"],
+    image: "/images/menu/Oatmeals/WildVegan.png",
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Oatmeal Base",
       "Oatmeal Bowl Size",
       "Oatmeal Dried Toppings",
       "Oatmeal Drizzels",
