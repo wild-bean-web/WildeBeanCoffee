@@ -39,6 +39,7 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
+    "Blends",
     "Wild Bowl",
     "Bakery & Pastries",
   ];
@@ -46,6 +47,7 @@ function MenuPageContent() {
   // Map section names to display names for filter buttons
   const sectionDisplayNames = {
     "Smoothies (Organic & Fresh)": "Smoothies",
+    "Blends": "Blends",
     "Tea": "Tea & Milk",
   };
 
@@ -95,6 +97,7 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
+    "Blends",
     "Wild Bowl",
     "Bakery & Pastries",
   ];

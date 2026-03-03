@@ -15,6 +15,27 @@ import Image from "next/image";
  * - Required vs optional indicators
  * - Disabled option handling
  */
+
+// Predetermined modifier selections for fixed bowls (users can still remove/add within rules)
+const PREDETERMINED_BOWL_DEFAULTS = {
+  "Wild Vegan": {
+    "Wild Vegan Base": ["Chia Seeds Pudding"],
+    "Oatmeal Bowl Size": ["Small (12oz)"],
+    "Oatmeal Dried Toppings": ["Granola", "Coconut flakes", "Sliced almonds", "Dried cranberries"],
+    "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
+    "Oatmeal Fruit Toppings": ["Strawberries", "Bananas"],
+    "Oatmeal EXTRA Add-Ons": [],
+  },
+  "Signature Bowl": {
+    "Oatmeal Base": ["Chia Seeds Pudding & Yogurt"],
+    "Oatmeal Bowl Size": ["Small (12oz)"],
+    "Oatmeal Dried Toppings": ["Granola", "Chopped pecans", "Sunflower Seeds", "Coconut flakes"],
+    "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
+    "Oatmeal Fruit Toppings": ["Strawberries", "Blueberries"],
+    "Oatmeal EXTRA Add-Ons": [],
+  },
+};
+
 export default function CustomizationModal({
   isOpen,
   onClose,
@@ -101,6 +122,17 @@ export default function CustomizationModal({
               defaults[group.name] = [defaultOption.name];
             }
           });
+
+          // Override with predetermined bowl defaults for Wild Vegan and Signature Bowl
+          if (menuItem?.name && PREDETERMINED_BOWL_DEFAULTS[menuItem.name]) {
+            const preset = PREDETERMINED_BOWL_DEFAULTS[menuItem.name];
+            const groupNames = (menuItem.modifierGroups || []).map((g) => g.name);
+            groupNames.forEach((groupName) => {
+              if (Array.isArray(preset[groupName])) {
+                defaults[groupName] = preset[groupName];
+              }
+            });
+          }
         }
 
         setSelectedModifiers(defaults);
@@ -465,10 +497,6 @@ export default function CustomizationModal({
                               </span>{" "}
                               (made with plant-based almond milk).
                             </p>
-                            <p className="mt-1 text-xs text-gray-600">
-                              No selection needed — just choose your dried
-                              toppings, fruits, and optional drizzles below.
-                            </p>
                           </div>
                         ) : (
                           <>
@@ -706,7 +734,9 @@ export default function CustomizationModal({
               )}
 
               {/* Wild Bowl / Build Your Own Bowl – subtle warning (shown when item has no allergen list) */}
-              {menuItem.name === "Build Your Own Bowl" &&
+              {(menuItem.name === "Build Your Own Bowl" ||
+                menuItem.name === "Wild Vegan" ||
+                menuItem.name === "Signature Bowl") &&
                 (!menuItem.allergens || menuItem.allergens.length === 0) && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <p className="text-xs text-gray-500">
@@ -747,7 +777,8 @@ export default function CustomizationModal({
                 ) && (
                   <p className="mt-2 text-center text-sm text-amber-700">
                     {menuItem?.name === "Build Your Own Bowl" ||
-                    menuItem?.name === "Wild Vegan"
+                    menuItem?.name === "Wild Vegan" ||
+                    menuItem?.name === "Signature Bowl"
                       ? "Please meet all requirements above (base, dried toppings, fruits) to add to cart."
                       : "Please complete the required options above to add to cart."}
                   </p>
