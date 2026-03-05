@@ -46,7 +46,7 @@ export const menuItemsFromCSV = [
   {
     name: "Doppio",
     description: "A bold double shot of espresso.",
-    price: 3.05,
+    price: 3.25,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
@@ -72,7 +72,7 @@ export const menuItemsFromCSV = [
   {
     name: "Flat White",
     description: "Espresso with velvety, lightly textured milk.",
-    price: 5.1,
+    price: 5.15,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
@@ -145,14 +145,14 @@ export const menuItemsFromCSV = [
   {
     name: "Caramel Macchiato",
     description: "Layered espresso and milk with caramel.",
-    price: 5.6,
+    price: 5.5,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "caramel"],
     allergens: ["Dairy"],
     image: "",
-    available: false,
-    active: false,
+    available: true,
+    active: true,
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (12-16)",
@@ -216,7 +216,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Caramel Macchiato",
     description: "Layered espresso and milk served over ice.",
-    price: 5.6,
+    price: 5.95,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
@@ -317,9 +317,9 @@ export const menuItemsFromCSV = [
     ],
   },
   {
-    name: "Berry Blast",
+    name: "Triple B",
     description:
-      "Strawberry, blueberry, raspberry, banana, milk, yogurt.",
+      "Strawberry, blueberry, raspberry, yogurt, milk.",
     price: 8.2,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -336,7 +336,7 @@ export const menuItemsFromCSV = [
   {
     name: "Tropical Bliss",
     description:
-      "Mango, pineapple, banana, orange juice, coconut, fresh lime.",
+      "Mango, pineapple, banana, orange juice, coconut, lime.",
     price: 7.5,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
@@ -347,32 +347,13 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
-  // Blends (moved from Smoothies per store menu)
-  {
-    name: "Nutty Banana Bliss",
-    description:
-      "Banana, peanut butter, chia seeds, almonds, cinnamon, and milk.",
-    price: 7.5,
-    currency: "USD",
-    section: "Blends",
-    tags: ["blend", "organic", "fresh", "nutty"],
-    allergens: ["Dairy", "Peanuts", "Tree Nuts"],
-    image: "/images/menu/Smoothies/NuttyBananaBlissLand.png",
-    available: true,
-    active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Smoothie Add-Ons",
-      "Extra Single Shots (Smoothie)",
-    ],
-  },
   {
     name: "Guava Cream",
-    description: "Guava, yogurt, avocado, dash of strawberry, fresh lime.",
+    description: "Guava, yogurt, avocado, dash of strawberry, lime.",
     price: 7.75,
     currency: "USD",
-    section: "Blends",
-    tags: ["blend", "organic", "fresh", "tropical", "guava"],
+    section: "Smoothies (Organic & Fresh)",
+    tags: ["smoothie", "organic", "fresh", "tropical", "guava"],
     allergens: ["Dairy"],
     image: "/images/menu/Smoothies/GuavaCreamLand.png",
     available: true,
@@ -383,20 +364,38 @@ export const menuItemsFromCSV = [
     ],
   },
   {
-    name: "Dirty Banana Smoothie",
+    name: "Berry Mango Tango",
     description:
-      "Espresso, Banana, Yogurt Chocolate Sauce, Honey.",
-    price: 7.95,
+      "Strawberry, mango, vanilla protein, yogurt, honey, almond milk.",
+    price: 9.25,
     currency: "USD",
-    section: "Blends",
-    tags: ["blend", "organic", "fresh", "espresso", "banana"],
-    allergens: ["Dairy"],
-    image: "/images/menu/Smoothies/DirtyBananaSmoothieLand.png",
+    section: "Smoothies (Organic & Fresh)",
+    tags: ["smoothie", "organic", "fresh", "protein", "berry", "mango"],
+    allergens: ["Dairy", "Tree Nuts"],
+    image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
     available: true,
     active: true,
     modifierGroupNames: [
       "Smoothie Size",
-      "Shot Preference",
+      "Protein Powder",
+      "Smoothie Add-Ons",
+    ],
+  },
+  {
+    name: "Power Couple",
+    description:
+      "Chia seed pudding, Vanilla protein, avocado, no-fat greek yogurt, peanut butter, honey.",
+    price: 9.5,
+    currency: "USD",
+    section: "Smoothies (Organic & Fresh)",
+    tags: ["smoothie", "organic", "fresh", "protein", "chia"],
+    allergens: ["Peanuts", "Tree Nuts", "Dairy"],
+    image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Smoothie Size",
+      "Protein Powder",
       "Smoothie Add-Ons",
     ],
   },
@@ -590,7 +589,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Tea",
     description: "Fresh-brewed tea served over ice.",
-    price: 3.25,
+    price: 3.65,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced"],
@@ -603,7 +602,7 @@ export const menuItemsFromCSV = [
   {
     name: "Chai Latte (Hot)",
     description: "Spiced chai blended with steamed milk.",
-    price: 5.25,
+    price: 4.95,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "hot", "spiced"],

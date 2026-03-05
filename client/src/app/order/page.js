@@ -54,7 +54,11 @@ function OrderPageContent() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notes, setNotes] = useState("");
-  const [storeHours, setStoreHours] = useState({ open: 6, close: 20, closeMinute: 0 }); // Default fallback (6am-8pm)
+  const [storeHours, setStoreHours] = useState({
+    open: 6,
+    close: 20,
+    closeMinute: 0,
+  }); // Default fallback (6am-8pm)
   const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
   const [successAnimation, setSuccessAnimation] = useState(null);
 
@@ -202,7 +206,12 @@ function OrderPageContent() {
       const date = new Date(dateString + "T12:00:00");
       const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
       const dayHours = locationHours.find((h) => h.day === dayName);
-      if (dayHours && !dayHours.closed && dayHours.opens != null && dayHours.closes != null) {
+      if (
+        dayHours &&
+        !dayHours.closed &&
+        dayHours.opens != null &&
+        dayHours.closes != null
+      ) {
         const openParts = (dayHours.opens || "06:00").split(":").map(Number);
         const closeParts = (dayHours.closes || "20:00").split(":").map(Number);
         openHour = openParts[0];
@@ -212,7 +221,8 @@ function OrderPageContent() {
       }
     }
 
-    const beforeClose = (h, m) => h < closeHour || (h === closeHour && m < closeMinute);
+    const beforeClose = (h, m) =>
+      h < closeHour || (h === closeHour && m < closeMinute);
 
     if (isToday) {
       const firstTime = getFirstAvailableTime();
@@ -224,7 +234,10 @@ function OrderPageContent() {
       let minute = firstTime.minute;
       const todayCloseMin = storeHours.closeMinute ?? 0;
 
-      while (hour < storeHours.close || (hour === storeHours.close && minute < todayCloseMin)) {
+      while (
+        hour < storeHours.close ||
+        (hour === storeHours.close && minute < todayCloseMin)
+      ) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
@@ -371,11 +384,18 @@ function OrderPageContent() {
     }
   }, []);
 
-  // Update pickupTime when both date and time are selected
+  // Update pickupTime when both date and time are selected.
+  // Build a Date in the user's local timezone and send ISO (UTC) so the server stores
+  // the correct moment; otherwise the server would parse "YYYY-MM-DDTHH:mm:00" as UTC
+  // and the kitchen would show the wrong time (e.g. 5 PM local showing as 12 PM).
   useEffect(() => {
     if (selectedDate && selectedTime) {
-      const dateTimeString = `${selectedDate}T${selectedTime}:00`;
-      setPickupTime(dateTimeString);
+      const [y, m, d] = selectedDate.split("-").map(Number);
+      const [hr, min] = selectedTime.split(":").map(Number);
+      const localDate = new Date(y, m - 1, d, hr, min, 0, 0);
+      setPickupTime(localDate.toISOString());
+    } else {
+      setPickupTime("");
     }
   }, [selectedDate, selectedTime]);
 

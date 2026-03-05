@@ -75,38 +75,21 @@ router.get("/", async (req, res, next) => {
       });
     }
 
-    // For Smoothies section, sort in specific order (Blends moved to separate section)
+    // For Smoothies section, sort in specific order
     if (section === "Smoothies (Organic & Fresh)" || (!section && items.some(item => item.section === "Smoothies (Organic & Fresh)"))) {
       const smoothieOrder = [
         "Green Glow",
-        "Berry Blast",
+        "Triple B",
         "Tropical Bliss",
+        "Guava Cream",
+        "Berry Mango Tango",
+        "Power Couple",
       ];
 
       items.sort((a, b) => {
         if (a.section === "Smoothies (Organic & Fresh)" && b.section === "Smoothies (Organic & Fresh)") {
           const aIndex = smoothieOrder.indexOf(a.name);
           const bIndex = smoothieOrder.indexOf(b.name);
-          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-          if (aIndex !== -1) return -1;
-          if (bIndex !== -1) return 1;
-          return a.name.localeCompare(b.name);
-        }
-        return 0;
-      });
-    }
-
-    // For Blends section, sort in specific order
-    if (section === "Blends" || (!section && items.some(item => item.section === "Blends"))) {
-      const blendsOrder = [
-        "Guava Cream",
-        "Nutty Banana Bliss",
-        "Dirty Banana Smoothie",
-      ];
-      items.sort((a, b) => {
-        if (a.section === "Blends" && b.section === "Blends") {
-          const aIndex = blendsOrder.indexOf(a.name);
-          const bIndex = blendsOrder.indexOf(b.name);
           if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
           if (aIndex !== -1) return -1;
           if (bIndex !== -1) return 1;
