@@ -115,6 +115,10 @@ export default function CustomizationModal({
               defaultOption = group.options.find(
                 (opt) => opt.name === "16oz" && opt.available !== false,
               );
+            } else if (group.name === "Protein Powder") {
+              defaultOption = group.options.find(
+                (opt) => opt.name === "Vanilla Mass protein powder" && opt.available,
+              );
             }
 
             // If a default option is found and the group is required, set it
@@ -132,6 +136,14 @@ export default function CustomizationModal({
                 defaults[groupName] = preset[groupName];
               }
             });
+          }
+
+          // Pre-select Protein Powder for protein smoothies (Berry Mango Tango, Power Couple)
+          if (
+            (menuItem?.name === "Berry Mango Tango" || menuItem?.name === "Power Couple") &&
+            (menuItem.modifierGroups || []).some((g) => g.name === "Protein Powder")
+          ) {
+            defaults["Protein Powder"] = ["Vanilla Mass protein powder"];
           }
         }
 

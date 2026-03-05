@@ -39,7 +39,6 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
-    "Blends",
     "Wild Bowl",
     "Bakery & Pastries",
   ];
@@ -47,7 +46,6 @@ function MenuPageContent() {
   // Map section names to display names for filter buttons
   const sectionDisplayNames = {
     "Smoothies (Organic & Fresh)": "Smoothies",
-    "Blends": "Blends",
     "Tea": "Tea & Milk",
   };
 
@@ -97,7 +95,6 @@ function MenuPageContent() {
     "Coffee & Espresso",
     "Tea",
     "Smoothies (Organic & Fresh)",
-    "Blends",
     "Wild Bowl",
     "Bakery & Pastries",
   ];
@@ -372,7 +369,7 @@ function MenuPageContent() {
                     onClick={() => openMenuItemModal(item)}
                   >
                     {/* Image Section */}
-                    {item.image && (
+                    {item.image ? (
                       <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                         <Image
                           src={item.image}
@@ -381,6 +378,15 @@ function MenuPageContent() {
                           className="object-cover transition-transform duration-300 group-hover:scale-110"
                           unoptimized
                         />
+                      </div>
+                    ) : (
+                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 border-b border-gray-100">
+                        <div className="text-center px-4">
+                          <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-xs font-medium text-gray-400">Photo coming soon</p>
+                        </div>
                       </div>
                     )}
                     
@@ -604,7 +610,7 @@ function MenuPageContent() {
                 className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-2xl"
               >
                 {/* Image Section */}
-                {selectedMenuItem.image && (
+                {selectedMenuItem.image ? (
                   <div className="relative h-80 w-full bg-gray-200 sm:h-96">
                     <Image
                       src={selectedMenuItem.image}
@@ -613,6 +619,33 @@ function MenuPageContent() {
                       className="object-contain"
                       unoptimized
                     />
+                    <button
+                      onClick={closeMenuItemModal}
+                      className="absolute right-4 top-4 rounded-full bg-white/90 p-2 shadow-md transition-colors hover:bg-white"
+                    >
+                      <svg
+                        className="h-6 w-6 text-[var(--coffee-brown)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex h-80 w-full items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 sm:h-96">
+                    <div className="text-center px-6">
+                      <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="mt-3 text-sm font-medium text-gray-400">Photo coming soon</p>
+                    </div>
                     <button
                       onClick={closeMenuItemModal}
                       className="absolute right-4 top-4 rounded-full bg-white/90 p-2 shadow-md transition-colors hover:bg-white"
