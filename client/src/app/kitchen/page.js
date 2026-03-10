@@ -843,12 +843,31 @@ function OrderCard({
                   </span>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">
-                      {item.modifiers.map((modifier, modIdx) => (
-                        <li key={modIdx} className="text-xs">
-                          <span className="font-medium">{modifier.modifierGroupName}:</span>{" "}
-                          {modifier.selectedOptions.map((opt) => opt.name).join(", ")}
-                        </li>
-                      ))}
+                      {item.modifiers.map((modifier, modIdx) => {
+                        const isQuantityBasedGroup =
+                          (modifier.modifierGroupName || "").includes("Syrup Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Extra Single Shot");
+                        const isSyrupPump = (modifier.modifierGroupName || "").includes("Syrup");
+                        const groupDisplayName = (modifier.modifierGroupName || "").replace(/\s*\(\+?\$[^)]*\)\s*$/g, "").trim() || modifier.modifierGroupName;
+                        const optionsText = modifier.selectedOptions
+                          .map((opt) => {
+                            const q = opt.quantity || 1;
+                            if (isQuantityBasedGroup) {
+                              const baseName = isSyrupPump ? (opt.name || "").replace(/\s+Pump\s*$/i, "").trim() || opt.name : opt.name;
+                              const pumpLabel = isSyrupPump ? (q > 1 ? " pumps" : " pump") : "";
+                              return `${q} x ${baseName}${pumpLabel}`;
+                            }
+                            return opt.name;
+                          })
+                          .join(", ");
+                        return (
+                          <li key={modIdx} className="text-xs">
+                            <span className="font-medium">{groupDisplayName}:</span>{" "}
+                            {optionsText}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                   {item.notes && (
