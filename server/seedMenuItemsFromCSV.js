@@ -36,7 +36,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
@@ -82,7 +82,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
@@ -103,7 +103,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (12-16)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Milk Choice",
       "Extra Single Shots (Hot)",
@@ -122,7 +122,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
@@ -156,7 +156,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (12-16)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Milk Choice",
       "Extra Single Shots (Hot)",
@@ -192,7 +192,7 @@ export const menuItemsFromCSV = [
       "Cold Brew Cup Size (16-20)",
       "Ice Level",
       "Milk Choice",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
     ],
   },
   {
@@ -227,7 +227,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Ice Level",
       "Milk Choice",
@@ -248,7 +248,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Ice Level",
       "Milk Choice",
@@ -269,7 +269,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Ice Level",
       "Milk Choice",
@@ -290,7 +290,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Shot Preference",
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Ice Level",
       "Milk Choice",
@@ -611,7 +611,7 @@ export const menuItemsFromCSV = [
     available: true,
     active: true,
     modifierGroupNames: [
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Cup Size (12-16)",
       "Milk Choice",
     ],
@@ -630,7 +630,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Hot Cup Size",
       "Milk Choice",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
     ],
   },
   {
@@ -646,7 +646,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Ice Level",
       "Milk Choice",
     ],
@@ -664,7 +664,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cold Cup Size",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Milk Choice",
       "Ice Level",
     ],
@@ -682,7 +682,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Milk Choice",
       "Ice Level",
     ],
@@ -700,7 +700,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Milk Choice",
       "Ice Level",
     ],
@@ -718,7 +718,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.20 each)",
+      "Syrup Pumps (+$0.25 each)",
       "Milk Choice",
       "Ice Level",
     ],

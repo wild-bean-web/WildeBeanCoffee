@@ -7,7 +7,8 @@ const SelectedModifierSchema = new mongoose.Schema(
     selectedOptions: [
       {
         name: { type: String, required: true, trim: true }, // e.g., "Large"
-        price: { type: Number, default: 0, min: 0 }, // Additional cost for this option
+        price: { type: Number, default: 0, min: 0 }, // Additional cost per unit for this option
+        quantity: { type: Number, default: 1, min: 1 }, // e.g. 5 for "5 pumps"
       },
     ],
   },

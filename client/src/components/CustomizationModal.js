@@ -325,14 +325,30 @@ export default function CustomizationModal({
   // Handle quantity change for quantity-based modifiers
   const handleQuantityChange = (groupName, optionName, change) => {
     const quantityKey = `${groupName}_${optionName}`;
-    setModifierQuantities((prev) => {
-      const current = prev[quantityKey] || 1;
-      const newQuantity = Math.max(1, Math.min(10, current + change)); // Limit between 1 and 10
-      return {
-        ...prev,
-        [quantityKey]: newQuantity,
-      };
-    });
+    const current = modifierQuantities[quantityKey] || 1;
+    const newQuantity = current + change;
+
+    if (newQuantity < 1) {
+      // Auto-deselect: remove option and clear quantity
+      setSelectedModifiers((prev) => {
+        const groupSelected = prev[groupName] || [];
+        return {
+          ...prev,
+          [groupName]: groupSelected.filter((name) => name !== optionName),
+        };
+      });
+      setModifierQuantities((prev) => {
+        const updated = { ...prev };
+        delete updated[quantityKey];
+        return updated;
+      });
+      return;
+    }
+
+    setModifierQuantities((prev) => ({
+      ...prev,
+      [quantityKey]: Math.min(10, newQuantity),
+    }));
   };
 
   // Handle add to cart
@@ -645,8 +661,10 @@ export default function CustomizationModal({
                                               />
                                             </svg>
                                           </button>
-                                          <span className="w-8 text-center text-sm font-semibold text-gray-900">
-                                            {quantity}
+                                          <span className="min-w-[5rem] text-center text-sm font-semibold text-gray-900">
+                                            {quantity === 1
+                                              ? "1 pump"
+                                              : `${quantity} pumps`}
                                           </span>
                                           <button
                                             type="button"

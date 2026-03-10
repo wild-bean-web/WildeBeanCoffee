@@ -155,26 +155,26 @@ function OrderPageContent() {
     }
   }, [user, authLoading]);
 
-  // Calculate the first available time slot for today
+  // Calculate the first available time slot for today (next 10-min increment from now, but not before store open)
   const getFirstAvailableTime = () => {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    // Calculate current time + 15 minutes, rounded up to next 15-min increment
+    // Next 10-minute mark from now (e.g. 4:10 → 4:20, 4:21 → 4:30)
     let firstHour = currentHour;
-    let firstMinute = Math.ceil((currentMinute + 15) / 15) * 15;
+    let firstMinute = Math.ceil((currentMinute + 1) / 10) * 10;
 
-    // Handle minute overflow
     if (firstMinute >= 60) {
       firstHour += 1;
       firstMinute = 0;
     }
 
-    // If before store open time + 15 minutes, start at store open time
+    // If before store open, start at store open time
+    const openMin = 0;
     if (
       firstHour < storeHours.open ||
-      (firstHour === storeHours.open && firstMinute < 15)
+      (firstHour === storeHours.open && firstMinute < openMin)
     ) {
       firstHour = storeHours.open;
       firstMinute = 0;
@@ -242,19 +242,19 @@ function OrderPageContent() {
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
 
-        minute += 15;
+        minute += 10;
         if (minute >= 60) {
           hour += 1;
           minute = 0;
         }
       }
     } else {
-      // For future dates, use that day's open/close (e.g. Mon–Fri 6am–6:30pm, Sat 6am–8pm, Sun 9am–6:30pm)
+      // For future dates, use that day's open/close
       let hour = openHour;
       let minute = openMinute;
-      // Snap to next 15-min increment if open is e.g. 9:00
-      if (minute % 15 !== 0) {
-        minute = Math.ceil(minute / 15) * 15;
+      // Snap to next 10-min increment if open is e.g. 9:05
+      if (minute % 10 !== 0) {
+        minute = Math.ceil(minute / 10) * 10;
         if (minute >= 60) {
           hour += 1;
           minute = 0;
@@ -266,7 +266,7 @@ function OrderPageContent() {
         const displayTime = formatTimeDisplay(hour, minute);
         slots.push({ value: timeString, display: displayTime });
 
-        minute += 15;
+        minute += 10;
         if (minute >= 60) {
           hour += 1;
           minute = 0;
@@ -527,27 +527,6 @@ function OrderPageContent() {
       currency,
     }).format(price);
   };
-
-  // Hot coffee = Coffee & Espresso section + hot (not iced/cold)
-  const isHotCoffeeDrink = (item) => {
-    const section = (item.section || "").trim();
-    const name = (item.name || "").toLowerCase();
-    const tags = Array.isArray(item.tags)
-      ? item.tags.map((t) => (t || "").toLowerCase())
-      : [];
-    if (section !== "Coffee & Espresso") return false;
-    if (tags.includes("hot")) return true;
-    if (tags.includes("iced") || tags.includes("cold")) return false;
-    if (
-      name.startsWith("iced") ||
-      name.startsWith("cold") ||
-      name.includes("cold brew")
-    )
-      return false;
-    return true; // default Coffee & Espresso items to hot if no cold/iced tag
-  };
-
-  const cartHasHotCoffee = cart.some(isHotCoffeeDrink);
 
   // Validation functions
   const validatePhone = (phone) => {
@@ -1281,7 +1260,24 @@ function OrderPageContent() {
                                   const quantity = opt.quantity || 1;
                                   const optionTotal =
                                     (opt.price || 0) * quantity;
-                                  const showQuantity = quantity > 1;
+                                  const isQuantityBasedGroup =
+                                    (mod.modifierGroupName || "").includes("Syrup Pumps") ||
+                                    (mod.modifierGroupName || "").includes("Pumps") ||
+                                    (mod.modifierGroupName || "").includes("Extra Single Shot");
+                                  const isSyrupPump =
+                                    (mod.modifierGroupName || "").includes("Syrup");
+                                  const baseName = isSyrupPump
+                                    ? (opt.name || "").replace(/\s+Pump\s*$/i, "").trim() || opt.name
+                                    : opt.name;
+                                  const pumpLabel =
+                                    isSyrupPump
+                                      ? quantity > 1
+                                        ? " pumps"
+                                        : " pump"
+                                      : "";
+                                  const displayLabel = isQuantityBasedGroup
+                                    ? `${quantity} x ${baseName}${pumpLabel}`
+                                    : opt.name;
 
                                   return (
                                     <div
@@ -1289,13 +1285,8 @@ function OrderPageContent() {
                                       className="text-xs text-gray-600 flex items-center justify-between gap-3"
                                     >
                                       <span className="flex items-center gap-1.5 flex-1 min-w-0">
-                                        {showQuantity && (
-                                          <span className="font-semibold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
-                                            {quantity}
-                                          </span>
-                                        )}
                                         <span className="truncate">
-                                          {opt.name}
+                                          {displayLabel}
                                         </span>
                                       </span>
                                       {optionTotal > 0 && (
@@ -1370,31 +1361,6 @@ function OrderPageContent() {
                   );
                 })}
               </div>
-
-              {cartHasHotCoffee && (
-                <div className="mt-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                  <p className="flex items-start gap-2 text-sm font-medium text-amber-900">
-                    <svg
-                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span>
-                      Your order includes hot coffee. We&apos;ll make it when
-                      you arrive so it stays fresh and delicious.
-                    </span>
-                  </p>
-                </div>
-              )}
 
               <div className="mt-6 border-t border-gray-200 pt-4">
                 <div className="space-y-2">
@@ -1810,12 +1776,6 @@ function OrderPageContent() {
                       </div>
                     ) : (
                       <>
-                        {cartHasHotCoffee && (
-                          <p className="mb-3 text-center text-sm font-medium text-amber-800">
-                            Hot coffee in your order will be made when you
-                            arrive for pickup.
-                          </p>
-                        )}
                         <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
                           <p className="mb-4 text-gray-700">
                             You will be redirected to Clover's secure payment
