@@ -14,7 +14,7 @@ export function getGrandOpeningLabel() {
 }
 
 /** Set to true when you are ready to offer pastries via online ordering (after grand opening). */
-export const PASTRIES_ORDERING_ENABLED = false;
+export const PASTRIES_ORDERING_ENABLED = true;
 
 export const PASTRIES_SECTION_NAME = "Bakery & Pastries";
 
