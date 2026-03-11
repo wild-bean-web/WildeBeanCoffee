@@ -103,6 +103,7 @@ export const modifierGroups = [
       { name: "Pumpkin Spice Syrup Pump", price: 0.25, available: true },
       { name: "Pure Cane Syrup Pump", price: 0.25, available: true },
       { name: "Chocolate Syrup Pump", price: 0.25, available: true },
+      { name: "White Chocolate Syrup Pump", price: 0.25, available: true },
       { name: "Mocha Syrup Pump (Disabled)", price: 0.25, available: false },
       { name: "French Vanilla Syrup Pump (Disabled)", price: 0.25, available: false },
       { name: "Cinnamon Syrup Pump (Disabled)", price: 0.25, available: false },
