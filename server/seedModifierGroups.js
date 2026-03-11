@@ -164,7 +164,6 @@ export const modifierGroups = [
     options: [
       { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
-      { name: "No Milk", price: 0, available: true },
       { name: "Oat Milk", price: 0.75, available: true },
       { name: "Soy Milk", price: 0.75, available: true },
       { name: "Almond Milk", price: 0.75, available: true },
@@ -178,7 +177,6 @@ export const modifierGroups = [
     options: [
       { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
-      { name: "No Milk", price: 0, available: true },
       { name: "Almond Milk", price: 0.75, available: true },
       { name: "Oat Milk", price: 0.75, available: true },
       { name: "Soy Milk", price: 0.75, available: true },
@@ -194,6 +192,18 @@ export const modifierGroups = [
       { name: "Light Ice", price: 0, available: true },
       { name: "Medium Ice", price: 0, available: true },
       { name: "Extra Ice", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Cold Foam",
+    description: "Add cold foam",
+    type: "single",
+    required: false,
+    options: [
+      { name: "Mango Cold Foam", price: 1, available: true },
+      { name: "Strawberry Cold Foam", price: 1, available: true },
+      { name: "Blueberry Cold Foam", price: 1, available: true },
+      { name: "Matcha Cold Foam", price: 1.25, available: true },
     ],
   },
   // Build-your-own oatmeal modifier groups (matches POS inventory-export-v2)
