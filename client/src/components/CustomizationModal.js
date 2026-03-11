@@ -21,7 +21,12 @@ const PREDETERMINED_BOWL_DEFAULTS = {
   "Wild Vegan": {
     "Wild Vegan Base": ["Chia Seeds Pudding"],
     "Oatmeal Bowl Size": ["Small (12oz)"],
-    "Oatmeal Dried Toppings": ["Granola", "Coconut flakes", "Sliced almonds", "Dried cranberries"],
+    "Oatmeal Dried Toppings": [
+      "Granola",
+      "Coconut flakes",
+      "Sliced almonds",
+      "Dried cranberries",
+    ],
     "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
     "Oatmeal Fruit Toppings": ["Strawberries", "Bananas"],
     "Oatmeal EXTRA Add-Ons": [],
@@ -29,7 +34,12 @@ const PREDETERMINED_BOWL_DEFAULTS = {
   "Signature Bowl": {
     "Oatmeal Base": ["Chia Seeds Pudding & Yogurt"],
     "Oatmeal Bowl Size": ["Small (12oz)"],
-    "Oatmeal Dried Toppings": ["Granola", "Chopped pecans", "Sunflower Seeds", "Coconut flakes"],
+    "Oatmeal Dried Toppings": [
+      "Granola",
+      "Chopped pecans",
+      "Sunflower Seeds",
+      "Coconut flakes",
+    ],
     "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
     "Oatmeal Fruit Toppings": ["Strawberries", "Blueberries"],
     "Oatmeal EXTRA Add-Ons": [],
@@ -117,7 +127,8 @@ export default function CustomizationModal({
               );
             } else if (group.name === "Protein Powder") {
               defaultOption = group.options.find(
-                (opt) => opt.name === "Vanilla Mass protein powder" && opt.available,
+                (opt) =>
+                  opt.name === "Vanilla Mass protein powder" && opt.available,
               );
             }
 
@@ -130,7 +141,9 @@ export default function CustomizationModal({
           // Override with predetermined bowl defaults for Wild Vegan and Signature Bowl
           if (menuItem?.name && PREDETERMINED_BOWL_DEFAULTS[menuItem.name]) {
             const preset = PREDETERMINED_BOWL_DEFAULTS[menuItem.name];
-            const groupNames = (menuItem.modifierGroups || []).map((g) => g.name);
+            const groupNames = (menuItem.modifierGroups || []).map(
+              (g) => g.name,
+            );
             groupNames.forEach((groupName) => {
               if (Array.isArray(preset[groupName])) {
                 defaults[groupName] = preset[groupName];
@@ -140,8 +153,11 @@ export default function CustomizationModal({
 
           // Pre-select Protein Powder for protein smoothies (Berry Mango Tango, Power Couple)
           if (
-            (menuItem?.name === "Berry Mango Tango" || menuItem?.name === "Power Couple") &&
-            (menuItem.modifierGroups || []).some((g) => g.name === "Protein Powder")
+            (menuItem?.name === "Berry Mango Tango" ||
+              menuItem?.name === "Power Couple") &&
+            (menuItem.modifierGroups || []).some(
+              (g) => g.name === "Protein Powder",
+            )
           ) {
             defaults["Protein Powder"] = ["Vanilla Mass protein powder"];
           }
