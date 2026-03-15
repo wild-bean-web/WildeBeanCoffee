@@ -88,6 +88,37 @@ function validateOrderPayload(body) {
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+/** Store timezone for business-hours comparison (e.g. America/New_York for MD). */
+const STORE_TIMEZONE = process.env.STORE_TIMEZONE || "America/New_York";
+
+/** Format "HH:mm" or "H:mm" as 12-hour e.g. "8:00 PM" for user-facing messages. */
+function formatTime12Hour(hhmm) {
+  if (!hhmm) return "";
+  const [h, m] = hhmm.split(":").map(Number);
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const ampm = h < 12 ? "AM" : "PM";
+  return `${hour12}:${String(m || 0).padStart(2, "0")} ${ampm}`;
+}
+
+/** Get hour and minute of a Date in the store timezone. */
+function getHoursMinutesInStoreTz(date, timeZone = STORE_TIMEZONE) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const hour = parseInt(parts.find((p) => p.type === "hour").value, 10);
+  const minute = parseInt(parts.find((p) => p.type === "minute").value, 10);
+  return { hour, minute };
+}
+
+/** Get weekday name (e.g. "Monday") for a Date in the store timezone. */
+function getDayNameInStoreTz(date, timeZone = STORE_TIMEZONE) {
+  return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(date);
+}
+
 /** Returns an error message if pickup time is outside store hours; otherwise null. */
 async function validatePickupTimeWithinHours(pickupTime) {
   if (!pickupTime) return null;
@@ -97,19 +128,23 @@ async function validatePickupTimeWithinHours(pickupTime) {
   const location = await Location.findOne({ active: true }).lean();
   if (!location?.hours?.length) return null;
 
-  const dayName = DAY_NAMES[date.getDay()];
+  // Interpret pickup time in store timezone (e.g. America/New_York for MD).
+  // The client sends ISO (UTC); server must compare to store hours in local store time.
+  const dayName = getDayNameInStoreTz(date);
+  const { hour: pickupHour, minute: pickupMinute } = getHoursMinutesInStoreTz(date);
   const dayHours = location.hours.find((h) => h.day === dayName);
+
   if (!dayHours?.closed && dayHours?.opens != null && dayHours?.closes != null) {
     const [openH, openM] = (dayHours.opens || "06:00").split(":").map(Number);
     const [closeH, closeM] = (dayHours.closes || "20:00").split(":").map(Number);
     const openMinutes = openH * 60 + (openM || 0);
     const closeMinutes = closeH * 60 + (closeM || 0);
-    const pickupMinutes = date.getHours() * 60 + date.getMinutes();
+    const pickupMinutes = pickupHour * 60 + pickupMinute;
     if (pickupMinutes < openMinutes) {
-      return `Pickup time is before opening (${dayHours.opens}). Please choose a time when we're open.`;
+      return `Pickup time is before opening (${formatTime12Hour(dayHours.opens)}). Please choose a time when we're open.`;
     }
     if (pickupMinutes >= closeMinutes) {
-      return `Pickup time is at or after closing (${dayHours.closes}). Please choose a time when we're open.`;
+      return `Pickup time is at or after closing (${formatTime12Hour(dayHours.closes)}). Please choose a time when we're open.`;
     }
   } else if (dayHours?.closed) {
     return "We're closed on that day. Please choose another pickup date.";

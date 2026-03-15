@@ -102,7 +102,7 @@ export const modifierGroups = [
       { name: "Coconut Syrup Pump", price: 0.25, available: true },
       { name: "Pumpkin Spice Syrup Pump", price: 0.25, available: true },
       { name: "Pure Cane Syrup Pump", price: 0.25, available: true },
-      { name: "Chocolate Syrup Pump", price: 0.25, available: true },
+      { name: "Chocolate Syrup Pump", price: 0.5, available: true },
       { name: "White Chocolate Syrup Pump", price: 0.25, available: true },
       { name: "Mocha Syrup Pump (Disabled)", price: 0.25, available: false },
       { name: "French Vanilla Syrup Pump (Disabled)", price: 0.25, available: false },
@@ -208,18 +208,15 @@ export const modifierGroups = [
   },
   // Build-your-own oatmeal modifier groups (matches POS inventory-export-v2)
   {
-    name: "Oatmeal Base",
+    name: "Base",
     description: "Choose your base (required)",
     type: "single",
     required: true,
     minSelections: 1,
     maxSelections: 1,
     options: [
-      { name: "Oatmeal", price: 0, available: true },
       { name: "Chia Seeds Pudding", price: 0, available: true },
       { name: "Yogurt", price: 0, available: true },
-      { name: "Oatmeal & Yogurt", price: 0, available: true },
-      { name: "Oatmeal & Chia Seeds Pudding", price: 0, available: true },
       { name: "Chia Seeds Pudding & Yogurt", price: 0, available: true },
     ],
   },
@@ -235,7 +232,7 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Oatmeal Bowl Size",
+    name: "Bowl Size",
     description: "Choose your bowl size (required). Medium is +$1.",
     type: "single",
     required: true,
@@ -247,7 +244,7 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Oatmeal Dried Toppings",
+    name: "Toppings",
     description: "Choose at least 3 dried toppings (up to 8)",
     type: "multiple",
     required: true,
@@ -266,7 +263,7 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Oatmeal Drizzels",
+    name: "Drizzels",
     description: "Choose up to 2 drizzles (optional)",
     type: "multiple",
     required: false,
@@ -275,10 +272,11 @@ export const modifierGroups = [
     options: [
       { name: "Peanut Butter", price: 0, available: true },
       { name: "Honey", price: 0, available: true },
+      { name: "Chocolate", price: 0, available: true },
     ],
   },
   {
-    name: "Oatmeal Fruit Toppings",
+    name: "Fruit Toppings",
     description: "Choose at least 2 fresh fruits",
     type: "multiple",
     required: true,
@@ -291,14 +289,13 @@ export const modifierGroups = [
     ],
   },
   {
-    name: "Oatmeal EXTRA Add-Ons",
-    description: "Extra base $2, extra dry/fruit $0.75, Peanut Butter/Honey $0.50",
+    name: "Extra Add-Ons",
+    description: "Extra base $2, extra dry/fruit $0.75, Peanut Butter/Honey $0.50, Chocolate $0.75",
     type: "multiple",
     required: false,
     minSelections: 0,
     maxSelections: 17,
     options: [
-      { name: "Oatmeal", price: 2, available: true },
       { name: "Chia Seeds Pudding", price: 2, available: true },
       { name: "Yogurt", price: 2, available: true },
       { name: "Sliced almonds", price: 0.75, available: true },
@@ -315,6 +312,7 @@ export const modifierGroups = [
       { name: "Bananas", price: 0.75, available: true },
       { name: "Peanut Butter", price: 0.5, available: true },
       { name: "Honey", price: 0.5, available: true },
+      { name: "Chocolate", price: 0.75, available: true },
     ],
   },
   {
