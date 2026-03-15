@@ -349,7 +349,7 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Guava Cream",
-    description: "Guava, yogurt, avocado, dash of strawberry, lime.",
+    description: "Guava, Strawberry, Banana, Yogurt, Lime. Contains: Dairy.",
     price: 7.75,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",

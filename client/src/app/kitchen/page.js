@@ -849,7 +849,11 @@ function OrderCard({
                           (modifier.modifierGroupName || "").includes("Pumps") ||
                           (modifier.modifierGroupName || "").includes("Extra Single Shot");
                         const isSyrupPump = (modifier.modifierGroupName || "").includes("Syrup");
-                        const groupDisplayName = (modifier.modifierGroupName || "").replace(/\s*\(\+?\$[^)]*\)\s*$/g, "").trim() || modifier.modifierGroupName;
+                        const rawGroupName = modifier.modifierGroupName || "";
+                        let groupDisplayName = rawGroupName.replace(/\s*\(\+?\$[^)]*\)\s*$/g, "").trim() || rawGroupName;
+                        if (["Cup Size (12-16)", "Cup Size (16-20)", "Cold Brew Cup Size (16-20)"].includes(rawGroupName)) {
+                          groupDisplayName = "Cup Size";
+                        }
                         const optionsText = modifier.selectedOptions
                           .map((opt) => {
                             const q = opt.quantity || 1;
