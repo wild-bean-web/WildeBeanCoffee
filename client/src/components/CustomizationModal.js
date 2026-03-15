@@ -20,29 +20,29 @@ import Image from "next/image";
 const PREDETERMINED_BOWL_DEFAULTS = {
   "Wild Vegan": {
     "Wild Vegan Base": ["Chia Seeds Pudding"],
-    "Oatmeal Bowl Size": ["Small (12oz)"],
-    "Oatmeal Dried Toppings": [
+    "Bowl Size": ["Small (12oz)"],
+    "Toppings": [
       "Granola",
       "Coconut flakes",
       "Sliced almonds",
       "Dried cranberries",
     ],
-    "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
-    "Oatmeal Fruit Toppings": ["Strawberries", "Bananas"],
-    "Oatmeal EXTRA Add-Ons": [],
+    "Drizzels": ["Peanut Butter", "Honey"],
+    "Fruit Toppings": ["Strawberries", "Bananas"],
+    "Extra Add-Ons": [],
   },
   "Signature Bowl": {
-    "Oatmeal Base": ["Chia Seeds Pudding & Yogurt"],
-    "Oatmeal Bowl Size": ["Small (12oz)"],
-    "Oatmeal Dried Toppings": [
+    "Base": ["Chia Seeds Pudding & Yogurt"],
+    "Bowl Size": ["Small (12oz)"],
+    "Toppings": [
       "Granola",
       "Chopped pecans",
       "Sunflower Seeds",
       "Coconut flakes",
     ],
-    "Oatmeal Drizzels": ["Peanut Butter", "Honey"],
-    "Oatmeal Fruit Toppings": ["Strawberries", "Blueberries"],
-    "Oatmeal EXTRA Add-Ons": [],
+    "Drizzels": ["Peanut Butter", "Honey"],
+    "Fruit Toppings": ["Strawberries", "Blueberries"],
+    "Extra Add-Ons": [],
   },
 };
 
@@ -117,7 +117,7 @@ export default function CustomizationModal({
               defaultOption = group.options.find(
                 (opt) => opt.name === "Chia Seeds Pudding" && opt.available,
               );
-            } else if (group.name === "Oatmeal Bowl Size") {
+            } else if (group.name === "Bowl Size") {
               defaultOption = group.options.find(
                 (opt) => opt.name === "Small (12oz)" && opt.available,
               );
