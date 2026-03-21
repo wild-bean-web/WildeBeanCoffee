@@ -96,6 +96,7 @@ export const modifierGroups = [
     maxSelections: 5,
     options: [
       { name: "Vanilla Syrup Pump", price: 0.25, available: true },
+      { name: "Sugar Free Vanilla Syrup Pump", price: 0.25, available: true },
       { name: "Caramel Syrup Pump", price: 0.25, available: true },
       { name: "Hazelnut Syrup Pump", price: 0.25, available: true },
       { name: "Strawberry Syrup Pump", price: 0.25, available: true },
@@ -164,6 +165,7 @@ export const modifierGroups = [
     options: [
       { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
+      { name: "No Milk", price: 0, available: true },
       { name: "Oat Milk", price: 0.75, available: true },
       { name: "Soy Milk", price: 0.75, available: true },
       { name: "Almond Milk", price: 0.75, available: true },
@@ -177,6 +179,7 @@ export const modifierGroups = [
     options: [
       { name: "Whole Milk", price: 0, available: true },
       { name: "2% Milk", price: 0, available: true },
+      { name: "No Milk", price: 0, available: true },
       { name: "Almond Milk", price: 0.75, available: true },
       { name: "Oat Milk", price: 0.75, available: true },
       { name: "Soy Milk", price: 0.75, available: true },

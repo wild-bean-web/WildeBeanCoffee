@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import { Order, Location } from "../models/index.js";
+import { Order, Location, MenuItem } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
 import { optionalAuth, authenticate, authenticateWithQueryToken } from "../middleware/auth.js";
 import { EventEmitter } from "events";
@@ -152,6 +152,31 @@ async function validatePickupTimeWithinHours(pickupTime) {
   return null;
 }
 
+/** Reject if any menu item is in-store only (onlineOrderable: false). */
+async function validateMenuItemsOnlineOrderable(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const menuIds = items
+    .filter((i) => i.itemType === "menu" && i.itemId)
+    .map((i) => i.itemId);
+  if (menuIds.length === 0) return null;
+  const objectIds = menuIds.map((id) =>
+    mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null
+  ).filter(Boolean);
+  if (objectIds.length === 0) return null;
+  const docs = await MenuItem.find({ _id: { $in: objectIds } })
+    .select("name onlineOrderable")
+    .lean();
+  const byId = new Map(docs.map((d) => [d._id.toString(), d]));
+  for (const line of items) {
+    if (line.itemType !== "menu" || !line.itemId) continue;
+    const doc = byId.get(String(line.itemId));
+    if (doc && doc.onlineOrderable === false) {
+      return `"${line.name || doc.name}" is only available in-store. Please remove it from your cart to complete your order.`;
+    }
+  }
+  return null;
+}
+
 // POST /api/orders
 // Use optionalAuth to support both authenticated and guest orders
 // Admin comped orders (ADMIN_DISCOUNT) allowed only for authenticated admin users
@@ -171,6 +196,12 @@ router.post("/", optionalAuth, async (req, res, next) => {
     }
 
     const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
+    if (!isAdminOrder) {
+      const inStoreOnlyError = await validateMenuItemsOnlineOrderable(items);
+      if (inStoreOnlyError) {
+        return errorResponse(res, 400, inStoreOnlyError, ["items"]);
+      }
+    }
     if (isAdminOrder) {
       if (!req.user) {
         return errorResponse(res, 401, "Authentication required for admin orders");

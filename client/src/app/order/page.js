@@ -81,11 +81,32 @@ function OrderPageContent() {
   }, []);
 
   useEffect(() => {
-    // Load cart from localStorage or state
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
+    // Load cart from localStorage; remove in-store-only menu items (e.g. pastries)
+    const loadCart = async () => {
+      const savedCart = localStorage.getItem("cart");
+      let parsed = savedCart ? JSON.parse(savedCart) : [];
+      try {
+        const menuItems = await menuApi.getAll();
+        const inStoreOnlyIds = new Set(
+          menuItems
+            .filter((m) => m.onlineOrderable === false)
+            .map((m) => String(m._id)),
+        );
+        if (inStoreOnlyIds.size > 0) {
+          const filtered = parsed.filter(
+            (line) => !inStoreOnlyIds.has(String(line._id)),
+          );
+          if (filtered.length !== parsed.length) {
+            parsed = filtered;
+            localStorage.setItem("cart", JSON.stringify(parsed));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to sync cart with menu", e);
+      }
+      setCart(parsed);
+    };
+    loadCart();
 
     // Fetch store hours from API (single source of truth)
     const fetchStoreHours = async () => {

@@ -204,6 +204,7 @@ function MenuPageContent() {
   };
 
   const handleAddToCartClick = (menuItem) => {
+    if (menuItem.onlineOrderable === false) return;
     // Check if item has modifier groups
     const hasModifiers = menuItem.modifierGroups && menuItem.modifierGroups.length > 0;
     
@@ -360,6 +361,41 @@ function MenuPageContent() {
               <h2 className="mb-6 border-b-2 border-[var(--lime-green)] pb-2 text-2xl font-bold text-[var(--coffee-brown)]">
                 {section}
               </h2>
+              {section === PASTRIES_SECTION_NAME && (
+                <div
+                  id="bakery-in-store-notice"
+                  className="mb-6 flex gap-3 rounded-xl border-2 border-[var(--lime-green)]/50 bg-gradient-to-r from-[var(--lime-green)]/15 to-amber-50/80 px-4 py-3 shadow-sm sm:items-center sm:gap-4 sm:px-5 sm:py-4"
+                  role="region"
+                  aria-label="Bakery and pastries ordering policy"
+                >
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--coffee-brown)] text-white sm:h-12 sm:w-12"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-[var(--coffee-brown)] sm:text-lg">
+                      In-store only — not available for online order
+                    </p>
+                    <p className="mt-1 text-sm leading-snug text-gray-700">
+                      Browse our pastries below, then visit the cafe to buy. Selection and availability change daily.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {items.map((item) => (
                   <motion.div
@@ -440,7 +476,9 @@ function MenuPageContent() {
                       
                       <div className="mt-auto">
                         {item.available ? (
-                          // For items with modifiers, always show "Add to Cart" to allow different customizations
+                          item.onlineOrderable === false ? (
+                            <div className="min-h-[42px]" aria-hidden="true" />
+                          ) : // For items with modifiers, always show "Add to Cart" to allow different customizations
                           // For items without modifiers, show quantity controls if already in cart
                           (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
                             <button
@@ -727,16 +765,23 @@ function MenuPageContent() {
                   <div className="mt-6 flex items-center justify-between border-t pt-4">
                     <div>
                       {selectedMenuItem.available ? (
+                        selectedMenuItem.onlineOrderable === false ? (
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold text-[var(--coffee-brown)]">In-store purchase only.</span>{" "}
+                            Not available for online order — selection varies daily.
+                          </p>
+                        ) : (
                         <p className="text-sm text-[var(--lime-green)]">
                           ✓ Available
                         </p>
+                        )
                       ) : (
                         <p className="text-sm text-red-600">
                           Currently Unavailable
                         </p>
                       )}
                     </div>
-                    {selectedMenuItem.available && (
+                    {selectedMenuItem.available && selectedMenuItem.onlineOrderable !== false && (
                       // For items with modifiers, always show "Add to Cart" to allow different customizations
                       // For items without modifiers, show quantity controls if already in cart
                       (selectedMenuItem.modifierGroups && selectedMenuItem.modifierGroups.length > 0) || getCartQuantity(selectedMenuItem._id) === 0 ? (

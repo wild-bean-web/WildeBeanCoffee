@@ -10,6 +10,8 @@ const MenuItemSchema = new mongoose.Schema(
     tags: [{ type: String, trim: true }], // Kept for backward compatibility
     allergens: [{ type: String, trim: true }], // Allergy information: Gluten, Lactose, Nuts, Soy, Eggs, etc.
     available: { type: Boolean, default: true },
+    /** When false, item is shown on the menu but cannot be ordered online (in-store only). */
+    onlineOrderable: { type: Boolean, default: true },
     image: { type: String, trim: true },
     active: { type: Boolean, default: true },
     modifierGroups: [
