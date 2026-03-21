@@ -253,6 +253,12 @@ export default function LocationPage() {
         </div>
       </div>
 
+      <div className="border-y border-[var(--lime-green)]/30 bg-gradient-to-r from-[var(--coffee-brown)]/10 to-[var(--lime-green)]/10 py-3 px-4 text-center sm:px-6">
+        <p className="mx-auto max-w-3xl text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
+          <span className="font-semibold text-[var(--lime-green)]">Now in store:</span> Organic açaí bowls and premium ice cream — chocolate, real vanilla bean, and vegan pistachio. Stop by the cafe to enjoy them with our full menu.
+        </p>
+      </div>
+
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-12">
         {loading && <LoadingSpinner message="Loading location..." />}
         {!loading && error && <ErrorDisplay message={error} />}

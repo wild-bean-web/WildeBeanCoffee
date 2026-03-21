@@ -336,11 +336,14 @@ function MenuPageContent() {
         </div>
       </div>
 
-      {/* Now serving Yirgacheffe — single origin Ethiopian, medium body (served in-store only) */}
+      {/* Cafe highlights: coffee, açaí bowls, ice cream */}
       <div className="border-y border-[var(--lime-green)]/30 bg-gradient-to-r from-[var(--coffee-brown)]/10 to-[var(--lime-green)]/10 py-3 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl text-center">
-          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
-            <span className="font-semibold text-[var(--lime-green)]">Now serving:</span> Yirgacheffe — single origin Ethiopian, medium body. Try it in your favorite drink at the cafe.
+        <div className="mx-auto max-w-7xl text-center space-y-1.5 sm:space-y-0 sm:space-x-2">
+          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base sm:inline">
+            <span className="font-semibold text-[var(--lime-green)]">Our coffee:</span> Yirgacheffe — specialty Ethiopian Arabica from high-altitude farms; bright, light-bodied, with floral jasmine, citrus &amp; bergamot, and fruit notes. Our house bean for drinks at the cafe.
+          </p>
+          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base sm:inline sm:before:content-['\00a0•\00a0']">
+            <span className="font-semibold text-[var(--lime-green)]">In store:</span> Organic açaí bowls (vegan &amp; gluten-free) &amp; premium ice cream — chocolate, vanilla bean &amp; vegan pistachio. Visit us for a cup or cone.
           </p>
         </div>
       </div>
