@@ -462,33 +462,92 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Now Serving — Yirgacheffe (single origin Ethiopian, medium body) */}
+      {/* Now at the cafe — coffee, açaí bowls, ice cream */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[var(--coffee-brown)] via-[var(--coffee-brown)] to-[var(--coffee-brown-dark)] py-14 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cpath fill=\'%23ffffff\' fill-opacity=\'0.03\' d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/svg%3E')] opacity-90" aria-hidden />
-        <div className="relative mx-auto max-w-4xl text-center">
+        <div className="relative mx-auto max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center"
           >
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-[var(--lime-green)]">
-              Now serving
+              Now at the cafe
             </p>
             <h2 className="mb-3 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-              Yirgacheffe
+              New favorites &amp; single-origin coffee
             </h2>
-            <p className="mx-auto max-w-2xl text-lg text-white/90 sm:text-xl">
-              Single origin Ethiopian — medium body. Try it in your favorite drink at the cafe.
+            <p className="mx-auto mb-10 max-w-2xl text-lg text-white/85 sm:text-xl">
+              Stop in to try our latest — available in store.
             </p>
+          </motion.div>
+          <div className="grid gap-8 md:grid-cols-3 md:gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, delay: 0.05 }}
+              className="rounded-2xl border border-white/15 bg-white/10 p-6 text-center backdrop-blur-sm"
+            >
+              <h3 className="text-xl font-bold text-[var(--lime-green)] sm:text-2xl">
+                Yirgacheffe
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
+                Specialty Arabica from high-altitude farms (1,700–2,200+ m) in southern Ethiopia — bright, fragrant, and light-bodied. Look for floral jasmine, citrus and bergamot acidity, and fruit notes like blueberry and peach. We use it as our house coffee for every drink at the cafe.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="rounded-2xl border border-white/15 bg-white/10 p-6 text-center backdrop-blur-sm"
+            >
+              <h3 className="text-xl font-bold text-[var(--lime-green)] sm:text-2xl">
+                Açaí bowls
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
+                Organic Brazilian açaí — tropical, berry-forward flavor with a rich, creamy sorbet texture. Naturally vegan, gluten-free &amp; dairy-free, loaded with antioxidants. We top it with fresh fruit, granola, and more—indulgent taste that still fits a health-conscious day.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="rounded-2xl border border-white/15 bg-white/10 p-6 text-center backdrop-blur-sm"
+            >
+              <h3 className="text-xl font-bold text-[var(--lime-green)] sm:text-2xl">
+                Ice cream
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
+                Premium scoop ice cream — rich chocolate and real vanilla bean (Madagascar vanilla), extra-creamy with no artificial flavors or colors. We also offer a vegan pistachio with real nut pieces—so everyone gets a dessert worth coming back for.
+              </p>
+            </motion.div>
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          >
             <Link
               href="/menu"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[var(--lime-green)] px-6 py-3 font-semibold text-[var(--coffee-brown)] transition-all hover:bg-[var(--lime-green-light)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2 focus:ring-offset-[var(--coffee-brown)]"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--lime-green)] px-6 py-3 font-semibold text-[var(--coffee-brown)] transition-all hover:bg-[var(--lime-green-light)] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2 focus:ring-offset-[var(--coffee-brown)]"
             >
               View menu
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
+            </Link>
+            <Link
+              href="/location"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-white/40 px-6 py-3 font-semibold text-white transition-all hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+              Visit us
             </Link>
           </motion.div>
         </div>
