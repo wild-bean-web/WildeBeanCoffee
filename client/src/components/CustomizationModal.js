@@ -243,6 +243,8 @@ export default function CustomizationModal({
     return true;
   }, [menuItem, selectedModifiers]);
 
+  const canOrderOnline = menuItem?.onlineOrderable !== false;
+
   // Validate required modifiers
   const validateModifiers = () => {
     const errors = {};
@@ -812,12 +814,18 @@ export default function CustomizationModal({
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={!canAddToCart}
+                disabled={!canAddToCart || !canOrderOnline}
                 className="w-full rounded-lg bg-[var(--lime-green)] px-6 py-3 text-white font-semibold hover:bg-[var(--lime-green-dark)] transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {existingCartItem ? "Update Cart" : "Add to Cart"}
               </button>
-              {!canAddToCart &&
+              {!canOrderOnline && (
+                <p className="mt-2 text-center text-sm text-gray-600">
+                  This item is only available in-store. Availability varies daily.
+                </p>
+              )}
+              {canOrderOnline &&
+                !canAddToCart &&
                 !menuItem?.modifierGroups?.some(
                   (g) => g.name === "Smoothie Size",
                 ) && (
