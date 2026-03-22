@@ -10,6 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 import CustomizationModal from "@/components/CustomizationModal";
 import { GRAND_OPENING_DATE } from "@/lib/constants";
+import {
+  getPickupLeadTimeError,
+  getPickupLeadTimeErrorFromIso,
+} from "@/lib/pickupValidation";
 
 function OrderPageContent() {
   const router = useRouter();
@@ -420,6 +424,35 @@ function OrderPageContent() {
     }
   }, [selectedDate, selectedTime]);
 
+  // Invalidate pickup if the minimum-lead window passes while the user is idle or away from the tab.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const revalidateStalePickup = () => {
+      if (!selectedDate || !selectedTime) return;
+      const msg = getPickupLeadTimeError(selectedDate, selectedTime);
+      if (!msg) return;
+      setSelectedTime("");
+      setPickupTime("");
+      setValidationErrors((prev) => ({ ...prev, pickupTime: msg }));
+      setShowPayment(false);
+    };
+
+    const intervalId = setInterval(revalidateStalePickup, 60_000);
+    const onWinFocus = () => revalidateStalePickup();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") revalidateStalePickup();
+    };
+    window.addEventListener("focus", onWinFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", onWinFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [selectedDate, selectedTime]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -603,6 +636,11 @@ function OrderPageContent() {
 
     if (!selectedTime) {
       errors.pickupTime = "Please select a pickup time";
+    } else if (selectedDate) {
+      const leadErr = getPickupLeadTimeError(selectedDate, selectedTime);
+      if (leadErr) {
+        errors.pickupTime = leadErr;
+      }
     }
 
     setValidationErrors(errors);
@@ -625,6 +663,13 @@ function OrderPageContent() {
 
   const handleCreateCheckout = async () => {
     setError(null);
+
+    if (!validateForm()) {
+      setShowPayment(false);
+      setError("Please fix the issues above before continuing.");
+      return;
+    }
+
     setPaymentProcessing(true);
 
     try {
@@ -830,6 +875,14 @@ function OrderPageContent() {
     setPaymentData(paymentResult);
     setPaymentProcessing(true);
     setError(null);
+
+    const isoLeadErr = getPickupLeadTimeErrorFromIso(pickupTime);
+    if (isoLeadErr) {
+      setValidationErrors((prev) => ({ ...prev, pickupTime: isoLeadErr }));
+      setPaymentProcessing(false);
+      setError(isoLeadErr);
+      return;
+    }
 
     try {
       const { subtotal, tax, total } = calculateTotals();
@@ -1666,14 +1719,32 @@ function OrderPageContent() {
                       <button
                         type="button"
                         onClick={() => {
+                          const willOpen = !showTimePicker;
+                          if (willOpen && selectedDate && selectedTime) {
+                            const msg = getPickupLeadTimeError(
+                              selectedDate,
+                              selectedTime,
+                            );
+                            if (msg) {
+                              setSelectedTime("");
+                              setPickupTime("");
+                              setValidationErrors((prev) => ({
+                                ...prev,
+                                pickupTime: msg,
+                              }));
+                              setShowPayment(false);
+                              setShowTimePicker(false);
+                              setShowDatePicker(false);
+                              return;
+                            }
+                          }
                           setShowTimePicker(!showTimePicker);
                           setShowDatePicker(false);
-                          // Clear validation error when user interacts
-                          if (validationErrors.pickupTime) {
-                            setValidationErrors({
-                              ...validationErrors,
+                          if (willOpen && validationErrors.pickupTime) {
+                            setValidationErrors((prev) => ({
+                              ...prev,
                               pickupTime: "",
-                            });
+                            }));
                           }
                         }}
                         className={`w-full rounded-lg border px-4 py-2 text-left focus:outline-none focus:ring-2 bg-white flex items-center justify-between ${

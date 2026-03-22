@@ -10,7 +10,6 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     password: { type: String, required: true }, // Will be hashed with bcrypt
     phone: { type: String, required: true, trim: true },
@@ -18,8 +17,7 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for email lookups
-UserSchema.index({ email: 1 });
+// unique: true on email already creates the index — no schema.index({ email }) to avoid duplicate index warnings
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export default User;

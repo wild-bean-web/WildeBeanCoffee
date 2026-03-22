@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
+import { getPickupLeadTimeErrorFromIso } from "@/lib/pickupValidation";
 
 function OrderSuccessContent() {
   const router = useRouter();
@@ -26,6 +27,13 @@ function OrderSuccessContent() {
     }
 
     const orderData = JSON.parse(pendingOrderData);
+
+    const leadErr = getPickupLeadTimeErrorFromIso(orderData.pickupTime);
+    if (leadErr) {
+      setError(leadErr);
+      setLoading(false);
+      return;
+    }
 
     // Create order with payment status
     const createOrder = async () => {
