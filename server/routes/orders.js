@@ -91,6 +91,22 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 /** Store timezone for business-hours comparison (e.g. America/New_York for MD). */
 const STORE_TIMEZONE = process.env.STORE_TIMEZONE || "America/New_York";
 
+const _leadParsed = parseInt(process.env.PICKUP_MIN_LEAD_MINUTES ?? "15", 10);
+const PICKUP_MIN_LEAD_MINUTES =
+  Number.isFinite(_leadParsed) && _leadParsed >= 0 ? _leadParsed : 15;
+
+/** Reject pickup instants in the past or before minimum lead time from now. */
+function validatePickupTimeMeetsMinimumLead(pickupTime) {
+  if (!pickupTime) return null;
+  const d = new Date(pickupTime);
+  if (Number.isNaN(d.getTime())) return null;
+  const leadMs = PICKUP_MIN_LEAD_MINUTES * 60 * 1000;
+  if (d.getTime() < Date.now() + leadMs) {
+    return `Pickup must be at least ${PICKUP_MIN_LEAD_MINUTES} minutes from now. Please choose a later pickup time.`;
+  }
+  return null;
+}
+
 /** Format "HH:mm" or "H:mm" as 12-hour e.g. "8:00 PM" for user-facing messages. */
 function formatTime12Hour(hhmm) {
   if (!hhmm) return "";
@@ -189,6 +205,11 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
+
+    const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
+    if (pickupLeadError) {
+      return errorResponse(res, 400, pickupLeadError, ["pickupTime"]);
+    }
 
     const pickupTimeError = await validatePickupTimeWithinHours(pickupTime);
     if (pickupTimeError) {

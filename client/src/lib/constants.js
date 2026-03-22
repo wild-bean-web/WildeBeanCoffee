@@ -20,3 +20,14 @@ export const PASTRIES_SECTION_NAME = "Bakery & Pastries";
 
 /** Google review link — used for "Leave a review" button (mobile) and can be encoded in QR. */
 export const GOOGLE_REVIEW_URL = "https://g.page/r/CZTCnS4aNEW1EBM/review";
+
+/**
+ * Minimum minutes between "now" and scheduled pickup (client + server should align).
+ * Override via NEXT_PUBLIC_PICKUP_MIN_LEAD_MINUTES (must match server PICKUP_MIN_LEAD_MINUTES in production).
+ */
+const _lead = parseInt(
+  typeof process !== "undefined" ? process.env.NEXT_PUBLIC_PICKUP_MIN_LEAD_MINUTES : "",
+  10,
+);
+export const PICKUP_MIN_LEAD_MINUTES =
+  Number.isFinite(_lead) && _lead >= 0 ? _lead : 15;
