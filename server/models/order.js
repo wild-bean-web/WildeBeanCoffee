@@ -25,6 +25,8 @@ const OrderItemSchema = new mongoose.Schema(
     modifiers: [SelectedModifierSchema], // Selected customization options
     modifierTotal: { type: Number, default: 0, min: 0 }, // Total additional cost from modifiers
     notes: { type: String, trim: true },
+    /** Client cart line id for Bean Stamps redeem matching (optional). */
+    cartKey: { type: String, trim: true },
   },
   { _id: false }
 );
@@ -72,6 +74,9 @@ const OrderSchema = new mongoose.Schema(
     pickupTime: { type: Date },
     notes: { type: String, trim: true },
     totals: { type: TotalsSchema, required: true },
+    /** Bean Stamps: one free line applied on this order. */
+    loyaltyRedeemApplied: { type: Boolean, default: false },
+    loyaltyDiscountSubtotal: { type: Number, min: 0, default: 0 },
   },
   { timestamps: true }
 );

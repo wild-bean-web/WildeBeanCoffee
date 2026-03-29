@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ProfileDropdown from "./ProfileDropdown";
 import Lottie from "lottie-react";
 import Toast from "./Toast";
+import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -112,6 +113,11 @@ export default function Nav() {
             <Link href="/location" className={linkClass("/location")}>
               Location
             </Link>
+            {user && BEAN_STAMPS_ENABLED && (
+              <Link href="/rewards" className={linkClass("/rewards")}>
+                Bean Stamps
+              </Link>
+            )}
             <Link
               href="/order"
               className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors ${
@@ -240,6 +246,19 @@ export default function Nav() {
               >
                 Location
               </Link>
+              {user && BEAN_STAMPS_ENABLED && (
+                <Link
+                  href="/rewards"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`text-base font-medium transition-colors ${
+                    isActive("/rewards")
+                      ? "text-[var(--lime-green)]"
+                      : "text-[var(--coffee-brown)] hover:text-[var(--lime-green)]"
+                  }`}
+                >
+                  Bean Stamps
+                </Link>
+              )}
               <Link
                 href="/order"
                 onClick={() => setIsMobileMenuOpen(false)}

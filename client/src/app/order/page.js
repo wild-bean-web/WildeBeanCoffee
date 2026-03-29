@@ -5,7 +5,15 @@ import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { locationApi, ordersApi, paymentsApi, menuApi } from "@/lib/api";
+import { locationApi, ordersApi, paymentsApi, menuApi, loyaltyApi } from "@/lib/api";
+import { applyBeanStampsToCart } from "@/lib/beanStampsPricing";
+import {
+  BEAN_STAMPS_ENABLED,
+  LOYALTY_QUALIFY_MIN_TOTAL,
+  LOYALTY_FREE_ITEM_MAX_PRE_TAX,
+  LOYALTY_STAMPS_PER_REWARD,
+  REWARD_ASSETS,
+} from "@/lib/loyaltyConstants";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 import CustomizationModal from "@/components/CustomizationModal";
@@ -65,6 +73,10 @@ function OrderPageContent() {
   }); // Default fallback (6am-8pm)
   const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
   const [successAnimation, setSuccessAnimation] = useState(null);
+
+  /** Bean Stamps (signed-in only; server enforces) */
+  const [loyalty, setLoyalty] = useState(null);
+  const [beanStampsRedeemCartKey, setBeanStampsRedeemCartKey] = useState(null);
 
   // Customization modal state
   const [isCustomizationModalOpen, setIsCustomizationModalOpen] =
@@ -179,6 +191,43 @@ function OrderPageContent() {
       });
     }
   }, [user, authLoading]);
+
+  useEffect(() => {
+    if (!BEAN_STAMPS_ENABLED) {
+      setLoyalty(null);
+      setBeanStampsRedeemCartKey(null);
+      return;
+    }
+    if (!user) {
+      setLoyalty(null);
+      setBeanStampsRedeemCartKey(null);
+      return;
+    }
+    let cancelled = false;
+    loyaltyApi
+      .getMe()
+      .then((data) => {
+        if (!cancelled) setLoyalty(data);
+      })
+      .catch(() => {
+        if (!cancelled) setLoyalty(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!beanStampsRedeemCartKey) return;
+    const exists = cart.some(
+      (i) => (i.cartKey || i._id) === beanStampsRedeemCartKey,
+    );
+    if (!exists) setBeanStampsRedeemCartKey(null);
+  }, [cart, beanStampsRedeemCartKey]);
+
+  useEffect(() => {
+    if (isAdmin || !BEAN_STAMPS_ENABLED) setBeanStampsRedeemCartKey(null);
+  }, [isAdmin]);
 
   // Calculate the first available time slot for today (next 10-min increment from now, but not before store open)
   const getFirstAvailableTime = () => {
@@ -575,6 +624,45 @@ function OrderPageContent() {
     return { subtotal, tax, discount, total, isAdmin };
   };
 
+  const getCheckoutCart = () => {
+    if (!BEAN_STAMPS_ENABLED) return cart;
+    if (!user || !beanStampsRedeemCartKey || isAdmin) return cart;
+    const applied = applyBeanStampsToCart(cart, beanStampsRedeemCartKey, taxRate);
+    return applied ? applied.cart : cart;
+  };
+
+  const getCheckoutTotals = () => {
+    const lines = getCheckoutCart();
+    const subtotal = lines.reduce((sum, item) => {
+      const basePrice = item.price || 0;
+      const modifierTotal = item.modifierTotal || 0;
+      const itemPrice = basePrice + modifierTotal;
+      return sum + itemPrice * item.quantity;
+    }, 0);
+    const tax = subtotal * taxRate;
+    const beforeDiscount = subtotal + tax;
+    const discount = isAdmin ? beforeDiscount : 0;
+    const total = isAdmin ? 0 : beforeDiscount;
+    return { subtotal, tax, discount, total, isAdmin };
+  };
+
+  const mapCartToOrderItems = (lines) =>
+    lines.map((item) => {
+      const basePrice = item.price || 0;
+      const modifierTotal = item.modifierTotal || 0;
+      const itemPrice = basePrice + modifierTotal;
+      return {
+        itemType: item.itemType || "product",
+        itemId: item._id,
+        name: item.name,
+        price: itemPrice,
+        quantity: item.quantity,
+        modifiers: item.modifiers || [],
+        modifierTotal,
+        cartKey: String(item.cartKey || item._id),
+      };
+    });
+
   const formatPrice = (price, currency = "USD") => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -604,10 +692,6 @@ function OrderPageContent() {
     if (!user) {
       if (!customerInfo.firstName || !customerInfo.firstName.trim()) {
         errors.firstName = "First name is required";
-      }
-
-      if (!customerInfo.lastName || !customerInfo.lastName.trim()) {
-        errors.lastName = "Last name is required";
       }
 
       if (!customerInfo.phone || !customerInfo.phone.trim()) {
@@ -673,12 +757,20 @@ function OrderPageContent() {
     setPaymentProcessing(true);
 
     try {
+      if (BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey) {
+        if (!loyalty?.rewardReady) {
+          throw new Error(
+            "Your Bean Stamps reward isn’t available. Refresh the page or visit Rewards.",
+          );
+        }
+      }
+
       const {
         subtotal,
         tax,
         total,
         isAdmin: isAdminDiscount,
-      } = calculateTotals();
+      } = getCheckoutTotals();
 
       // If admin, skip payment and create order directly
       if (isAdminDiscount && total === 0) {
@@ -686,8 +778,16 @@ function OrderPageContent() {
         return;
       }
 
-      // Prepare order items with modifiers
-      const orderItems = cart.map((item) => {
+      if (total <= 0) {
+        throw new Error(
+          "Order total must be greater than zero. Add another item or remove the reward if the cart is only the free item.",
+        );
+      }
+
+      const checkoutCart = getCheckoutCart();
+
+      // Prepare order items with modifiers (Clover / receipt)
+      const orderItems = checkoutCart.map((item) => {
         const basePrice = item.price || 0;
         const modifierTotal = item.modifierTotal || 0;
         const itemPrice = basePrice + modifierTotal;
@@ -695,8 +795,8 @@ function OrderPageContent() {
         return {
           name: item.name,
           quantity: item.quantity,
-          price: itemPrice, // Include modifier costs in price
-          modifiers: item.modifiers || [], // Include modifier selections
+          price: itemPrice,
+          modifiers: item.modifiers || [],
           modifierTotal: modifierTotal,
         };
       });
@@ -719,9 +819,6 @@ function OrderPageContent() {
       // Validate customer data before sending
       if (!customerData.firstName || !customerData.firstName.trim()) {
         throw new Error("First name is required");
-      }
-      if (!customerData.lastName || !customerData.lastName.trim()) {
-        throw new Error("Last name is required");
       }
       if (!customerData.email || !customerData.email.trim()) {
         throw new Error("Email is required");
@@ -766,7 +863,10 @@ function OrderPageContent() {
       // Store order data in sessionStorage for after payment
       // Convert customer data to format expected by Order model (customer.name required)
       const orderCustomerData = {
-        name: `${customerData.firstName} ${customerData.lastName}`.trim(),
+        name: [customerData.firstName, customerData.lastName]
+          .map((s) => (s || "").trim())
+          .filter(Boolean)
+          .join(" "),
         phone: customerData.phone || "",
         email: customerData.email || undefined,
       };
@@ -774,24 +874,14 @@ function OrderPageContent() {
       // Include modifiers so kitchen/receipt have full customization (e.g. Build Your Own Bowl)
       const orderData = {
         customer: orderCustomerData,
-        items: cart.map((item) => {
-          const basePrice = item.price || 0;
-          const modifierTotal = item.modifierTotal || 0;
-          const itemPrice = basePrice + modifierTotal;
-          return {
-            itemType: item.itemType || "product",
-            itemId: item._id,
-            name: item.name,
-            price: itemPrice,
-            quantity: item.quantity,
-            modifiers: item.modifiers || [],
-            modifierTotal,
-          };
-        }),
+        items: mapCartToOrderItems(checkoutCart),
         taxRate,
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
         checkoutId: checkoutSession.checkoutId,
+        ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
+          ? { beanStampsRedeemCartKey }
+          : {}),
       };
       sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
 
@@ -813,34 +903,24 @@ function OrderPageContent() {
     setError(null);
 
     try {
-      const { subtotal, tax, total } = calculateTotals();
-
-      // Prepare order items with modifiers
-      const orderItems = cart.map((item) => {
-        const basePrice = item.price || 0;
-        const modifierTotal = item.modifierTotal || 0;
-        const itemPrice = basePrice + modifierTotal;
-
-        return {
-          itemType: item.itemType || "product",
-          itemId: item._id,
-          name: item.name,
-          price: itemPrice,
-          quantity: item.quantity,
-          modifiers: item.modifiers || [],
-          modifierTotal: modifierTotal,
-        };
-      });
+      const checkoutCart = getCheckoutCart();
+      const orderItems = mapCartToOrderItems(checkoutCart);
 
       // Use user info if signed in, otherwise use form data
       const customerData = user
         ? {
-            name: `${user.firstName} ${user.lastName}`,
+            name: [user.firstName, user.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
             phone: user.phone,
             email: user.email || undefined,
           }
         : {
-            name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+            name: [customerInfo.firstName, customerInfo.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
             phone: customerInfo.phone,
             email: customerInfo.email || undefined,
           };
@@ -885,34 +965,24 @@ function OrderPageContent() {
     }
 
     try {
-      const { subtotal, tax, total } = calculateTotals();
-
-      // Prepare order items with modifiers
-      const orderItems = cart.map((item) => {
-        const basePrice = item.price || 0;
-        const modifierTotal = item.modifierTotal || 0;
-        const itemPrice = basePrice + modifierTotal;
-
-        return {
-          itemType: item.itemType || "product", // 'product' or 'menu'
-          itemId: item._id,
-          name: item.name,
-          price: itemPrice, // Include modifier costs in price
-          quantity: item.quantity,
-          modifiers: item.modifiers || [], // Include modifier selections
-          modifierTotal: modifierTotal,
-        };
-      });
+      const checkoutCart = getCheckoutCart();
+      const orderItems = mapCartToOrderItems(checkoutCart);
 
       // Use user info if signed in, otherwise use form data
       const customerData = user
         ? {
-            name: `${user.firstName} ${user.lastName}`,
+            name: [user.firstName, user.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
             phone: user.phone,
             email: user.email || undefined,
           }
         : {
-            name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+            name: [customerInfo.firstName, customerInfo.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
             phone: customerInfo.phone,
             email: customerInfo.email || undefined,
           };
@@ -925,6 +995,9 @@ function OrderPageContent() {
         notes: notes || undefined,
         paymentStatus: "paid", // Payment already processed
         paymentRef: paymentResult.paymentRef || paymentResult.chargeId,
+        ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
+          ? { beanStampsRedeemCartKey }
+          : {}),
       };
 
       setLoading(true);
@@ -1205,7 +1278,8 @@ function OrderPageContent() {
     );
   }
 
-  const { subtotal, tax, total } = calculateTotals();
+  const { subtotal, tax, total } = getCheckoutTotals();
+  const checkoutCartForDisplay = getCheckoutCart();
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -1235,9 +1309,73 @@ function OrderPageContent() {
             <span className="font-medium">Back to Menu</span>
           </Link>
         </div>
-        <h1 className="mb-8 text-4xl font-bold text-[var(--coffee-brown)]">
+        <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)] sm:mb-5 sm:text-4xl">
           Checkout
         </h1>
+
+        {user && BEAN_STAMPS_ENABLED && (
+          <div className="mb-6 sm:mb-8 rounded-2xl border-2 border-[var(--lime-green)]/35 bg-gradient-to-br from-[var(--lime-green-light)]/45 via-white to-stone-50/80 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between sm:gap-6">
+              <div className="min-w-0 flex-1 space-y-3">
+                <div className="flex flex-wrap items-end justify-between gap-2 gap-y-1">
+                  <div>
+                    <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--coffee-brown)]/60 sm:text-xs">
+                      Bean Stamps
+                    </p>
+                    {loyalty ? (
+                      <p className="mt-0.5 text-3xl font-bold tabular-nums text-[var(--coffee-brown)] sm:text-4xl">
+                        {loyalty.stamps}
+                        <span className="text-lg font-semibold text-[var(--coffee-brown)]/50 sm:text-xl">
+                          {" "}
+                          / {LOYALTY_STAMPS_PER_REWARD}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm text-gray-500">Loading…</p>
+                    )}
+                  </div>
+                  {loyalty?.rewardReady && (
+                    <span className="inline-flex items-center rounded-full bg-[var(--lime-green)] px-3 py-1 text-xs font-bold text-white shadow-sm sm:text-sm">
+                      Reward ready
+                    </span>
+                  )}
+                </div>
+                {loyalty && (
+                  <>
+                    <div
+                      className="h-2.5 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-[var(--coffee-brown)]/10 sm:h-3"
+                      role="progressbar"
+                      aria-valuenow={loyalty.stamps}
+                      aria-valuemin={0}
+                      aria-valuemax={LOYALTY_STAMPS_PER_REWARD}
+                      aria-label={`${loyalty.stamps} of ${LOYALTY_STAMPS_PER_REWARD} stamps`}
+                    >
+                      <div
+                        className="h-full rounded-full bg-[var(--lime-green)] transition-all duration-500 ease-out"
+                        style={{
+                          width: `${Math.min(100, (loyalty.stamps / LOYALTY_STAMPS_PER_REWARD) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs leading-relaxed text-[var(--coffee-brown)]/80 sm:text-sm">
+                      {loyalty.rewardReady
+                        ? "Apply your free item on a cart line below, then checkout."
+                        : `Spend $${LOYALTY_QUALIFY_MIN_TOTAL}+ after tax per order to earn stamps. ${LOYALTY_STAMPS_PER_REWARD - loyalty.stamps} to go.`}
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex shrink-0 sm:flex-col sm:justify-center sm:border-l sm:border-[var(--coffee-brown)]/10 sm:pl-6">
+                <Link
+                  href="/rewards"
+                  className="inline-flex w-full items-center justify-center rounded-xl border-2 border-[var(--coffee-brown)] bg-white px-4 py-3 text-center text-sm font-semibold text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown)] hover:text-white sm:w-auto sm:min-w-[9rem] sm:py-2.5"
+                >
+                  View rewards card
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-5">
           {/* Order Summary */}
@@ -1247,12 +1385,36 @@ function OrderPageContent() {
                 Order Summary
               </h2>
 
+              {BEAN_STAMPS_ENABLED && user && loyalty && !isAdmin && (
+                <div className="mb-4 rounded-xl border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)]/40 px-4 py-3 text-sm text-[var(--coffee-brown)]">
+                  <span className="font-semibold">Bean Stamps</span>
+                  {loyalty.rewardReady ? (
+                    <span className="ml-2 font-bold text-[var(--lime-green-dark)]">
+                      Reward ready — pick one line below (max $
+                      {LOYALTY_FREE_ITEM_MAX_PRE_TAX} off).
+                    </span>
+                  ) : (
+                    <span className="ml-2">
+                      {loyalty.stamps}/20 stamps to your next free item (
+                      <Link
+                        href="/rewards"
+                        className="underline font-medium text-[var(--coffee-brown)]"
+                      >
+                        details
+                      </Link>
+                      ). Orders must total at least $
+                      {LOYALTY_QUALIFY_MIN_TOTAL} after tax to earn a stamp.
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-4">
-                {cart.map((item) => {
+                {checkoutCartForDisplay.map((item) => {
                   const basePrice = item.price || 0;
                   const modifierTotal = item.modifierTotal || 0;
                   const itemPrice = basePrice + modifierTotal;
-                  const itemKey = item.cartKey || item._id;
+                  const itemKey = String(item.cartKey || item._id);
 
                   return (
                     <motion.div
@@ -1288,7 +1450,13 @@ function OrderPageContent() {
                               {item.modifierGroups &&
                                 item.modifierGroups.length > 0 && (
                                   <button
-                                    onClick={() => handleEditItem(item)}
+                                    onClick={() => {
+                                      const full = cart.find(
+                                        (i) =>
+                                          (i.cartKey || i._id) === itemKey,
+                                      );
+                                      handleEditItem(full || item);
+                                    }}
                                     className="p-1.5 text-gray-400 hover:text-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 rounded-lg transition-all duration-200 group"
                                     aria-label="Edit item"
                                     title="Edit customization"
@@ -1429,6 +1597,62 @@ function OrderPageContent() {
                               </p>
                             </div>
                           </div>
+
+                          {BEAN_STAMPS_ENABLED &&
+                            user &&
+                            loyalty?.rewardReady &&
+                            !isAdmin &&
+                            (() => {
+                              const orig = cart.find(
+                                (i) => (i.cartKey || i._id) === itemKey,
+                              );
+                              if (!orig) return null;
+                              const linePre =
+                                ((Number(orig.price) || 0) +
+                                  (Number(orig.modifierTotal) || 0)) *
+                                (orig.quantity || 1);
+                              const over = Math.max(
+                                0,
+                                linePre - LOYALTY_FREE_ITEM_MAX_PRE_TAX,
+                              );
+                              return (
+                                <div className="mt-2 space-y-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setBeanStampsRedeemCartKey((k) =>
+                                        k === itemKey ? null : itemKey,
+                                      )
+                                    }
+                                    className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                                      beanStampsRedeemCartKey === itemKey
+                                        ? "border-[var(--lime-green)] bg-[var(--lime-green)] text-white"
+                                        : "border-[var(--coffee-brown)] text-[var(--coffee-brown)] hover:bg-[var(--lime-green-light)]"
+                                    }`}
+                                  >
+                                    <Image
+                                      src={REWARD_ASSETS.applyReward}
+                                      alt=""
+                                      width={22}
+                                      height={22}
+                                      unoptimized
+                                    />
+                                    {beanStampsRedeemCartKey === itemKey
+                                      ? "Reward applied — tap to remove"
+                                      : "Apply free item reward"}
+                                  </button>
+                                  {over > 0 &&
+                                    beanStampsRedeemCartKey !== itemKey && (
+                                      <p className="text-xs text-gray-600">
+                                        If you apply the reward here, you’ll
+                                        pay {formatPrice(over)} + tax on the
+                                        excess over $
+                                        {LOYALTY_FREE_ITEM_MAX_PRE_TAX}.
+                                      </p>
+                                    )}
+                                </div>
+                              );
+                            })()}
                         </div>
                       </div>
                     </motion.div>
@@ -1438,6 +1662,12 @@ function OrderPageContent() {
 
               <div className="mt-6 border-t border-gray-200 pt-4">
                 <div className="space-y-2">
+                  {BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey && (
+                    <div className="flex justify-between text-sm text-[var(--lime-green-dark)] font-semibold">
+                      <span>Bean Stamps reward</span>
+                      <span>Applied to one line</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium">{formatPrice(subtotal)}</span>
@@ -1529,11 +1759,11 @@ function OrderPageContent() {
 
                       <div>
                         <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                          Last Name *
+                          Last Name{" "}
+                          <span className="font-normal text-gray-500">(optional)</span>
                         </label>
                         <input
                           type="text"
-                          required
                           value={customerInfo.lastName}
                           onChange={(e) => {
                             setCustomerInfo({
@@ -1881,7 +2111,7 @@ function OrderPageContent() {
                           >
                             {paymentProcessing
                               ? "Processing..."
-                              : `Proceed to Payment - ${formatPrice(calculateTotals().total)}`}
+                              : `Proceed to Payment - ${formatPrice(getCheckoutTotals().total)}`}
                           </button>
                         </div>
                         <button
@@ -1909,6 +2139,17 @@ function OrderPageContent() {
               <Link href="/terms" className="underline hover:text-gray-700">
                 Terms of Use
               </Link>
+              {BEAN_STAMPS_ENABLED && user && (
+                <>
+                  {" · "}
+                  <Link
+                    href="/rewards/terms"
+                    className="underline hover:text-gray-700"
+                  >
+                    Bean Stamps terms
+                  </Link>
+                </>
+              )}
             </p>
           </div>
         </div>

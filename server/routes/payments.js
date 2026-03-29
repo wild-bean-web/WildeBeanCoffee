@@ -130,8 +130,14 @@ router.post("/create-checkout", async (req, res, next) => {
       return errorResponse(res, 400, "Items are required");
     }
 
-    if (!customer || !customer.firstName || !customer.lastName || !customer.email) {
-      return errorResponse(res, 400, "Customer information (firstName, lastName, email) is required");
+    const firstName = (customer?.firstName || "").trim();
+    const email = (customer?.email || "").trim();
+    if (!customer || !firstName || !email) {
+      return errorResponse(
+        res,
+        400,
+        "Customer information (first name and email) is required"
+      );
     }
 
     if (!amount || amount <= 0) {

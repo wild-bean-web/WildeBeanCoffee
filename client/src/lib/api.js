@@ -208,10 +208,18 @@ export const ordersApi = {
    * @param {string} status - New status
    * @returns {Promise<Object>} Updated order object
    */
-  updateStatus: async (id, status) => {
+  /**
+   * @param {string} id
+   * @param {string|{status?: string, paymentStatus?: string}} statusOrBody - legacy: status string; or body object
+   */
+  updateStatus: async (id, statusOrBody) => {
+    const body =
+      typeof statusOrBody === "string"
+        ? { status: statusOrBody }
+        : statusOrBody;
     const result = await fetchJson(`/api/orders/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
     return result.data;
   },
@@ -246,6 +254,16 @@ export const ordersApi = {
     const url = `/api/orders/kitchen/previous${queryString ? `?${queryString}` : ""}`;
     const result = await fetchJson(url);
     return result.data || [];
+  },
+};
+
+/**
+ * Bean Stamps loyalty (authenticated users only)
+ */
+export const loyaltyApi = {
+  getMe: async () => {
+    const result = await fetchJson("/api/loyalty/me");
+    return result.data;
   },
 };
 

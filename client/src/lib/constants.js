@@ -30,4 +30,4 @@ const _lead = parseInt(
   10,
 );
 export const PICKUP_MIN_LEAD_MINUTES =
-  Number.isFinite(_lead) && _lead >= 0 ? _lead : 15;
+  Number.isFinite(_lead) && _lead >= 0 ? _lead : 5;

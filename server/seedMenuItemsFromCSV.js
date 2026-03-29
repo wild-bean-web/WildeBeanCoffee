@@ -297,6 +297,52 @@ export const menuItemsFromCSV = [
       "Extra Single Shots (Iced)",
     ],
   },
+  {
+    name: "Brown Sugar Cinnamon Shaken Espresso",
+    description:
+      "Double espresso shaken with ice, brown sugar, and cinnamon, finished with your choice of milk.",
+    price: 5.15,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["iced", "espresso", "cold", "shaken"],
+    allergens: ["Dairy"],
+    image: "", // UI shows "Photo coming soon"
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.25 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Cold Foam",
+      "Extra Single Shots (Iced)",
+    ],
+  },
+  {
+    name: "Caramel Shaken Espresso",
+    description:
+      "Double espresso shaken with ice and caramel, finished with your choice of milk.",
+    price: 5.95,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["iced", "espresso", "cold", "shaken", "caramel"],
+    allergens: ["Dairy"],
+    image: "", // UI shows "Photo coming soon"
+    available: true,
+    active: true,
+    modifierGroupNames: [
+      "Shot Preference",
+      "Cup Size (16-20)",
+      "Syrup Pumps (+$0.25 each)",
+      "Coffee Toppings",
+      "Ice Level",
+      "Milk Choice",
+      "Cold Foam",
+      "Extra Single Shots (Iced)",
+    ],
+  },
 
   // Smoothies
   {

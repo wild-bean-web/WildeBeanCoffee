@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { ordersApi } from "@/lib/api";
+import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState([]);
@@ -363,6 +364,42 @@ export default function KitchenDashboard() {
     }
   };
 
+  /** Bean Stamps: refunds do not remove stamps (per program rules). */
+  const handleMarkRefunded = async (orderId) => {
+    if (
+      !window.confirm(
+        "Record refund for this order? Bean Stamps earned for this order will NOT be removed.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(orderId, { paymentStatus: "refunded" });
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (error) {
+      console.error("Failed to mark refunded:", error);
+      alert("Failed to record refund. Please try again.");
+    }
+  };
+
+  /** Bean Stamps: cancel revokes stamp tied to this order. */
+  const handleMarkCancelledLoyalty = async (orderId) => {
+    if (
+      !window.confirm(
+        "Cancel this order? Any Bean Stamp earned from this order will be removed from the customer’s card.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(orderId, { status: "cancelled" });
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      alert("Failed to cancel order. Please try again.");
+    }
+  };
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -687,6 +724,14 @@ export default function KitchenDashboard() {
                       getTimeAgo={getTimeAgo}
                       isReady={true}
                       onMarkPickedUp={handleMarkPickedUp}
+                      onMarkRefunded={
+                        BEAN_STAMPS_ENABLED ? handleMarkRefunded : undefined
+                      }
+                      onMarkCancelledLoyalty={
+                        BEAN_STAMPS_ENABLED
+                          ? handleMarkCancelledLoyalty
+                          : undefined
+                      }
                     />
                   ))}
                 </AnimatePresence>
@@ -731,6 +776,14 @@ export default function KitchenDashboard() {
                         getTimeAgo={getTimeAgo}
                         onMarkReady={handleMarkReady}
                         isReady={false}
+                        onMarkRefunded={
+                          BEAN_STAMPS_ENABLED ? handleMarkRefunded : undefined
+                        }
+                        onMarkCancelledLoyalty={
+                          BEAN_STAMPS_ENABLED
+                            ? handleMarkCancelledLoyalty
+                            : undefined
+                        }
                       />
                     ))}
                   </AnimatePresence>
@@ -753,9 +806,18 @@ function OrderCard({
   onMarkReady,
   onMarkPickedUp,
   isReady,
+  onMarkRefunded,
+  onMarkCancelledLoyalty,
 }) {
   const [isMarkingReady, setIsMarkingReady] = useState(false);
   const [isMarkingPickedUp, setIsMarkingPickedUp] = useState(false);
+  const [loyaltyBusy, setLoyaltyBusy] = useState(false);
+
+  const showLoyaltyActions =
+    order.paymentStatus === "paid" &&
+    order.status !== "cancelled" &&
+    onMarkRefunded &&
+    onMarkCancelledLoyalty;
 
   const handleMarkReadyClick = async () => {
     setIsMarkingReady(true);
@@ -931,6 +993,46 @@ function OrderCard({
          >
            {isMarkingPickedUp ? "Marking..." : "Picked Up"}
          </button>
+       )}
+
+       {showLoyaltyActions && (
+         <div className="mt-3 space-y-2 border-t border-dashed border-gray-200 pt-3">
+           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+             Bean Stamps / refunds
+           </p>
+           <div className="flex flex-wrap gap-2">
+             <button
+               type="button"
+               disabled={loyaltyBusy}
+               onClick={async () => {
+                 setLoyaltyBusy(true);
+                 try {
+                   await onMarkRefunded(order._id);
+                 } finally {
+                   setLoyaltyBusy(false);
+                 }
+               }}
+               className="rounded-lg border border-amber-600 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+             >
+               Record refund
+             </button>
+             <button
+               type="button"
+               disabled={loyaltyBusy}
+               onClick={async () => {
+                 setLoyaltyBusy(true);
+                 try {
+                   await onMarkCancelledLoyalty(order._id);
+                 } finally {
+                   setLoyaltyBusy(false);
+                 }
+               }}
+               className="rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-100 disabled:opacity-50"
+             >
+               Cancel order (remove stamp)
+             </button>
+           </div>
+         </div>
        )}
     </motion.div>
   );
