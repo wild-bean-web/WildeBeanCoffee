@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
 import { getPickupLeadTimeErrorFromIso } from "@/lib/pickupValidation";
+import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
 function OrderSuccessContent() {
   const router = useRouter();
@@ -43,6 +44,9 @@ function OrderSuccessContent() {
           paymentStatus: "paid",
           paymentRef: checkoutId || "hosted-checkout",
         };
+        if (!BEAN_STAMPS_ENABLED) {
+          delete orderPayload.beanStampsRedeemCartKey;
+        }
 
         const result = await ordersApi.create(orderPayload);
         setOrderId(result._id);

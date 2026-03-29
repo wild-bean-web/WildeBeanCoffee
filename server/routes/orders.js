@@ -4,6 +4,13 @@ import { Order, Location, MenuItem } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
 import { optionalAuth, authenticate, authenticateWithQueryToken } from "../middleware/auth.js";
 import { EventEmitter } from "events";
+import {
+  applyLoyaltyRedeemToItems,
+  assertUserHasFullStampCard,
+  processLoyaltyAfterPaidOrder,
+  revokeLoyaltyStampForOrder,
+} from "../services/loyalty.js";
+import { isBeanStampsEnabled } from "../config/featureFlags.js";
 
 const router = express.Router();
 
@@ -91,9 +98,9 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
 /** Store timezone for business-hours comparison (e.g. America/New_York for MD). */
 const STORE_TIMEZONE = process.env.STORE_TIMEZONE || "America/New_York";
 
-const _leadParsed = parseInt(process.env.PICKUP_MIN_LEAD_MINUTES ?? "15", 10);
+const _leadParsed = parseInt(process.env.PICKUP_MIN_LEAD_MINUTES ?? "5", 10);
 const PICKUP_MIN_LEAD_MINUTES =
-  Number.isFinite(_leadParsed) && _leadParsed >= 0 ? _leadParsed : 15;
+  Number.isFinite(_leadParsed) && _leadParsed >= 0 ? _leadParsed : 5;
 
 /** Reject pickup instants in the past or before minimum lead time from now. */
 function validatePickupTimeMeetsMinimumLead(pickupTime) {
@@ -203,8 +210,25 @@ router.post("/", optionalAuth, async (req, res, next) => {
       return errorResponse(res, 400, "Validation failed", errors);
     }
 
-    const { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
+    let { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
       req.body;
+    const beanStampsRedeemCartKey =
+      typeof req.body.beanStampsRedeemCartKey === "string"
+        ? req.body.beanStampsRedeemCartKey.trim()
+        : "";
+
+    if (beanStampsRedeemCartKey && !isBeanStampsEnabled()) {
+      return errorResponse(
+        res,
+        400,
+        "Bean Stamps is not available.",
+        ["beanStampsRedeemCartKey"]
+      );
+    }
+
+    if (beanStampsRedeemCartKey && !req.user) {
+      return errorResponse(res, 401, "Sign in to use Bean Stamps rewards.");
+    }
 
     const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
     if (pickupLeadError) {
@@ -233,23 +257,45 @@ router.post("/", optionalAuth, async (req, res, next) => {
       }
     }
 
-    // Calculate totals - apply 100% discount for admin orders
+    let loyaltyRedeemApplied = false;
+    let loyaltyDiscountSubtotal = 0;
+
+    if (beanStampsRedeemCartKey) {
+      if (isAdminOrder) {
+        return errorResponse(res, 400, "Bean Stamps cannot be applied to comped orders.");
+      }
+      try {
+        const applied = applyLoyaltyRedeemToItems(
+          items,
+          beanStampsRedeemCartKey,
+          Number(taxRate) || 0
+        );
+        items = applied.items;
+        loyaltyRedeemApplied = true;
+        loyaltyDiscountSubtotal = applied.loyaltyDiscountSubtotal;
+      } catch (e) {
+        return errorResponse(res, 400, e.message || "Invalid reward redemption", [
+          "beanStampsRedeemCartKey",
+        ]);
+      }
+    }
+
     let totals = computeTotals(items, taxRate);
     if (isAdminOrder) {
       totals = {
         subtotal: totals.subtotal,
         tax: totals.tax,
-        total: 0, // Admin orders are free
+        total: 0,
         currency: totals.currency,
       };
     }
 
-    // Check if user is authenticated (req.user is set by optionalAuth middleware if token is valid)
-    // If no req.user, it's a guest order
     const isGuest = !req.user;
     const userId = req.user?._id || undefined;
 
-    const order = await Order.create({
+    const session = await mongoose.startSession();
+    let order;
+    const orderPayload = {
       userId,
       isGuest,
       customer,
@@ -260,22 +306,74 @@ router.post("/", optionalAuth, async (req, res, next) => {
       paymentStatus: paymentStatus || "pending",
       status: "placed",
       totals,
-    });
+      loyaltyRedeemApplied,
+      loyaltyDiscountSubtotal,
+    };
 
-    // Attempt to print receipt if payment is successful (non-blocking)
+    const runLoyaltyInSession = async (s) => {
+      if (beanStampsRedeemCartKey) {
+        await assertUserHasFullStampCard(req.user._id, s);
+      }
+      const [created] = await Order.create([orderPayload], { session: s });
+      order = created;
+      await processLoyaltyAfterPaidOrder({
+        session: s,
+        userId,
+        orderId: order._id,
+        totals: order.totals,
+        paymentStatus: order.paymentStatus,
+        paymentRef: order.paymentRef,
+        loyaltyRedeemApplied,
+      });
+    };
+
+    try {
+      await session.withTransaction(() => runLoyaltyInSession(session));
+    } catch (txnErr) {
+      if (
+        txnErr?.message?.includes("Bean Stamps") ||
+        txnErr?.message?.includes("reward") ||
+        txnErr?.message?.includes("Collect 20")
+      ) {
+        return errorResponse(res, 400, txnErr.message, ["beanStampsRedeemCartKey"]);
+      }
+      const msg = String(txnErr?.message || "");
+      const noReplica =
+        msg.includes("replica set") ||
+        msg.includes("mongos") ||
+        txnErr?.code === 20;
+      if (noReplica) {
+        if (beanStampsRedeemCartKey) {
+          await assertUserHasFullStampCard(req.user._id, null);
+        }
+        order = await Order.create(orderPayload);
+        await processLoyaltyAfterPaidOrder({
+          session: null,
+          userId,
+          orderId: order._id,
+          totals: order.totals,
+          paymentStatus: order.paymentStatus,
+          paymentRef: order.paymentRef,
+          loyaltyRedeemApplied,
+        });
+      } else {
+        throw txnErr;
+      }
+    } finally {
+      await session.endSession();
+    }
+
     if (paymentStatus === "paid") {
       try {
         const { printReceipt } = await import("../services/clover.js");
         printReceipt(order).catch((err) => {
           console.error("Receipt printing failed for order:", order._id, err);
-          // Don't fail the order creation if printing fails
         });
       } catch (err) {
         console.error("Failed to import printReceipt service:", err);
       }
     }
 
-    // Emit event for real-time dashboard updates
     orderEventEmitter.emit("order:created", order);
 
     res.status(201).json({ data: order });
@@ -450,6 +548,11 @@ router.patch("/:id/status", authenticate, requireKitchenAdmin, async (req, res, 
       return errorResponse(res, 400, "No valid fields to update");
     }
 
+    const previous = await Order.findById(id).lean();
+    if (!previous) {
+      return errorResponse(res, 404, "Order not found");
+    }
+
     const order = await Order.findByIdAndUpdate(
       id,
       { $set: update },
@@ -460,7 +563,14 @@ router.patch("/:id/status", authenticate, requireKitchenAdmin, async (req, res, 
       return errorResponse(res, 404, "Order not found");
     }
 
-    // Emit event for real-time dashboard updates
+    if (
+      isBeanStampsEnabled() &&
+      update.status === "cancelled" &&
+      previous.status !== "cancelled"
+    ) {
+      await revokeLoyaltyStampForOrder(id);
+    }
+
     orderEventEmitter.emit("order:updated", order);
 
     res.json({ data: order });

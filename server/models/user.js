@@ -13,6 +13,8 @@ const UserSchema = new mongoose.Schema(
     },
     password: { type: String, required: true }, // Will be hashed with bcrypt
     phone: { type: String, required: true, trim: true },
+    /** Bean Stamps: incremented when a reward is redeemed (new stamp cycle). */
+    loyaltyCycle: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

@@ -44,8 +44,17 @@ router.get("/", async (req, res, next) => {
       items.sort((a, b) => {
         // Only apply custom sorting to Coffee & Espresso items
         if (a.section === "Coffee & Espresso" && b.section === "Coffee & Espresso") {
-          const aIsCold = a.name.toLowerCase().startsWith("iced") || a.name.toLowerCase().startsWith("cold");
-          const bIsCold = b.name.toLowerCase().startsWith("iced") || b.name.toLowerCase().startsWith("cold");
+          const coldTags = (tags) =>
+            Array.isArray(tags) &&
+            (tags.includes("cold") || tags.includes("iced"));
+          const aIsCold =
+            a.name.toLowerCase().startsWith("iced") ||
+            a.name.toLowerCase().startsWith("cold") ||
+            coldTags(a.tags);
+          const bIsCold =
+            b.name.toLowerCase().startsWith("iced") ||
+            b.name.toLowerCase().startsWith("cold") ||
+            coldTags(b.tags);
           
           // Hot items come first
           if (aIsCold && !bIsCold) return 1;

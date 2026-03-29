@@ -156,7 +156,7 @@ describe.skip("Orders API", () => {
         taxRate: 0,
         paymentStatus: "paid",
         paymentRef: "hosted-checkout-test",
-        pickupTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        pickupTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
       };
 
       const response = await request(app)

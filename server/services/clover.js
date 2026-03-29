@@ -533,7 +533,7 @@ function formatReceiptContent(order) {
  * Create a Hosted Checkout session
  * @param {Object} checkoutData - Checkout information
  * @param {Array} checkoutData.items - Array of items with name, quantity, price
- * @param {Object} checkoutData.customer - Customer information (firstName, lastName, email, phone?)
+ * @param {Object} checkoutData.customer - Customer information (firstName, email required; lastName optional for Clover uses "." if empty)
  * @param {number} checkoutData.amount - Total amount in cents
  * @param {string} checkoutData.successUrl - URL to redirect after successful payment
  * @param {string} checkoutData.failureUrl - URL to redirect after failed payment
@@ -564,10 +564,10 @@ export async function createHostedCheckoutSession(checkoutData) {
     JSON.stringify(
       {
         itemCount: items?.length || 0,
-        customerName:
-          customer?.firstName && customer?.lastName
-            ? `${customer.firstName} ${customer.lastName}`
-            : "N/A",
+        customerName: [customer?.firstName, customer?.lastName]
+          .map((s) => (s || "").trim())
+          .filter(Boolean)
+          .join(" ") || "N/A",
         customerEmail: customer?.email || "N/A",
         amount: amount,
         amountInDollars: amount ? (amount / 100).toFixed(2) : "N/A",
@@ -592,16 +592,16 @@ export async function createHostedCheckoutSession(checkoutData) {
     throw new Error("Checkout items are required");
   }
 
-  if (
-    !customer ||
-    !customer.firstName ||
-    !customer.lastName ||
-    !customer.email
-  ) {
+  const firstName = (customer?.firstName || "").trim();
+  const lastNameRaw = (customer?.lastName || "").trim();
+  const email = (customer?.email || "").trim();
+  if (!customer || !firstName || !email) {
     throw new Error(
-      "Customer information (firstName, lastName, email) is required"
+      "Customer information (firstName, email) is required; lastName is optional"
     );
   }
+  /** Clover expects a lastName string; use placeholder when guest omits it. */
+  const lastNameForClover = lastNameRaw || ".";
 
   if (!amount || amount <= 0) {
     throw new Error("Valid payment amount is required");
@@ -656,9 +656,9 @@ export async function createHostedCheckoutSession(checkoutData) {
     // Tax rate must be an integer where 10% = 1000000 (so 0.06 = 600000)
     const checkoutPayload = {
       customer: {
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        email: customer.email,
+        firstName,
+        lastName: lastNameForClover,
+        email,
         phoneNumber: customer.phone || undefined,
       },
       shoppingCart: {
