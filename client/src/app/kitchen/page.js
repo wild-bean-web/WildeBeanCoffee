@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -77,7 +77,17 @@ export default function KitchenDashboard() {
     };
   }, []);
 
-  // Load initial orders
+  const loadOrders = useCallback(async () => {
+    try {
+      const data = await ordersApi.getKitchenOrders();
+      setOrders(data);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    }
+  }, []);
+
+  // Load initial orders + SSE for live updates
   useEffect(() => {
     loadOrders();
 
@@ -130,7 +140,13 @@ export default function KitchenDashboard() {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [loadOrders]);
+
+  // Full refresh every 5 minutes so missed SSE events or stale state self-heal
+  useEffect(() => {
+    const id = setInterval(loadOrders, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [loadOrders]);
 
   // Remove new order highlight after 5 seconds
   useEffect(() => {
@@ -141,16 +157,6 @@ export default function KitchenDashboard() {
       return () => clearTimeout(timer);
     }
   }, [newOrderIds]);
-
-  const loadOrders = async () => {
-    try {
-      const data = await ordersApi.getKitchenOrders();
-      setOrders(data);
-      setLastUpdate(new Date());
-    } catch (error) {
-      console.error("Failed to load orders:", error);
-    }
-  };
 
   // Initialize audio context (requires user interaction)
   const initializeAudio = async () => {
