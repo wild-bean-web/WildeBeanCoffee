@@ -199,14 +199,15 @@ export const modifierGroups = [
   },
   {
     name: "Cold Foam",
-    description: "Add cold foam",
+    description: "Add cold foam (matches Clover modifier pricing)",
     type: "single",
     required: false,
     options: [
-      { name: "Mango Cold Foam", price: 1, available: true },
-      { name: "Strawberry Cold Foam", price: 1, available: true },
       { name: "Blueberry Cold Foam", price: 1, available: true },
+      { name: "Mango Cold Foam", price: 1, available: true },
       { name: "Matcha Cold Foam", price: 1.25, available: true },
+      { name: "Strawberry Cold Foam", price: 1, available: true },
+      { name: "Vanilla Cold Foam (White)", price: 0.75, available: true },
     ],
   },
   // Build-your-own oatmeal modifier groups (matches POS inventory-export-v2)
