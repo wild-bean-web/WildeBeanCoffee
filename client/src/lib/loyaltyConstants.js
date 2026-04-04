@@ -34,7 +34,8 @@ export function getStampImageSrc(stampNumberOneBased) {
     LOYALTY_STAMPS_PER_REWARD,
     Math.max(1, Math.floor(stampNumberOneBased) || 1),
   );
-  return `${STAMP_IMAGE_BASE}/stamp${n}.png`;
+  // Filenames use capital S (Stamp1.png …); Linux hosts are case-sensitive (Vercel).
+  return `${STAMP_IMAGE_BASE}/Stamp${n}.png`;
 }
 
 export const REWARD_ASSETS = {
