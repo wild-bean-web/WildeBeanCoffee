@@ -15,6 +15,8 @@ const ProductSchema = new mongoose.Schema(
     categories: [{ type: String, trim: true }],
     active: { type: Boolean, default: true },
     comingSoon: { type: Boolean, default: false },
+    /** When true, shop UI shows a placeholder instead of numeric price (price may be 0). */
+    priceUnknown: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
