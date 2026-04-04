@@ -13,10 +13,12 @@ import {
   LOYALTY_FREE_ITEM_MAX_PRE_TAX,
   LOYALTY_STAMPS_PER_REWARD,
   REWARD_ASSETS,
+  getLoyaltyRewardTagline,
 } from "@/lib/loyaltyConstants";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 import CustomizationModal from "@/components/CustomizationModal";
+import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { ADMIN_ORDER_COMP_ENABLED, GRAND_OPENING_DATE } from "@/lib/constants";
 import {
   getPickupLeadTimeError,
@@ -781,7 +783,7 @@ function OrderPageContent() {
 
       if (total <= 0) {
         throw new Error(
-          "Order total must be greater than zero. Add another item or remove the reward if the cart is only the free item.",
+          "Order total must be greater than zero. Add another item or remove the reward if your cart total is covered by the reward discount.",
         );
       }
 
@@ -1319,6 +1321,8 @@ function OrderPageContent() {
           Checkout
         </h1>
 
+        <BeanStampsPromo variant="checkout" />
+
         {user && BEAN_STAMPS_ENABLED && (
           <div className="mb-6 sm:mb-8 rounded-2xl border-2 border-[var(--lime-green)]/35 bg-gradient-to-br from-[var(--lime-green-light)]/45 via-white to-stone-50/80 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between sm:gap-6">
@@ -1365,7 +1369,7 @@ function OrderPageContent() {
                     </div>
                     <p className="text-xs leading-relaxed text-[var(--coffee-brown)]/80 sm:text-sm">
                       {loyalty.rewardReady
-                        ? "Apply your free item on a cart line below, then checkout."
+                        ? "Tap Apply reward on your pick below, then check out."
                         : `Spend $${LOYALTY_QUALIFY_MIN_TOTAL}+ after tax per order to earn stamps. ${LOYALTY_STAMPS_PER_REWARD - loyalty.stamps} to go.`}
                     </p>
                   </>
@@ -1396,12 +1400,11 @@ function OrderPageContent() {
                   <span className="font-semibold">Bean Stamps</span>
                   {loyalty.rewardReady ? (
                     <span className="ml-2 font-bold text-[var(--lime-green-dark)]">
-                      Reward ready — pick one line below (max $
-                      {LOYALTY_FREE_ITEM_MAX_PRE_TAX} off).
+                      Reward ready — {getLoyaltyRewardTagline()}.
                     </span>
                   ) : (
                     <span className="ml-2">
-                      {loyalty.stamps}/20 stamps to your next free item (
+                      {loyalty.stamps}/20 stamps to your next reward (
                       <Link
                         href="/rewards"
                         className="underline font-medium text-[var(--coffee-brown)]"
@@ -1667,10 +1670,8 @@ function OrderPageContent() {
                                   {over > 0 &&
                                     beanStampsRedeemCartKey !== itemKey && (
                                       <p className="text-xs text-gray-600">
-                                        If you apply the reward here, you’ll
-                                        pay {formatPrice(over)} + tax on the
-                                        excess over $
-                                        {LOYALTY_FREE_ITEM_MAX_PRE_TAX}.
+                                        If you apply the reward here, you’ll pay {formatPrice(over)} + tax on
+                                        the pre-tax amount over ${LOYALTY_FREE_ITEM_MAX_PRE_TAX} for this pick.
                                       </p>
                                     )}
                                 </div>
@@ -1691,7 +1692,7 @@ function OrderPageContent() {
                       <span className="text-right max-w-[65%]">
                         {beanStampsRewardLineName
                           ? `Applied to ${beanStampsRewardLineName}`
-                          : "Applied to one line"}
+                          : "Applied to your pick"}
                       </span>
                     </div>
                   )}

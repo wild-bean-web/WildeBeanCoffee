@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LOYALTY_FREE_ITEM_MAX_PRE_TAX } from "@/lib/loyaltyConstants";
 
 export const metadata = {
   title: "Bean Stamps Terms | Wild Bean Coffee",
@@ -82,12 +83,42 @@ export default function BeanStampsTermsPage() {
           <h2 className="text-lg font-bold text-[var(--coffee-brown)]">
             3. Redeeming a reward
           </h2>
-          <ul className="list-inside list-disc space-y-2">
+          <p className="text-sm text-gray-800">
+            We may describe the benefit in marketing or on the website as{" "}
+            <strong>up to ${LOYALTY_FREE_ITEM_MAX_PRE_TAX} off your pick</strong>.
+            For these terms, <strong>your pick</strong> means the{" "}
+            <strong>single menu item entry</strong> in your online shopping cart
+            that you designate at checkout to apply your reward—the same entry
+            shown as one row in your order summary, including the{" "}
+            <strong>quantity</strong> and <strong>customizations</strong> (e.g.
+            modifiers) displayed for that entry.
+          </p>
+          <ul className="mt-4 list-inside list-disc space-y-2">
             <li>
-              At 20 stamps, you may apply <strong>one reward per checkout</strong>
-              : up to <strong>$15.00 pre-tax</strong> off a single cart line
-              (base + customizations for that line). If that line costs more than
-              $15 pre-tax, you pay the remainder plus applicable tax on the order.
+              <strong>Discount amount (pre-tax):</strong> The reward reduces the
+              pre-tax price of your pick by up to{" "}
+              <strong>${LOYALTY_FREE_ITEM_MAX_PRE_TAX.toFixed(2)}</strong> (or
+              such other maximum as we publish on the website). The pre-tax
+              price of your pick is calculated as{" "}
+              <strong>
+                (base unit price + per-unit customizations) × quantity
+              </strong>{" "}
+              for that entry, as determined in our checkout.
+            </li>
+            <li>
+              <strong>Cap:</strong> If that pre-tax total is{" "}
+              <strong>less than</strong> ${LOYALTY_FREE_ITEM_MAX_PRE_TAX.toFixed(2)}
+              , the discount equals that total. If it is{" "}
+              <strong>greater than</strong> ${LOYALTY_FREE_ITEM_MAX_PRE_TAX.toFixed(2)}
+              , the discount is <strong>capped</strong> at $
+              {LOYALTY_FREE_ITEM_MAX_PRE_TAX.toFixed(2)}; you pay the remainder of
+              your pick’s pre-tax amount, and <strong>sales tax</strong> is
+              calculated on the order as a whole in accordance with our checkout
+              (after application of the discount).
+            </li>
+            <li>
+              At 20 stamps, you may apply <strong>one such reward per checkout</strong>
+              .
             </li>
             <li>
               Using the reward on an order <strong>resets your stamp progress</strong>{" "}

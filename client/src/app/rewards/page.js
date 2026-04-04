@@ -8,10 +8,11 @@ import Lottie from "lottie-react";
 import { loyaltyApi } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  BEAN_STAMPS_ENABLED,
   getStampImageSrc,
   LOYALTY_STAMPS_PER_REWARD,
   LOYALTY_QUALIFY_MIN_TOTAL,
-  LOYALTY_FREE_ITEM_MAX_PRE_TAX,
+  getLoyaltyRewardTaglineMidSentence,
   REWARD_ASSETS,
 } from "@/lib/loyaltyConstants";
 import BeanStampSlotPlaceholder from "@/components/BeanStampSlotPlaceholder";
@@ -61,21 +62,53 @@ export default function RewardsPage() {
   }
 
   if (!user) {
+    if (!BEAN_STAMPS_ENABLED) {
+      return (
+        <div className="min-h-screen bg-gray-50 px-4 py-16">
+          <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
+            <h1 className="text-2xl font-bold text-[var(--coffee-brown)]">Rewards</h1>
+            <p className="mt-4 text-gray-600">Bean Stamps are not available here right now.</p>
+            <Link
+              href="/"
+              className="mt-6 inline-block rounded-full bg-[var(--lime-green)] px-6 py-3 font-semibold text-white hover:bg-[var(--lime-green-dark)]"
+            >
+              Back home
+            </Link>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-gray-50 px-4 py-16">
-        <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
-          <h1 className="text-2xl font-bold text-[var(--coffee-brown)]">
-            Bean Stamps
-          </h1>
-          <p className="mt-4 text-gray-600">
-            Sign in to see your stamps and earn rewards on online orders.
+        <div className="mx-auto max-w-lg rounded-2xl border-2 border-[var(--lime-green)]/30 bg-gradient-to-b from-white to-[var(--lime-green-light)]/20 p-8 text-center shadow-lg">
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--lime-green-dark)]">
+            Wild Bean rewards
           </p>
-          <Link
-            href="/auth"
-            className="mt-6 inline-block rounded-full bg-[var(--lime-green)] px-6 py-3 font-semibold text-white hover:bg-[var(--lime-green-dark)]"
-          >
-            Sign in
-          </Link>
+          <h1 className="mt-2 text-2xl font-bold text-[var(--coffee-brown)] sm:text-3xl">
+            Bean Stamps are live
+          </h1>
+          <p className="mt-4 text-gray-700">
+            Create a free account and earn stamps on qualifying online orders (${LOYALTY_QUALIFY_MIN_TOTAL}+
+            after tax). At {LOYALTY_STAMPS_PER_REWARD} stamps, {getLoyaltyRewardTaglineMidSentence()} (see{" "}
+            <Link href="/rewards/terms" className="font-medium underline">
+              program terms
+            </Link>
+            ).
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/auth?signup=1"
+              className="inline-flex items-center justify-center rounded-full bg-[var(--lime-green)] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[var(--lime-green-dark)]"
+            >
+              Join free — start earning
+            </Link>
+            <Link
+              href="/auth"
+              className="inline-flex items-center justify-center rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-sm font-bold text-[var(--coffee-brown)] transition hover:bg-[var(--coffee-brown)] hover:text-white"
+            >
+              Sign in
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -110,9 +143,8 @@ export default function RewardsPage() {
         </h1>
         <p className="mt-2 text-gray-600">
           Online only. Spend at least ${LOYALTY_QUALIFY_MIN_TOTAL} after tax per
-          qualifying order to earn one stamp. At {LOYALTY_STAMPS_PER_REWARD}{" "}
-          stamps, apply up to ${LOYALTY_FREE_ITEM_MAX_PRE_TAX} off one cart line
-          at checkout.
+          qualifying order to earn one stamp. At {LOYALTY_STAMPS_PER_REWARD} stamps,{" "}
+          {getLoyaltyRewardTaglineMidSentence()} at checkout.
         </p>
 
         {loadError && (
@@ -140,9 +172,9 @@ export default function RewardsPage() {
                 You have a reward ready!
               </p>
               <p className="mt-2 text-gray-600">
-                Go to checkout and tap Apply reward on one line (max $
-                {LOYALTY_FREE_ITEM_MAX_PRE_TAX} pre-tax). Your stamp progress
-                resets when you place that order.
+                Go to checkout, tap <strong>Apply reward</strong> beside your pick in the cart (
+                {getLoyaltyRewardTaglineMidSentence()}, before tax). Your stamp progress resets when you place
+                that order.
               </p>
             </div>
           ) : stamps === 0 ? (
