@@ -1,9 +1,13 @@
 /** Mirror server Bean Stamps rules for UI (server enforces). */
 
-/** Off until launch. Set NEXT_PUBLIC_BEAN_STAMPS_ENABLED=true (must match server BEAN_STAMPS_ENABLED). */
+const _beanPub = process.env.NEXT_PUBLIC_BEAN_STAMPS_ENABLED;
+/** false|0 → off. true|1 → on. Unset: on in `next dev` only; production builds need NEXT_PUBLIC_BEAN_STAMPS_ENABLED=true. */
 export const BEAN_STAMPS_ENABLED =
-  process.env.NEXT_PUBLIC_BEAN_STAMPS_ENABLED === "true" ||
-  process.env.NEXT_PUBLIC_BEAN_STAMPS_ENABLED === "1";
+  _beanPub === "false" || _beanPub === "0"
+    ? false
+    : _beanPub === "true" || _beanPub === "1"
+      ? true
+      : process.env.NODE_ENV === "development";
 
 export const LOYALTY_STAMPS_PER_REWARD = 20;
 export const LOYALTY_QUALIFY_MIN_TOTAL = 10;

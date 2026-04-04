@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
 import CustomizationModal from "@/components/CustomizationModal";
-import { GRAND_OPENING_DATE } from "@/lib/constants";
+import { ADMIN_ORDER_COMP_ENABLED, GRAND_OPENING_DATE } from "@/lib/constants";
 import {
   getPickupLeadTimeError,
   getPickupLeadTimeErrorFromIso,
@@ -40,6 +40,7 @@ function OrderPageContent() {
   ];
   const isAdmin =
     user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const adminCompActive = isAdmin && ADMIN_ORDER_COMP_ENABLED;
 
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -226,8 +227,8 @@ function OrderPageContent() {
   }, [cart, beanStampsRedeemCartKey]);
 
   useEffect(() => {
-    if (isAdmin || !BEAN_STAMPS_ENABLED) setBeanStampsRedeemCartKey(null);
-  }, [isAdmin]);
+    if (adminCompActive || !BEAN_STAMPS_ENABLED) setBeanStampsRedeemCartKey(null);
+  }, [adminCompActive]);
 
   // Calculate the first available time slot for today (next 10-min increment from now, but not before store open)
   const getFirstAvailableTime = () => {
@@ -617,16 +618,16 @@ function OrderPageContent() {
     const tax = subtotal * taxRate;
     const beforeDiscount = subtotal + tax;
 
-    // Apply 100% discount for admins
-    const discount = isAdmin ? beforeDiscount : 0;
-    const total = isAdmin ? 0 : beforeDiscount;
+    // Apply 100% discount for admins when QA comp is enabled
+    const discount = adminCompActive ? beforeDiscount : 0;
+    const total = adminCompActive ? 0 : beforeDiscount;
 
-    return { subtotal, tax, discount, total, isAdmin };
+    return { subtotal, tax, discount, total, isAdmin: adminCompActive };
   };
 
   const getCheckoutCart = () => {
     if (!BEAN_STAMPS_ENABLED) return cart;
-    if (!user || !beanStampsRedeemCartKey || isAdmin) return cart;
+    if (!user || !beanStampsRedeemCartKey || adminCompActive) return cart;
     const applied = applyBeanStampsToCart(cart, beanStampsRedeemCartKey, taxRate);
     return applied ? applied.cart : cart;
   };
@@ -641,9 +642,9 @@ function OrderPageContent() {
     }, 0);
     const tax = subtotal * taxRate;
     const beforeDiscount = subtotal + tax;
-    const discount = isAdmin ? beforeDiscount : 0;
-    const total = isAdmin ? 0 : beforeDiscount;
-    return { subtotal, tax, discount, total, isAdmin };
+    const discount = adminCompActive ? beforeDiscount : 0;
+    const total = adminCompActive ? 0 : beforeDiscount;
+    return { subtotal, tax, discount, total, isAdmin: adminCompActive };
   };
 
   const mapCartToOrderItems = (lines) =>
@@ -1280,6 +1281,11 @@ function OrderPageContent() {
 
   const { subtotal, tax, total } = getCheckoutTotals();
   const checkoutCartForDisplay = getCheckoutCart();
+  const beanStampsRewardLineName = beanStampsRedeemCartKey
+    ? cart.find(
+        (i) => String(i.cartKey || i._id) === String(beanStampsRedeemCartKey),
+      )?.name
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -1385,7 +1391,7 @@ function OrderPageContent() {
                 Order Summary
               </h2>
 
-              {BEAN_STAMPS_ENABLED && user && loyalty && !isAdmin && (
+              {BEAN_STAMPS_ENABLED && user && loyalty && !adminCompActive && (
                 <div className="mb-4 rounded-xl border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)]/40 px-4 py-3 text-sm text-[var(--coffee-brown)]">
                   <span className="font-semibold">Bean Stamps</span>
                   {loyalty.rewardReady ? (
@@ -1601,7 +1607,7 @@ function OrderPageContent() {
                           {BEAN_STAMPS_ENABLED &&
                             user &&
                             loyalty?.rewardReady &&
-                            !isAdmin &&
+                            !adminCompActive &&
                             (() => {
                               const orig = cart.find(
                                 (i) => (i.cartKey || i._id) === itemKey,
@@ -1624,22 +1630,39 @@ function OrderPageContent() {
                                         k === itemKey ? null : itemKey,
                                       )
                                     }
-                                    className={`inline-flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                                    className={`inline-flex items-center gap-1.5 rounded-lg border-2 px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                                       beanStampsRedeemCartKey === itemKey
                                         ? "border-[var(--lime-green)] bg-[var(--lime-green)] text-white"
                                         : "border-[var(--coffee-brown)] text-[var(--coffee-brown)] hover:bg-[var(--lime-green-light)]"
                                     }`}
                                   >
-                                    <Image
-                                      src={REWARD_ASSETS.applyReward}
-                                      alt=""
-                                      width={22}
-                                      height={22}
-                                      unoptimized
-                                    />
-                                    {beanStampsRedeemCartKey === itemKey
-                                      ? "Reward applied — tap to remove"
-                                      : "Apply free item reward"}
+                                    {beanStampsRedeemCartKey === itemKey ? (
+                                      <>
+                                        <svg
+                                          className="h-4 w-4 shrink-0 opacity-95"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth={2.5}
+                                          strokeLinecap="round"
+                                          aria-hidden
+                                        >
+                                          <path d="M18 6L6 18M6 6l12 12" />
+                                        </svg>
+                                        <span>Remove reward</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Image
+                                          src={REWARD_ASSETS.applyReward}
+                                          alt=""
+                                          width={20}
+                                          height={20}
+                                          unoptimized
+                                        />
+                                        <span>Apply reward</span>
+                                      </>
+                                    )}
                                   </button>
                                   {over > 0 &&
                                     beanStampsRedeemCartKey !== itemKey && (
@@ -1665,7 +1688,11 @@ function OrderPageContent() {
                   {BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey && (
                     <div className="flex justify-between text-sm text-[var(--lime-green-dark)] font-semibold">
                       <span>Bean Stamps reward</span>
-                      <span>Applied to one line</span>
+                      <span className="text-right max-w-[65%]">
+                        {beanStampsRewardLineName
+                          ? `Applied to ${beanStampsRewardLineName}`
+                          : "Applied to one line"}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
@@ -1676,7 +1703,7 @@ function OrderPageContent() {
                     <span className="text-gray-600">Tax</span>
                     <span className="font-medium">{formatPrice(tax)}</span>
                   </div>
-                  {isAdmin && (
+                  {adminCompActive && (
                     <div className="flex justify-between text-sm">
                       <span className="text-[var(--lime-green)] font-semibold">
                         Admin (QA) — Comped
@@ -1692,7 +1719,7 @@ function OrderPageContent() {
                       {formatPrice(total)}
                     </span>
                   </div>
-                  {isAdmin && (
+                  {adminCompActive && (
                     <p className="text-xs text-center text-[var(--lime-green)] font-medium mt-2">
                       Admin order for QA/testing — No payment required
                     </p>
@@ -2071,7 +2098,7 @@ function OrderPageContent() {
                       disabled={loading || !selectedDate || !selectedTime}
                       className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isAdmin ? "Place Order" : "Continue to Payment"}
+                      {adminCompActive ? "Place Order" : "Continue to Payment"}
                     </button>
                     {(!selectedDate || !selectedTime) && (
                       <p className="text-center text-xs text-gray-500 mt-2">
@@ -2081,7 +2108,7 @@ function OrderPageContent() {
                   </>
                 ) : (
                   <div className="space-y-4">
-                    {isAdmin ? (
+                    {adminCompActive ? (
                       <div className="rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green-light)] p-6 text-center">
                         <p className="mb-4 text-gray-700">
                           Admin order (QA/testing) — Comped to $0. No payment

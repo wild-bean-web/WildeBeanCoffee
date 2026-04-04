@@ -486,13 +486,14 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Oatmeals/WildVegan.png",
     available: true,
     active: true,
+    // Same groups as Signature Bowl except base: use "Wild Vegan Base" (chia only; matches seedModifierGroups + CustomizationModal).
     modifierGroupNames: [
       "Wild Vegan Base",
-      "Oatmeal Bowl Size",
-      "Oatmeal Dried Toppings",
-      "Oatmeal Drizzels",
-      "Oatmeal Fruit Toppings",
-      "Oatmeal EXTRA Add-Ons",
+      "Bowl Size",
+      "Toppings",
+      "Drizzels",
+      "Fruit Toppings",
+      "Extra Add-Ons",
     ],
   },
   {
