@@ -22,6 +22,8 @@ export default function RewardsPage() {
   const [loyalty, setLoyalty] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [confetti, setConfetti] = useState(null);
+  /** Lottie holds the last frame unless unmounted; hide overlay after one play. */
+  const [showConfettiOverlay, setShowConfettiOverlay] = useState(false);
 
   useEffect(() => {
     fetch(REWARD_ASSETS.confetti)
@@ -29,6 +31,17 @@ export default function RewardsPage() {
       .then(setConfetti)
       .catch(() => setConfetti(null));
   }, []);
+
+  useEffect(() => {
+    const ready = Boolean(loyalty?.rewardReady);
+    if (!ready) {
+      setShowConfettiOverlay(false);
+      return;
+    }
+    if (confetti) {
+      setShowConfettiOverlay(true);
+    }
+  }, [loyalty, confetti]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,10 +121,14 @@ export default function RewardsPage() {
           </p>
         )}
 
-        {rewardReady && confetti && (
+        {showConfettiOverlay && confetti && (
           <div className="pointer-events-none fixed inset-0 z-40 flex items-start justify-center">
             <div className="h-64 w-full max-w-2xl">
-              <Lottie animationData={confetti} loop={false} />
+              <Lottie
+                animationData={confetti}
+                loop={false}
+                onComplete={() => setShowConfettiOverlay(false)}
+              />
             </div>
           </div>
         )}
@@ -123,7 +140,7 @@ export default function RewardsPage() {
                 You have a reward ready!
               </p>
               <p className="mt-2 text-gray-600">
-                Go to checkout and tap Apply free item reward on one line (max $
+                Go to checkout and tap Apply reward on one line (max $
                 {LOYALTY_FREE_ITEM_MAX_PRE_TAX} pre-tax). Your stamp progress
                 resets when you place that order.
               </p>

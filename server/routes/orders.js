@@ -2,7 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import { Order, Location, MenuItem } from "../models/index.js";
 import { errorResponse, isObjectId } from "../utils/validation.js";
-import { optionalAuth, authenticate, authenticateWithQueryToken } from "../middleware/auth.js";
+import {
+  optionalAuth,
+  authenticate,
+  authenticateWithQueryToken,
+} from "../middleware/auth.js";
 import { EventEmitter } from "events";
 import {
   applyLoyaltyRedeemToItems,
@@ -10,11 +14,17 @@ import {
   processLoyaltyAfterPaidOrder,
   revokeLoyaltyStampForOrder,
 } from "../services/loyalty.js";
-import { isBeanStampsEnabled } from "../config/featureFlags.js";
+import {
+  isBeanStampsEnabled,
+  isAdminOrderCompEnabled,
+} from "../config/featureFlags.js";
 
 const router = express.Router();
 
-const KITCHEN_ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+const KITCHEN_ADMIN_EMAILS = [
+  "danielwoldehana@yahoo.com",
+  "wildbeancoffeellc@gmail.com",
+];
 
 function requireKitchenAdmin(req, res, next) {
   if (!req.user) {
@@ -22,7 +32,11 @@ function requireKitchenAdmin(req, res, next) {
   }
   const email = (req.user.email || "").toLowerCase();
   if (!KITCHEN_ADMIN_EMAILS.includes(email)) {
-    return errorResponse(res, 403, "Access denied. Kitchen dashboard is restricted to authorized users.");
+    return errorResponse(
+      res,
+      403,
+      "Access denied. Kitchen dashboard is restricted to authorized users.",
+    );
   }
   next();
 }
@@ -30,13 +44,25 @@ function requireKitchenAdmin(req, res, next) {
 // Event emitter for real-time order updates
 export const orderEventEmitter = new EventEmitter();
 
-const allowedStatuses = ["placed", "preparing", "ready", "completed", "cancelled"];
-const allowedPaymentStatuses = ["pending", "authorized", "paid", "failed", "refunded"];
+const allowedStatuses = [
+  "placed",
+  "preparing",
+  "ready",
+  "completed",
+  "cancelled",
+];
+const allowedPaymentStatuses = [
+  "pending",
+  "authorized",
+  "paid",
+  "failed",
+  "refunded",
+];
 
 function computeTotals(items, taxRate = 0, currency = "USD") {
   const subtotal = items.reduce(
     (sum, item) => sum + Number(item.price) * Number(item.quantity ?? 1),
-    0
+    0,
   );
   const tax = Number((subtotal * taxRate).toFixed(2));
   const total = Number((subtotal + tax).toFixed(2));
@@ -45,7 +71,15 @@ function computeTotals(items, taxRate = 0, currency = "USD") {
 
 function validateOrderPayload(body) {
   const errors = [];
-  const { customer, items, pickupTime, taxRate, notes, paymentRef, paymentStatus } = body;
+  const {
+    customer,
+    items,
+    pickupTime,
+    taxRate,
+    notes,
+    paymentRef,
+    paymentStatus,
+  } = body;
 
   if (!customer?.name) errors.push("customer.name is required");
   if (!customer?.phone) errors.push("customer.phone is required");
@@ -66,19 +100,26 @@ function validateOrderPayload(body) {
     });
   }
 
-  if (taxRate !== undefined && (Number(taxRate) < 0 || Number.isNaN(Number(taxRate)))) {
+  if (
+    taxRate !== undefined &&
+    (Number(taxRate) < 0 || Number.isNaN(Number(taxRate)))
+  ) {
     errors.push("taxRate must be a non-negative number if provided");
   }
 
   if (paymentStatus && !allowedPaymentStatuses.includes(paymentStatus)) {
-    errors.push(`paymentStatus must be one of ${allowedPaymentStatuses.join(", ")}`);
+    errors.push(
+      `paymentStatus must be one of ${allowedPaymentStatuses.join(", ")}`,
+    );
   }
 
   // Require payment to be completed before order can be created
   // Exception: Admin orders with ADMIN_DISCOUNT paymentRef don't need actual payment
   const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
   if (paymentStatus !== "paid") {
-    errors.push("Payment must be completed before order can be created. paymentStatus must be 'paid'");
+    errors.push(
+      "Payment must be completed before order can be created. paymentStatus must be 'paid'",
+    );
   }
 
   // If payment is paid, paymentRef should be provided (unless it's an admin order)
@@ -93,7 +134,15 @@ function validateOrderPayload(body) {
   return errors;
 }
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 /** Store timezone for business-hours comparison (e.g. America/New_York for MD). */
 const STORE_TIMEZONE = process.env.STORE_TIMEZONE || "America/New_York";
@@ -139,7 +188,9 @@ function getHoursMinutesInStoreTz(date, timeZone = STORE_TIMEZONE) {
 
 /** Get weekday name (e.g. "Monday") for a Date in the store timezone. */
 function getDayNameInStoreTz(date, timeZone = STORE_TIMEZONE) {
-  return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(date);
+  return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(
+    date,
+  );
 }
 
 /** Returns an error message if pickup time is outside store hours; otherwise null. */
@@ -154,12 +205,19 @@ async function validatePickupTimeWithinHours(pickupTime) {
   // Interpret pickup time in store timezone (e.g. America/New_York for MD).
   // The client sends ISO (UTC); server must compare to store hours in local store time.
   const dayName = getDayNameInStoreTz(date);
-  const { hour: pickupHour, minute: pickupMinute } = getHoursMinutesInStoreTz(date);
+  const { hour: pickupHour, minute: pickupMinute } =
+    getHoursMinutesInStoreTz(date);
   const dayHours = location.hours.find((h) => h.day === dayName);
 
-  if (!dayHours?.closed && dayHours?.opens != null && dayHours?.closes != null) {
+  if (
+    !dayHours?.closed &&
+    dayHours?.opens != null &&
+    dayHours?.closes != null
+  ) {
     const [openH, openM] = (dayHours.opens || "06:00").split(":").map(Number);
-    const [closeH, closeM] = (dayHours.closes || "20:00").split(":").map(Number);
+    const [closeH, closeM] = (dayHours.closes || "20:00")
+      .split(":")
+      .map(Number);
     const openMinutes = openH * 60 + (openM || 0);
     const closeMinutes = closeH * 60 + (closeM || 0);
     const pickupMinutes = pickupHour * 60 + pickupMinute;
@@ -182,9 +240,13 @@ async function validateMenuItemsOnlineOrderable(items) {
     .filter((i) => i.itemType === "menu" && i.itemId)
     .map((i) => i.itemId);
   if (menuIds.length === 0) return null;
-  const objectIds = menuIds.map((id) =>
-    mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null
-  ).filter(Boolean);
+  const objectIds = menuIds
+    .map((id) =>
+      mongoose.Types.ObjectId.isValid(id)
+        ? new mongoose.Types.ObjectId(id)
+        : null,
+    )
+    .filter(Boolean);
   if (objectIds.length === 0) return null;
   const docs = await MenuItem.find({ _id: { $in: objectIds } })
     .select("name onlineOrderable")
@@ -210,20 +272,24 @@ router.post("/", optionalAuth, async (req, res, next) => {
       return errorResponse(res, 400, "Validation failed", errors);
     }
 
-    let { customer, items, pickupTime, taxRate = 0, notes, paymentRef, paymentStatus } =
-      req.body;
+    let {
+      customer,
+      items,
+      pickupTime,
+      taxRate = 0,
+      notes,
+      paymentRef,
+      paymentStatus,
+    } = req.body;
     const beanStampsRedeemCartKey =
       typeof req.body.beanStampsRedeemCartKey === "string"
         ? req.body.beanStampsRedeemCartKey.trim()
         : "";
 
     if (beanStampsRedeemCartKey && !isBeanStampsEnabled()) {
-      return errorResponse(
-        res,
-        400,
-        "Bean Stamps is not available.",
-        ["beanStampsRedeemCartKey"]
-      );
+      return errorResponse(res, 400, "Bean Stamps is not available.", [
+        "beanStampsRedeemCartKey",
+      ]);
     }
 
     if (beanStampsRedeemCartKey && !req.user) {
@@ -241,6 +307,14 @@ router.post("/", optionalAuth, async (req, res, next) => {
     }
 
     const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
+    if (isAdminOrder && !isAdminOrderCompEnabled()) {
+      return errorResponse(
+        res,
+        403,
+        "Admin comped orders are disabled in this environment.",
+        ["paymentRef"],
+      );
+    }
     if (!isAdminOrder) {
       const inStoreOnlyError = await validateMenuItemsOnlineOrderable(items);
       if (inStoreOnlyError) {
@@ -249,11 +323,19 @@ router.post("/", optionalAuth, async (req, res, next) => {
     }
     if (isAdminOrder) {
       if (!req.user) {
-        return errorResponse(res, 401, "Authentication required for admin orders");
+        return errorResponse(
+          res,
+          401,
+          "Authentication required for admin orders",
+        );
       }
       const adminEmail = (req.user.email || "").toLowerCase();
       if (!KITCHEN_ADMIN_EMAILS.includes(adminEmail)) {
-        return errorResponse(res, 403, "Only authorized admins can place comped orders");
+        return errorResponse(
+          res,
+          403,
+          "Only authorized admins can place comped orders",
+        );
       }
     }
 
@@ -262,21 +344,28 @@ router.post("/", optionalAuth, async (req, res, next) => {
 
     if (beanStampsRedeemCartKey) {
       if (isAdminOrder) {
-        return errorResponse(res, 400, "Bean Stamps cannot be applied to comped orders.");
+        return errorResponse(
+          res,
+          400,
+          "Bean Stamps cannot be applied to comped orders.",
+        );
       }
       try {
         const applied = applyLoyaltyRedeemToItems(
           items,
           beanStampsRedeemCartKey,
-          Number(taxRate) || 0
+          Number(taxRate) || 0,
         );
         items = applied.items;
         loyaltyRedeemApplied = true;
         loyaltyDiscountSubtotal = applied.loyaltyDiscountSubtotal;
       } catch (e) {
-        return errorResponse(res, 400, e.message || "Invalid reward redemption", [
-          "beanStampsRedeemCartKey",
-        ]);
+        return errorResponse(
+          res,
+          400,
+          e.message || "Invalid reward redemption",
+          ["beanStampsRedeemCartKey"],
+        );
       }
     }
 
@@ -335,7 +424,9 @@ router.post("/", optionalAuth, async (req, res, next) => {
         txnErr?.message?.includes("reward") ||
         txnErr?.message?.includes("Collect 20")
       ) {
-        return errorResponse(res, 400, txnErr.message, ["beanStampsRedeemCartKey"]);
+        return errorResponse(res, 400, txnErr.message, [
+          "beanStampsRedeemCartKey",
+        ]);
       }
       const msg = String(txnErr?.message || "");
       const noReplica =
@@ -385,117 +476,132 @@ router.post("/", optionalAuth, async (req, res, next) => {
 // GET /api/orders/kitchen
 // Get orders for kitchen dashboard (paid orders that are not completed or cancelled)
 // Must be before /:id route to avoid conflicts. Requires admin auth.
-router.get("/kitchen", authenticate, requireKitchenAdmin, async (req, res, next) => {
-  try {
-    const orders = await Order.find({
-      paymentStatus: "paid",
-      status: { $nin: ["completed", "cancelled"] },
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+router.get(
+  "/kitchen",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const orders = await Order.find({
+        paymentStatus: "paid",
+        status: { $nin: ["completed", "cancelled"] },
+      })
+        .sort({ createdAt: -1 })
+        .lean();
 
-    res.json({ data: orders });
-  } catch (err) {
-    next(err);
-  }
-});
+      res.json({ data: orders });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /api/orders/kitchen/previous
 // Get completed (picked up) orders for previous orders page. Requires admin auth.
 // Supports date range: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
 // Legacy single date: ?date=YYYY-MM-DD
 // Show all: ?all=true
-router.get("/kitchen/previous", authenticate, requireKitchenAdmin, async (req, res, next) => {
-  try {
-    const { date, startDate, endDate, all } = req.query;
+router.get(
+  "/kitchen/previous",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const { date, startDate, endDate, all } = req.query;
 
-    const query = {
-      paymentStatus: "paid",
-      status: "completed",
-    };
+      const query = {
+        paymentStatus: "paid",
+        status: "completed",
+      };
 
-    if (all === "true") {
-      // No date filtering
-    } else if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      query.$or = [
-        { updatedAt: { $gte: start, $lte: end } },
-        { createdAt: { $gte: start, $lte: end } },
-      ];
-    } else if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-      query.$or = [
-        { updatedAt: { $gte: startOfDay, $lte: endOfDay } },
-        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
-      ];
-    } else {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const endOfToday = new Date();
-      endOfToday.setHours(23, 59, 59, 999);
-      query.$or = [
-        { updatedAt: { $gte: today, $lte: endOfToday } },
-        { createdAt: { $gte: today, $lte: endOfToday } },
-      ];
+      if (all === "true") {
+        // No date filtering
+      } else if (startDate && endDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.$or = [
+          { updatedAt: { $gte: start, $lte: end } },
+          { createdAt: { $gte: start, $lte: end } },
+        ];
+      } else if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        query.$or = [
+          { updatedAt: { $gte: startOfDay, $lte: endOfDay } },
+          { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+        ];
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        query.$or = [
+          { updatedAt: { $gte: today, $lte: endOfToday } },
+          { createdAt: { $gte: today, $lte: endOfToday } },
+        ];
+      }
+
+      const orders = await Order.find(query)
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .lean();
+
+      res.json({ data: orders });
+    } catch (err) {
+      next(err);
     }
-
-    const orders = await Order.find(query)
-      .sort({ updatedAt: -1, createdAt: -1 })
-      .lean();
-
-    res.json({ data: orders });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // GET /api/orders/kitchen/stream
 // Server-Sent Events endpoint for real-time order updates. Requires admin auth.
 // Token can be in query (?token=) since EventSource cannot send headers.
-router.get("/kitchen/stream", authenticateWithQueryToken, requireKitchenAdmin, (req, res) => {
-  // Set headers for SSE
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering
+router.get(
+  "/kitchen/stream",
+  authenticateWithQueryToken,
+  requireKitchenAdmin,
+  (req, res) => {
+    // Set headers for SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering
 
-  // Send initial connection message
-  res.write(`: connected\n\n`);
+    // Send initial connection message
+    res.write(`: connected\n\n`);
 
-  // Event handlers
-  const onOrderCreated = (order) => {
-    res.write(`event: order:created\n`);
-    res.write(`data: ${JSON.stringify(order)}\n\n`);
-  };
+    // Event handlers
+    const onOrderCreated = (order) => {
+      res.write(`event: order:created\n`);
+      res.write(`data: ${JSON.stringify(order)}\n\n`);
+    };
 
-  const onOrderUpdated = (order) => {
-    res.write(`event: order:updated\n`);
-    res.write(`data: ${JSON.stringify(order)}\n\n`);
-  };
+    const onOrderUpdated = (order) => {
+      res.write(`event: order:updated\n`);
+      res.write(`data: ${JSON.stringify(order)}\n\n`);
+    };
 
-  // Register event listeners
-  orderEventEmitter.on("order:created", onOrderCreated);
-  orderEventEmitter.on("order:updated", onOrderUpdated);
+    // Register event listeners
+    orderEventEmitter.on("order:created", onOrderCreated);
+    orderEventEmitter.on("order:updated", onOrderUpdated);
 
-  // Send heartbeat every 30 seconds to keep connection alive
-  const heartbeat = setInterval(() => {
-    res.write(`: heartbeat\n\n`);
-  }, 30000);
+    // Send heartbeat every 30 seconds to keep connection alive
+    const heartbeat = setInterval(() => {
+      res.write(`: heartbeat\n\n`);
+    }, 30000);
 
-  // Cleanup on client disconnect
-  req.on("close", () => {
-    clearInterval(heartbeat);
-    orderEventEmitter.off("order:created", onOrderCreated);
-    orderEventEmitter.off("order:updated", onOrderUpdated);
-    res.end();
-  });
-});
+    // Cleanup on client disconnect
+    req.on("close", () => {
+      clearInterval(heartbeat);
+      orderEventEmitter.off("order:created", onOrderCreated);
+      orderEventEmitter.off("order:updated", onOrderUpdated);
+      res.end();
+    });
+  },
+);
 
 // GET /api/orders/:id
 router.get("/:id", async (req, res, next) => {
@@ -515,69 +621,74 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // PATCH /api/orders/:id/status (kitchen: mark ready / picked up). Requires admin auth.
-router.patch("/:id/status", authenticate, requireKitchenAdmin, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { status, paymentStatus } = req.body;
+router.patch(
+  "/:id/status",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status, paymentStatus } = req.body;
 
-    if (!isObjectId(id)) {
-      return errorResponse(res, 400, "Invalid order id");
+      if (!isObjectId(id)) {
+        return errorResponse(res, 400, "Invalid order id");
+      }
+
+      if (status && !allowedStatuses.includes(status)) {
+        return errorResponse(
+          res,
+          400,
+          `status must be one of ${allowedStatuses.join(", ")}`,
+        );
+      }
+
+      if (paymentStatus && !allowedPaymentStatuses.includes(paymentStatus)) {
+        return errorResponse(
+          res,
+          400,
+          `paymentStatus must be one of ${allowedPaymentStatuses.join(", ")}`,
+        );
+      }
+
+      const update = {};
+      if (status) update.status = status;
+      if (paymentStatus) update.paymentStatus = paymentStatus;
+
+      if (!Object.keys(update).length) {
+        return errorResponse(res, 400, "No valid fields to update");
+      }
+
+      const previous = await Order.findById(id).lean();
+      if (!previous) {
+        return errorResponse(res, 404, "Order not found");
+      }
+
+      const order = await Order.findByIdAndUpdate(
+        id,
+        { $set: update },
+        { new: true, runValidators: true },
+      ).lean();
+
+      if (!order) {
+        return errorResponse(res, 404, "Order not found");
+      }
+
+      if (
+        isBeanStampsEnabled() &&
+        update.status === "cancelled" &&
+        previous.status !== "cancelled"
+      ) {
+        await revokeLoyaltyStampForOrder(id);
+      }
+
+      orderEventEmitter.emit("order:updated", order);
+
+      res.json({ data: order });
+    } catch (err) {
+      next(err);
     }
-
-    if (status && !allowedStatuses.includes(status)) {
-      return errorResponse(
-        res,
-        400,
-        `status must be one of ${allowedStatuses.join(", ")}`
-      );
-    }
-
-    if (paymentStatus && !allowedPaymentStatuses.includes(paymentStatus)) {
-      return errorResponse(
-        res,
-        400,
-        `paymentStatus must be one of ${allowedPaymentStatuses.join(", ")}`
-      );
-    }
-
-    const update = {};
-    if (status) update.status = status;
-    if (paymentStatus) update.paymentStatus = paymentStatus;
-
-    if (!Object.keys(update).length) {
-      return errorResponse(res, 400, "No valid fields to update");
-    }
-
-    const previous = await Order.findById(id).lean();
-    if (!previous) {
-      return errorResponse(res, 404, "Order not found");
-    }
-
-    const order = await Order.findByIdAndUpdate(
-      id,
-      { $set: update },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!order) {
-      return errorResponse(res, 404, "Order not found");
-    }
-
-    if (
-      isBeanStampsEnabled() &&
-      update.status === "cancelled" &&
-      previous.status !== "cancelled"
-    ) {
-      await revokeLoyaltyStampForOrder(id);
-    }
-
-    orderEventEmitter.emit("order:updated", order);
-
-    res.json({ data: order });
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
 
 // POST /api/orders/webhook (stub)
 router.post("/webhook", async (req, res) => {
@@ -587,4 +698,3 @@ router.post("/webhook", async (req, res) => {
 });
 
 export default router;
-

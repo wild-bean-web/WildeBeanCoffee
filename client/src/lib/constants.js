@@ -31,3 +31,11 @@ const _lead = parseInt(
 );
 export const PICKUP_MIN_LEAD_MINUTES =
   Number.isFinite(_lead) && _lead >= 0 ? _lead : 5;
+
+/**
+ * Admin QA comp ($0 checkout with ADMIN_DISCOUNT). Must match server ADMIN_ORDER_COMP_ENABLED.
+ * NEXT_PUBLIC_ADMIN_ORDER_COMP_ENABLED=false or 0 disables; unset or true/1 enables.
+ */
+const _adminComp = process.env.NEXT_PUBLIC_ADMIN_ORDER_COMP_ENABLED;
+export const ADMIN_ORDER_COMP_ENABLED =
+  _adminComp !== "false" && _adminComp !== "0";

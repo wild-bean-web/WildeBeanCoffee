@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import { MenuItem, ModifierGroup } from "../models/index.js";
 import { errorResponse, validateQueryBoolean } from "../utils/validation.js";
+import { isMenuItemHiddenFromCustomer } from "../config/customerMenuExclusions.js";
 
 const router = express.Router();
 
@@ -34,11 +35,12 @@ router.get("/", async (req, res, next) => {
       ];
     }
 
-    const items = await MenuItem.find(query)
+    let items = await MenuItem.find(query)
       .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
-    
+    items = items.filter((item) => !isMenuItemHiddenFromCustomer(item.name));
+
     // For Coffee & Espresso section, sort hot items before iced/cold items
     if (section === "Coffee & Espresso" || (!section && items.some(item => item.section === "Coffee & Espresso"))) {
       items.sort((a, b) => {
@@ -124,6 +126,9 @@ router.get("/:id", async (req, res, next) => {
       .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .lean();
     if (!item) {
+      return errorResponse(res, 404, "Menu item not found");
+    }
+    if (isMenuItemHiddenFromCustomer(item.name)) {
       return errorResponse(res, 404, "Menu item not found");
     }
     res.json({ data: item });
