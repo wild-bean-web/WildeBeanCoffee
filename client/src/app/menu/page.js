@@ -9,6 +9,7 @@ import { useMenu } from "@/hooks/useMenu";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import CustomizationModal from "@/components/CustomizationModal";
+import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { GRAND_OPENING_DATE, PASTRIES_ORDERING_ENABLED, PASTRIES_SECTION_NAME } from "@/lib/constants";
 
 function MenuPageContent() {
@@ -303,6 +304,9 @@ function MenuPageContent() {
             <p className="mb-6 text-lg text-gray-600">
               Explore our selection of beverages, pastries, and smoothies
             </p>
+            <div className="mx-auto max-w-3xl text-left">
+              <BeanStampsPromo variant="menu" />
+            </div>
           </div>
           
           {/* Section Filter */}

@@ -155,7 +155,7 @@ export default function SocialMediaGallery() {
       alt: "Chai Latte",
       platform: "Espresso Macchiato",
       link: SOCIAL_MEDIA_LINKS.instagram,
-      title: "Tag @loveWildBeanCoffee",
+      title: "Tag @wildbeancoffeellc",
       text: "Espresso yourself… we won't judge",
       animation: "espressoSelfie",
     },
@@ -437,7 +437,7 @@ export default function SocialMediaGallery() {
           <p className="text-gray-600">
             Tag us{" "}
             <span className="font-semibold text-[var(--coffee-brown)]">
-              @lovewildbeancoffee
+              @wildbeancoffeellc
             </span>{" "}
             for a chance to be featured!
           </p>

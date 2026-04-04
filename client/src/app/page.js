@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import SocialMediaGallery from "@/components/SocialMediaGallery";
+import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { GRAND_OPENING_DATE, getGrandOpeningLabel, GOOGLE_REVIEW_URL } from "@/lib/constants";
 
 function getTimeLeft(now) {
@@ -97,7 +98,6 @@ export default function Home() {
     {
       id: 1,
       title: "Wild Bean Coffee",
-      titleSubtext: "Smoothie Cafe",
       subtitle: "Premium Coffee & Handcrafted Beverages",
       description:
         "Experience the perfect blend of quality beans and artisanal craftsmanship.",
@@ -306,23 +306,6 @@ export default function Home() {
                       ) : (
                         slide.title
                       )}
-                      {slide.titleSubtext && (
-                        <>
-                          <br />
-                          <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
-                            <span className="inline-block pl-8 sm:pl-12 md:pl-16 lg:pl-20">
-                              &
-                            </span>
-                            <br />
-                            <span className="inline-block pl-4 sm:pl-6 md:pl-8 lg:pl-10">
-                              <span className="text-[var(--lime-green)]">
-                                Smoothie
-                              </span>{" "}
-                              Cafe
-                            </span>
-                          </span>
-                        </>
-                      )}
                     </motion.h1>
                     <motion.p
                       initial={{ opacity: 0, y: 20 }}
@@ -461,6 +444,8 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      <BeanStampsPromo variant="home" />
 
       {/* Now at the cafe — coffee, açaí bowls, ice cream */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[var(--coffee-brown)] via-[var(--coffee-brown)] to-[var(--coffee-brown-dark)] py-14 px-4 sm:px-6 lg:px-8">

@@ -47,6 +47,14 @@ export default function Nav() {
     return pathname.startsWith(path);
   };
 
+  /** Main cart/checkout lives at /order; success/failure are separate. */
+  const orderNavIsCheckout =
+    pathname === "/order" ||
+    (pathname.startsWith("/order/") &&
+      pathname !== "/order/success" &&
+      pathname !== "/order/failure");
+  const orderNavLabel = orderNavIsCheckout ? "Checkout" : "Order Online";
+
   const linkClass = (path) => {
     const baseClass =
       "text-sm font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:transition-all";
@@ -113,7 +121,7 @@ export default function Nav() {
             <Link href="/location" className={linkClass("/location")}>
               Location
             </Link>
-            {user && BEAN_STAMPS_ENABLED && (
+            {BEAN_STAMPS_ENABLED && (
               <Link href="/rewards" className={linkClass("/rewards")}>
                 Bean Stamps
               </Link>
@@ -126,7 +134,7 @@ export default function Nav() {
                   : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
               }`}
             >
-              Order Online
+              {orderNavLabel}
             </Link>
             {/* Kitchen Dashboard - Admin Only */}
             {isAdmin && (
@@ -246,7 +254,7 @@ export default function Nav() {
               >
                 Location
               </Link>
-              {user && BEAN_STAMPS_ENABLED && (
+              {BEAN_STAMPS_ENABLED && (
                 <Link
                   href="/rewards"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -268,7 +276,7 @@ export default function Nav() {
                     : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
                 }`}
               >
-                Order Online
+                {orderNavLabel}
               </Link>
               {/* Kitchen Dashboard - Admin Only (Mobile) */}
               {isAdmin && (

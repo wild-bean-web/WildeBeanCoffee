@@ -13,6 +13,19 @@ export const LOYALTY_STAMPS_PER_REWARD = 20;
 export const LOYALTY_QUALIFY_MIN_TOTAL = 10;
 export const LOYALTY_FREE_ITEM_MAX_PRE_TAX = 15;
 
+/**
+ * Short customer-facing description of the redemption benefit (no cart jargon).
+ * Program detail: discount applies to one selected cart entry, pre-tax, capped at LOYALTY_FREE_ITEM_MAX_PRE_TAX; quantity on that entry counts toward that entry’s total.
+ */
+export function getLoyaltyRewardTagline() {
+  return `Up to $${LOYALTY_FREE_ITEM_MAX_PRE_TAX} off your pick`;
+}
+
+/** Same words as getLoyaltyRewardTagline with lowercase “up” for mid-sentence use. */
+export function getLoyaltyRewardTaglineMidSentence() {
+  return `up to $${LOYALTY_FREE_ITEM_MAX_PRE_TAX} off your pick`;
+}
+
 export const STAMP_IMAGE_BASE = "/images/RewardIcons/Stamps";
 
 /** 1-based stamp index for progress display (1..20). */
