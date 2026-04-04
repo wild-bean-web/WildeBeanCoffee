@@ -31,7 +31,8 @@ const products = [
     name: "Ethiopia Yirgacheffe",
     description:
       "Floral, citrus, and tea-like with bright acidity. A classic Ethiopian coffee with delicate notes.",
-    price: 16.5,
+    price: 0,
+    priceUnknown: true,
     currency: "USD",
     roastLevel: "Medium",
     origin: "Ethiopia",
@@ -47,7 +48,8 @@ const products = [
     name: "Ethiopia Sidamo",
     description:
       "Rich and full-bodied with wine-like acidity and fruity notes. A distinctive Ethiopian coffee.",
-    price: 17.0,
+    price: 0,
+    priceUnknown: true,
     currency: "USD",
     roastLevel: "Medium",
     origin: "Ethiopia",

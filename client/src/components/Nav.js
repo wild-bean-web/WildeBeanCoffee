@@ -64,6 +64,22 @@ export default function Nav() {
     return `${baseClass} text-[var(--coffee-brown)] hover:text-[var(--lime-green)] after:w-0 after:bg-[var(--lime-green)] hover:after:w-full`;
   };
 
+  const beanStampsIcon = (
+    <Image
+      src="/images/RewardIcons/ApplyReward/Apply-reward.png"
+      alt=""
+      width={24}
+      height={24}
+      className="h-6 w-6 shrink-0 object-contain drop-shadow-sm"
+      aria-hidden
+    />
+  );
+
+  const beanStampsPillBase =
+    "inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 font-semibold transition-colors shadow-sm";
+  const beanStampsNavActive = `${beanStampsPillBase} border-[var(--lime-green)] bg-[var(--lime-green)]/15 text-[var(--lime-green)]`;
+  const beanStampsNavIdle = `${beanStampsPillBase} border-amber-400/70 bg-gradient-to-r from-amber-50 to-lime-50 text-[var(--coffee-brown)] hover:border-[var(--lime-green)] hover:from-lime-50 hover:to-amber-50 hover:shadow`;
+
   const handleSignOutSuccess = (errorMessage) => {
     if (errorMessage) {
       setToast({
@@ -122,8 +138,12 @@ export default function Nav() {
               Location
             </Link>
             {BEAN_STAMPS_ENABLED && (
-              <Link href="/rewards" className={linkClass("/rewards")}>
-                Bean Stamps
+              <Link
+                href="/rewards"
+                className={`text-sm ${isActive("/rewards") ? beanStampsNavActive : beanStampsNavIdle}`}
+              >
+                {beanStampsIcon}
+                <span>Bean Stamps</span>
               </Link>
             )}
             <Link
@@ -258,13 +278,12 @@ export default function Nav() {
                 <Link
                   href="/rewards"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-base font-medium transition-colors ${
-                    isActive("/rewards")
-                      ? "text-[var(--lime-green)]"
-                      : "text-[var(--coffee-brown)] hover:text-[var(--lime-green)]"
+                  className={`text-base w-fit ${
+                    isActive("/rewards") ? beanStampsNavActive : beanStampsNavIdle
                   }`}
                 >
-                  Bean Stamps
+                  {beanStampsIcon}
+                  <span>Bean Stamps</span>
                 </Link>
               )}
               <Link
