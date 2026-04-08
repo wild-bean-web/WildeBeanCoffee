@@ -86,7 +86,8 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
     setSendingCode(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    // Railway cold start + Mongo + SMTP can exceed a short deadline; avoid false "timeouts"
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const response = await fetch(
@@ -116,7 +117,9 @@ export default function SignUpForm({ onSuccess, onError, switchToSignIn }) {
     } catch (error) {
       console.error("Send code error:", error);
       if (error.name === "AbortError") {
-        setVerificationError("Request timed out. Check your connection or try again.");
+        setVerificationError(
+          "Request timed out. Check your connection, then confirm the site’s API URL and CORS settings (see deployment docs)—or try again after a moment (servers can be slow to wake)."
+        );
       } else {
         setVerificationError(error.message || "Failed to send verification code");
       }
