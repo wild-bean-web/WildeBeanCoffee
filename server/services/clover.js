@@ -487,6 +487,14 @@ function formatReceiptContent(order) {
     text: `Tax: $${order.totals.tax.toFixed(2)}`,
     align: "LEFT",
   });
+  const tipVal = Number(order.totals.tip);
+  if (Number.isFinite(tipVal) && tipVal > 0) {
+    lines.push({
+      type: "TEXT",
+      text: `Tip: $${tipVal.toFixed(2)}`,
+      align: "LEFT",
+    });
+  }
   lines.push({
     type: "TEXT",
     text: `TOTAL: $${order.totals.total.toFixed(2)}`,
@@ -540,6 +548,7 @@ function formatReceiptContent(order) {
  * @param {string} checkoutData.cancelUrl - URL to redirect if payment is cancelled
  * @param {number} checkoutData.taxRate - Tax rate (optional, e.g., 0.0875 for 8.75%)
  * @param {string} checkoutData.currency - Currency code (default: USD)
+ * @param {number} [checkoutData.tipAmountCents] - Tip in cents (shoppingCart.tipAmount); not taxed
  * @returns {Promise<Object>} Checkout session with URL
  */
 export async function createHostedCheckoutSession(checkoutData) {
@@ -557,6 +566,8 @@ export async function createHostedCheckoutSession(checkoutData) {
     cancelUrl,
     taxRate = 0,
     currency = "USD",
+    /** Tip in cents (not taxed). Passed as shoppingCart.tipAmount for Hosted Checkout. */
+    tipAmountCents = 0,
   } = checkoutData;
 
   console.log(
@@ -626,7 +637,8 @@ export async function createHostedCheckoutSession(checkoutData) {
       0
     );
     const taxAmount = Math.round(subtotal * taxRate);
-    const totalAmount = subtotal + taxAmount;
+    const tipCents = Math.max(0, Math.round(Number(tipAmountCents) || 0));
+    const totalAmount = subtotal + taxAmount + tipCents;
 
     // Clover calculates the total automatically, but we validate it matches
     const finalAmount = Math.round(amount);
@@ -639,6 +651,8 @@ export async function createHostedCheckoutSession(checkoutData) {
           subtotalInDollars: (subtotal / 100).toFixed(2),
           taxAmount: taxAmount,
           taxAmountInDollars: (taxAmount / 100).toFixed(2),
+          tipCents: tipCents,
+          tipInDollars: (tipCents / 100).toFixed(2),
           totalAmount: totalAmount,
           totalAmountInDollars: (totalAmount / 100).toFixed(2),
           providedAmount: finalAmount,
@@ -654,6 +668,11 @@ export async function createHostedCheckoutSession(checkoutData) {
     // If set in Merchant Dashboard, those URLs override the API call URLs
     // Clover requires HTTPS URLs, so we only include redirectUrls if they're HTTPS
     // Tax rate must be an integer where 10% = 1000000 (so 0.06 = 600000)
+    const shoppingCart = {
+      lineItems: lineItems,
+      ...(tipCents > 0 ? { tipAmount: tipCents } : {}),
+    };
+
     const checkoutPayload = {
       customer: {
         firstName,
@@ -661,9 +680,7 @@ export async function createHostedCheckoutSession(checkoutData) {
         email,
         phoneNumber: customer.phone || undefined,
       },
-      shoppingCart: {
-        lineItems: lineItems,
-      },
+      shoppingCart,
       taxRates:
         taxRate > 0
           ? [

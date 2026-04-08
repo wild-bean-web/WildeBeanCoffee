@@ -9,11 +9,9 @@ import { locationApi, ordersApi, paymentsApi, menuApi, loyaltyApi } from "@/lib/
 import { applyBeanStampsToCart } from "@/lib/beanStampsPricing";
 import {
   BEAN_STAMPS_ENABLED,
-  LOYALTY_QUALIFY_MIN_TOTAL,
   LOYALTY_FREE_ITEM_MAX_PRE_TAX,
   LOYALTY_STAMPS_PER_REWARD,
   REWARD_ASSETS,
-  getLoyaltyRewardTagline,
 } from "@/lib/loyaltyConstants";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
@@ -80,6 +78,10 @@ function OrderPageContent() {
   /** Bean Stamps (signed-in only; server enforces) */
   const [loyalty, setLoyalty] = useState(null);
   const [beanStampsRedeemCartKey, setBeanStampsRedeemCartKey] = useState(null);
+
+  /** Optional tip: percent of pre-tax subtotal; "none" | "10" | "15" | "18" | "custom". Tap again to clear. */
+  const [tipChip, setTipChip] = useState("none");
+  const [tipCustomStr, setTipCustomStr] = useState("");
 
   // Customization modal state
   const [isCustomizationModalOpen, setIsCustomizationModalOpen] =
@@ -634,19 +636,48 @@ function OrderPageContent() {
     return applied ? applied.cart : cart;
   };
 
+  const getTipPercent = () => {
+    if (tipChip === "none") return 0;
+    if (tipChip === "custom") {
+      const n = parseFloat(tipCustomStr);
+      if (!Number.isFinite(n) || n < 0) return 0;
+      return Math.min(50, n);
+    }
+    return Number(tipChip);
+  };
+
   const getCheckoutTotals = () => {
     const lines = getCheckoutCart();
-    const subtotal = lines.reduce((sum, item) => {
+    let foodSubtotalCents = 0;
+    for (const item of lines) {
       const basePrice = item.price || 0;
       const modifierTotal = item.modifierTotal || 0;
       const itemPrice = basePrice + modifierTotal;
-      return sum + itemPrice * item.quantity;
-    }, 0);
-    const tax = subtotal * taxRate;
-    const beforeDiscount = subtotal + tax;
-    const discount = adminCompActive ? beforeDiscount : 0;
-    const total = adminCompActive ? 0 : beforeDiscount;
-    return { subtotal, tax, discount, total, isAdmin: adminCompActive };
+      const unit = Math.round(itemPrice * 100);
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      foodSubtotalCents += unit * qty;
+    }
+    const subtotal = foodSubtotalCents / 100;
+    const taxCents = Math.round(foodSubtotalCents * taxRate);
+    const tax = taxCents / 100;
+    const beforeDiscountCents = foodSubtotalCents + taxCents;
+    const discount = adminCompActive ? beforeDiscountCents / 100 : 0;
+    const tipPct = adminCompActive ? 0 : getTipPercent();
+    const tipCents = adminCompActive
+      ? 0
+      : Math.round((foodSubtotalCents * tipPct) / 100);
+    const tipAmount = tipCents / 100;
+    const totalCents = adminCompActive ? 0 : foodSubtotalCents + taxCents + tipCents;
+    const total = totalCents / 100;
+    return {
+      subtotal,
+      tax,
+      discount,
+      tipAmount,
+      tipPercent: tipPct,
+      total,
+      isAdmin: adminCompActive,
+    };
   };
 
   const mapCartToOrderItems = (lines) =>
@@ -768,12 +799,8 @@ function OrderPageContent() {
         }
       }
 
-      const {
-        subtotal,
-        tax,
-        total,
-        isAdmin: isAdminDiscount,
-      } = getCheckoutTotals();
+      const { total, tipAmount, isAdmin: isAdminDiscount } =
+        getCheckoutTotals();
 
       // If admin, skip payment and create order directly
       if (isAdminDiscount && total === 0) {
@@ -852,10 +879,12 @@ function OrderPageContent() {
       const cancelUrl = `${baseUrl}/order?canceled=true`;
 
       // Create checkout session
+      const tipAmountCents = Math.round(tipAmount * 100);
       const checkoutSession = await paymentsApi.createCheckout({
         items: orderItems,
         customer: customerData,
         amount: Math.round(total * 100), // Convert to cents
+        tipAmountCents,
         successUrl,
         failureUrl,
         cancelUrl,
@@ -882,6 +911,7 @@ function OrderPageContent() {
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
         checkoutId: checkoutSession.checkoutId,
+        ...(tipAmount > 0 ? { tip: tipAmount } : {}),
         ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
           ? { beanStampsRedeemCartKey }
           : {}),
@@ -1281,7 +1311,7 @@ function OrderPageContent() {
     );
   }
 
-  const { subtotal, tax, total } = getCheckoutTotals();
+  const { subtotal, tax, total, tipAmount, tipPercent } = getCheckoutTotals();
   const checkoutCartForDisplay = getCheckoutCart();
   const beanStampsRewardLineName = beanStampsRedeemCartKey
     ? cart.find(
@@ -1368,9 +1398,21 @@ function OrderPageContent() {
                       />
                     </div>
                     <p className="text-xs leading-relaxed text-[var(--coffee-brown)]/80 sm:text-sm">
-                      {loyalty.rewardReady
-                        ? "Tap Apply reward on your pick below, then check out."
-                        : `Spend $${LOYALTY_QUALIFY_MIN_TOTAL}+ after tax per order to earn stamps. ${LOYALTY_STAMPS_PER_REWARD - loyalty.stamps} to go.`}
+                      {loyalty.rewardReady ? (
+                        "Tap Apply reward on your pick below, then check out."
+                      ) : (
+                        <>
+                          {LOYALTY_STAMPS_PER_REWARD - loyalty.stamps} more stamp
+                          {LOYALTY_STAMPS_PER_REWARD - loyalty.stamps === 1 ? "" : "s"} to your next reward.{" "}
+                          <Link
+                            href="/rewards/terms"
+                            className="font-medium underline underline-offset-2 hover:text-[var(--lime-green-dark)]"
+                          >
+                            Program terms
+                          </Link>{" "}
+                          have qualifying details.
+                        </>
+                      )}
                     </p>
                   </>
                 )}
@@ -1400,19 +1442,19 @@ function OrderPageContent() {
                   <span className="font-semibold">Bean Stamps</span>
                   {loyalty.rewardReady ? (
                     <span className="ml-2 font-bold text-[var(--lime-green-dark)]">
-                      Reward ready — {getLoyaltyRewardTagline()}.
+                      Reward ready — use <strong>Apply reward</strong> on an eligible item before checkout.
                     </span>
                   ) : (
                     <span className="ml-2">
-                      {loyalty.stamps}/20 stamps to your next reward (
-                      <Link
-                        href="/rewards"
-                        className="underline font-medium text-[var(--coffee-brown)]"
-                      >
-                        details
+                      {loyalty.stamps}/{LOYALTY_STAMPS_PER_REWARD} stamps to your next reward (
+                      <Link href="/rewards" className="underline font-medium text-[var(--coffee-brown)]">
+                        card
                       </Link>
-                      ). Orders must total at least $
-                      {LOYALTY_QUALIFY_MIN_TOTAL} after tax to earn a stamp.
+                      ).{" "}
+                      <Link href="/rewards/terms" className="underline font-medium text-[var(--coffee-brown)]">
+                        Program terms
+                      </Link>{" "}
+                      describe qualifying orders.
                     </span>
                   )}
                 </div>
@@ -1704,6 +1746,91 @@ function OrderPageContent() {
                     <span className="text-gray-600">Tax</span>
                     <span className="font-medium">{formatPrice(tax)}</span>
                   </div>
+                  {!adminCompActive && (
+                    <div className="rounded-xl border border-stone-200/90 bg-stone-50/50 px-3 py-3">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--coffee-brown)]/45">
+                        Optional Tip
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {[
+                          { key: "10", label: "10%" },
+                          { key: "15", label: "15%" },
+                          { key: "18", label: "18%" },
+                        ].map(({ key, label }) => {
+                          const active = tipChip === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => {
+                                if (active) {
+                                  setTipChip("none");
+                                  setTipCustomStr("");
+                                } else {
+                                  setTipChip(key);
+                                  setTipCustomStr("");
+                                }
+                              }}
+                              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                                active
+                                  ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
+                                  : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (tipChip === "custom") {
+                              setTipChip("none");
+                              setTipCustomStr("");
+                            } else {
+                              setTipChip("custom");
+                            }
+                          }}
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                            tipChip === "custom"
+                              ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
+                              : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
+                          }`}
+                        >
+                          Other %
+                        </button>
+                      </div>
+                      {tipChip === "custom" && (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                          <span className="shrink-0">Custom</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={50}
+                            step={0.5}
+                            value={tipCustomStr}
+                            onChange={(e) => setTipCustomStr(e.target.value)}
+                            placeholder="e.g. 12"
+                            className="w-20 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[var(--coffee-brown)] tabular-nums focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                          />
+                          <span className="text-gray-500">% (max 50)</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+                  {!adminCompActive && tipAmount > 0 && (
+                    <div className="flex justify-between text-sm text-stone-600">
+                      <span>
+                        Tip
+                        {tipPercent > 0 ? (
+                          <span className="text-stone-400"> ({tipPercent}%)</span>
+                        ) : null}
+                      </span>
+                      <span className="font-medium tabular-nums">
+                        {formatPrice(tipAmount)}
+                      </span>
+                    </div>
+                  )}
                   {adminCompActive && (
                     <div className="flex justify-between text-sm">
                       <span className="text-[var(--lime-green)] font-semibold">

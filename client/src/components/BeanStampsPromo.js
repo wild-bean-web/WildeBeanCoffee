@@ -6,9 +6,7 @@ import { motion } from "framer-motion";
 import {
   BEAN_STAMPS_ENABLED,
   LOYALTY_STAMPS_PER_REWARD,
-  LOYALTY_QUALIFY_MIN_TOTAL,
   REWARD_ASSETS,
-  getLoyaltyRewardTaglineMidSentence,
   getStampImageSrc,
 } from "@/lib/loyaltyConstants";
 import { useAuth } from "@/hooks/useAuth";
@@ -75,12 +73,8 @@ export default function BeanStampsPromo({ variant = "menu" }) {
                 Bean Stamps — your online rewards perk
               </h2>
               <p className="mt-3 text-base text-[var(--coffee-brown)]/85 sm:text-lg">
-                Order online, earn stamps on qualifying orders (${LOYALTY_QUALIFY_MIN_TOTAL}+ after tax), and
-                when you fill your card with {LOYALTY_STAMPS_PER_REWARD} stamps, enjoy a{" "}
-                <span className="font-semibold text-[var(--lime-green-dark)]">
-                  free drink or bowl
-                </span>{" "}
-                ({getLoyaltyRewardTaglineMidSentence()}). Same Wild Bean vibe — now with perks.
+                Create a free account and earn stamps on qualifying online orders. At{" "}
+                {LOYALTY_STAMPS_PER_REWARD} stamps, receive your rewards.
               </p>
               <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:justify-start">
                 {user ? (
@@ -107,6 +101,14 @@ export default function BeanStampsPromo({ variant = "menu" }) {
                   </>
                 )}
               </div>
+              <p className="mt-4 text-center text-xs text-[var(--coffee-brown)]/65 sm:text-left lg:text-left">
+                <Link
+                  href="/rewards/terms"
+                  className="font-medium underline underline-offset-2 hover:text-[var(--lime-green-dark)]"
+                >
+                  See program terms
+                </Link>
+              </p>
             </div>
           </div>
         </div>
@@ -118,13 +120,13 @@ export default function BeanStampsPromo({ variant = "menu" }) {
     if (user) return null;
     return (
       <div
-        className="mb-6 rounded-2xl border-2 border-[var(--lime-green)]/40 bg-gradient-to-r from-[var(--lime-green-light)]/50 via-white to-amber-50/40 p-4 shadow-sm sm:p-5"
+        className="mb-6 rounded-2xl border-2 border-[var(--lime-green)]/40 bg-gradient-to-r from-[var(--lime-green-light)]/50 via-white to-amber-50/40 p-5 shadow-sm sm:p-6"
         role="region"
         aria-label="Bean Stamps rewards program"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-3 sm:gap-4">
-            <div className="flex shrink-0 -space-x-2" aria-hidden>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+          <div className="flex min-w-0 gap-3 sm:gap-4 lg:flex-1">
+            <div className="flex shrink-0 -space-x-2 self-start pt-0.5" aria-hidden>
               {STAMP_PREVIEW.slice(0, 3).map((n) => (
                 <Image
                   key={n}
@@ -137,29 +139,37 @@ export default function BeanStampsPromo({ variant = "menu" }) {
                 />
               ))}
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--coffee-brown)]/60">
                 New — Bean Stamps
               </p>
-              <p className="mt-0.5 text-sm font-semibold text-[var(--coffee-brown)] sm:text-base">
-                Earn stamps on online orders. At {LOYALTY_STAMPS_PER_REWARD} stamps,{" "}
-                {getLoyaltyRewardTaglineMidSentence()}.
+              <p className="mt-1 text-sm font-semibold leading-relaxed text-[var(--coffee-brown)] sm:text-base lg:pr-4">
+                Create a free account and earn stamps on qualifying online orders. At{" "}
+                {LOYALTY_STAMPS_PER_REWARD} stamps, receive your rewards.
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex w-full shrink-0 flex-col gap-4 border-t border-[var(--coffee-brown)]/10 pt-5 sm:gap-3 sm:border-t-0 sm:pt-0 lg:w-auto lg:max-w-[20rem] lg:items-end lg:self-start">
             <Link
               href={joinHref}
-              className="inline-flex items-center justify-center rounded-full bg-[var(--lime-green)] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[var(--lime-green-dark)]"
+              className="inline-flex min-h-[3rem] w-full items-center justify-center rounded-full bg-[var(--lime-green)] px-6 text-center text-sm font-bold text-white transition hover:bg-[var(--lime-green-dark)] lg:min-h-0 lg:w-auto lg:px-7 lg:py-3"
             >
               Sign up free
             </Link>
             <Link
               href="/auth"
-              className="text-center text-sm font-semibold text-[var(--coffee-brown)] underline underline-offset-2 hover:text-[var(--lime-green-dark)]"
+              className="px-0.5 text-center text-xs font-medium leading-relaxed text-[var(--coffee-brown)] underline decoration-[var(--coffee-brown)]/35 underline-offset-[5px] transition hover:text-[var(--lime-green-dark)] sm:text-sm sm:font-semibold lg:text-right"
             >
               Already have an account? Sign in
             </Link>
+            <p className="px-0.5 text-center text-[0.7rem] leading-relaxed text-[var(--coffee-brown)]/55 lg:text-right">
+              <Link
+                href="/rewards/terms"
+                className="font-medium underline underline-offset-2 hover:text-[var(--lime-green-dark)]"
+              >
+                See program terms
+              </Link>
+            </p>
           </div>
         </div>
       </div>
@@ -169,12 +179,12 @@ export default function BeanStampsPromo({ variant = "menu" }) {
   /* menu */
   return (
     <div
-      className="mb-6 rounded-2xl border-2 border-dashed border-[var(--lime-green)]/50 bg-white/90 p-4 shadow-sm sm:p-5"
+      className="mb-6 rounded-2xl border-2 border-dashed border-[var(--lime-green)]/50 bg-white/90 p-5 shadow-sm sm:p-6"
       role="region"
       aria-label="Bean Stamps rewards"
     >
-      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
+      <div className="flex flex-col items-stretch sm:flex-row sm:items-center sm:justify-between sm:gap-6 lg:gap-8">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:pr-2">
           <span
             className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lime-green)] p-1.5"
             aria-hidden
@@ -192,48 +202,52 @@ export default function BeanStampsPromo({ variant = "menu" }) {
             <p className="text-xs font-bold uppercase tracking-wide text-[var(--lime-green-dark)]">
               Bean Stamps rewards
             </p>
-            <p className="mt-1 text-sm text-[var(--coffee-brown)] sm:text-base">
+            <p className="mt-1 text-sm leading-relaxed text-[var(--coffee-brown)] sm:text-base">
               {user ? (
                 <>
-                  You&apos;re earning on qualifying orders.{" "}
-                  <span className="font-semibold">
-                    {LOYALTY_STAMPS_PER_REWARD} stamps
-                  </span>{" "}
-                  = {getLoyaltyRewardTaglineMidSentence()}.
+                  You&apos;re earning stamps on qualifying online orders. At{" "}
+                  <span className="font-semibold">{LOYALTY_STAMPS_PER_REWARD} stamps</span>, receive your rewards.
                 </>
               ) : (
                 <>
-                  <span className="font-semibold">New:</span> create a free account and earn stamps when you
-                  order online (${LOYALTY_QUALIFY_MIN_TOTAL}+ after tax). Fill the card for a treat on us.
+                  <span className="font-semibold">New:</span> create a free account and earn stamps on qualifying
+                  online orders. At {LOYALTY_STAMPS_PER_REWARD} stamps, receive your rewards.
                 </>
               )}
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-          {user ? (
-            <Link
-              href={cardHref}
-              className="inline-flex items-center justify-center rounded-full bg-[var(--coffee-brown)] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[var(--coffee-brown-dark)]"
-            >
-              Open rewards card
-            </Link>
-          ) : (
-            <>
-              <Link
-                href={joinHref}
-                className="inline-flex items-center justify-center rounded-full bg-[var(--lime-green)] px-5 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[var(--lime-green-dark)]"
-              >
-                Join free
-              </Link>
+        <div className="mt-5 flex w-full min-w-0 flex-col gap-3 border-t border-[var(--coffee-brown)]/10 pt-5 sm:mt-0 sm:w-auto sm:shrink-0 sm:border-t-0 sm:pt-0 sm:pl-2 md:pl-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:justify-end sm:gap-3">
+            {user ? (
               <Link
                 href={cardHref}
-                className="inline-flex items-center justify-center rounded-full border-2 border-[var(--coffee-brown)] px-5 py-2.5 text-center text-sm font-bold text-[var(--coffee-brown)] transition hover:bg-[var(--coffee-brown)] hover:text-white"
+                className="inline-flex min-h-[2.875rem] w-full items-center justify-center whitespace-nowrap rounded-full bg-[var(--coffee-brown)] px-6 py-2.5 text-center text-sm font-bold text-white transition hover:bg-[var(--coffee-brown-dark)] sm:w-auto sm:min-h-[2.75rem]"
               >
-                Learn more
+                Open rewards card
               </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link
+                  href={joinHref}
+                  className="inline-flex min-h-[2.875rem] w-full flex-1 items-center justify-center whitespace-nowrap rounded-full bg-[var(--lime-green)] px-6 py-2.5 text-center text-sm font-bold leading-none text-white transition hover:bg-[var(--lime-green-dark)] sm:w-auto sm:min-h-[2.75rem] sm:flex-initial"
+                >
+                  Join free
+                </Link>
+                <Link
+                  href={cardHref}
+                  className="inline-flex min-h-[2.875rem] w-full flex-1 items-center justify-center whitespace-nowrap rounded-full border-2 border-[var(--coffee-brown)] bg-white px-6 py-2.5 text-center text-sm font-bold leading-none text-[var(--coffee-brown)] transition hover:bg-[var(--coffee-brown)] hover:text-white sm:w-auto sm:min-h-[2.75rem] sm:flex-initial"
+                >
+                  Learn more
+                </Link>
+              </>
+            )}
+          </div>
+          <p className="text-center text-[0.7rem] leading-relaxed text-[var(--coffee-brown)]/60 sm:text-right">
+            <Link href="/rewards/terms" className="underline underline-offset-2 hover:text-[var(--lime-green-dark)]">
+              See program terms
+            </Link>
+          </p>
         </div>
       </div>
     </div>
