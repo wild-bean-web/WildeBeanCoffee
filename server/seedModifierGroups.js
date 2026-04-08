@@ -12,6 +12,18 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Espresso Bean",
+    displayName: "Regular, Decaf, or Half-Caf",
+    description: "Regular espresso, decaf, or half-caf",
+    type: "single",
+    required: true,
+    options: [
+      { name: "Regular", price: 0, available: true },
+      { name: "Decaf", price: 0, available: true },
+      { name: "Half-Caf", price: 0, available: true },
+    ],
+  },
+  {
     name: "Cup Size (12-16)",
     description: "Select your cup size",
     type: "single",

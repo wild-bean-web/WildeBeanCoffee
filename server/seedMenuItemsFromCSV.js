@@ -19,6 +19,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
     ],
@@ -36,6 +37,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
@@ -54,7 +56,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/DoppioLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
   },
   {
     name: "Espresso",
@@ -67,7 +69,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
   },
   {
     name: "Flat White",
@@ -82,6 +84,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
@@ -102,6 +105,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (12-16)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -122,6 +126,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Cup Size (12-16)",
@@ -140,7 +145,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Extra Single Shots (Hot)"],
+    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
   },
   {
     name: "Caramel Macchiato",
@@ -155,6 +160,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (12-16)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -209,6 +215,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Ice Level",
       "Cold Foam",
@@ -228,6 +235,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -250,6 +258,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -272,6 +281,7 @@ export const menuItemsFromCSV = [
     active: false,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -294,6 +304,7 @@ export const menuItemsFromCSV = [
     active: false,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -317,6 +328,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
@@ -340,6 +352,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Shot Preference",
+      "Espresso Bean",
       "Cup Size (16-20)",
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
