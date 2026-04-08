@@ -360,10 +360,10 @@ export default function PrivacyPolicyPage() {
                 <p className="mb-2">
                   Email:{" "}
                   <a
-                    href="mailto:wildbeancoffeellc@gmail.com"
+                    href="mailto:info@wildbeancoffeeshop.com"
                     className="text-[var(--lime-green)] hover:underline"
                   >
-                    wildbeancoffeellc@gmail.com
+                    info@wildbeancoffeeshop.com
                   </a>
                 </p>
                 <p className="mb-2">

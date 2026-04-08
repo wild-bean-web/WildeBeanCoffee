@@ -38,7 +38,7 @@ function OrderPageContent() {
   // Admin emails - only admins can place orders before grand opening; their orders are comped for QA/testing
   const ADMIN_EMAILS = [
     "danielwoldehana@yahoo.com",
-    "wildbeancoffeellc@gmail.com",
+    "info@wildbeancoffeeshop.com",
   ];
   const isAdmin =
     user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());

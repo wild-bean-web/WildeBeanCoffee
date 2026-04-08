@@ -358,7 +358,7 @@ const locations = [
     country: "US",
     coordinates: { lat: 39.0629, lng: -77.1291 },
     phone: "+1 240-645-6203",
-    email: "wildbeancoffeellc@gmail.com",
+    email: "info@wildbeancoffeeshop.com",
     mapsUrl: "",
     hours: [
       { day: "Monday", opens: "07:00", closes: "20:00" },

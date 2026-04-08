@@ -148,8 +148,8 @@ export default function Footer() {
               </a>
             </p>
             <p className="mb-4 text-sm text-gray-300">
-              <a href="mailto:wildbeancoffeellc@gmail.com" className="transition-colors hover:text-[var(--lime-green)]">
-                wildbeancoffeellc@gmail.com
+              <a href="mailto:info@wildbeancoffeeshop.com" className="transition-colors hover:text-[var(--lime-green)]">
+                info@wildbeancoffeeshop.com
               </a>
             </p>
             <p className="mb-8 text-sm text-gray-300">

@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
-const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+const ADMIN_EMAILS = [
+  "danielwoldehana@yahoo.com",
+  "info@wildbeancoffeeshop.com",
+];
 
 export default function KitchenLayout({ children }) {
   const { user, loading: authLoading } = useAuth();
