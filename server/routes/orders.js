@@ -23,7 +23,7 @@ const router = express.Router();
 
 const KITCHEN_ADMIN_EMAILS = [
   "danielwoldehana@yahoo.com",
-  "wildbeancoffeellc@gmail.com",
+  "info@wildbeancoffeeshop.com",
 ];
 
 function requireKitchenAdmin(req, res, next) {

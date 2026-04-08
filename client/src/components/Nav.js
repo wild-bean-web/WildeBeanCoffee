@@ -19,7 +19,10 @@ export default function Nav() {
   const [toast, setToast] = useState(null);
 
   // Admin emails
-  const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+  const ADMIN_EMAILS = [
+    "danielwoldehana@yahoo.com",
+    "info@wildbeancoffeeshop.com",
+  ];
   const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   // Load userAvatar animation

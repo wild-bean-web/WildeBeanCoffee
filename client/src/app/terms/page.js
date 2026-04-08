@@ -151,10 +151,10 @@ export default function TermsOfUsePage() {
               <p className="leading-relaxed">
                 <strong>Contact for accessibility issues:</strong> Email us at{" "}
                 <a
-                  href="mailto:wildbeancoffeellc@gmail.com"
+                  href="mailto:info@wildbeancoffeeshop.com"
                   className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                 >
-                  wildbeancoffeellc@gmail.com
+                  info@wildbeancoffeeshop.com
                 </a>{" "}
                 or call{" "}
                 <a
@@ -283,10 +283,10 @@ export default function TermsOfUsePage() {
                 <li>
                   Email:{" "}
                   <a
-                    href="mailto:wildbeancoffeellc@gmail.com"
+                    href="mailto:info@wildbeancoffeeshop.com"
                     className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                   >
-                    wildbeancoffeellc@gmail.com
+                    info@wildbeancoffeeshop.com
                   </a>
                 </li>
                 <li>
