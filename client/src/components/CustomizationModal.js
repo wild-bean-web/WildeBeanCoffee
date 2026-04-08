@@ -130,6 +130,10 @@ export default function CustomizationModal({
                 (opt) =>
                   opt.name === "Vanilla Mass protein powder" && opt.available,
               );
+            } else if (group.name === "Espresso Bean") {
+              defaultOption = group.options.find(
+                (opt) => opt.name === "Regular" && opt.available,
+              );
             }
 
             // If a default option is found and the group is required, set it
@@ -185,6 +189,23 @@ export default function CustomizationModal({
     if (has16oz) {
       setSelectedModifiers((prev) => ({ ...prev, "Smoothie Size": ["16oz"] }));
     }
+  }, [isOpen, menuItem]);
+
+  useEffect(() => {
+    if (!isOpen || !menuItem?.modifierGroups) return;
+    const beanGroup = menuItem.modifierGroups.find(
+      (g) => g.name === "Espresso Bean",
+    );
+    if (!beanGroup?.required) return;
+    setSelectedModifiers((prev) => {
+      const current = prev["Espresso Bean"] || [];
+      if (current.length > 0) return prev;
+      const hasRegular = beanGroup.options?.some(
+        (o) => o.name === "Regular" && o.available !== false,
+      );
+      if (!hasRegular) return prev;
+      return { ...prev, "Espresso Bean": ["Regular"] };
+    });
   }, [isOpen, menuItem]);
 
   // Check if a modifier group supports quantities (like Syrup Pumps)
