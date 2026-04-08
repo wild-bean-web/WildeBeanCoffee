@@ -26,12 +26,16 @@ function normalizeLoyaltyCycle(raw) {
 }
 
 function computeTotalsFromItems(items, taxRate = 0) {
-  const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.price) * Number(item.quantity ?? 1),
-    0
-  );
-  const tax = Number((subtotal * taxRate).toFixed(2));
-  const total = Number((subtotal + tax).toFixed(2));
+  let foodSubtotalCents = 0;
+  for (const item of items) {
+    const unit = Math.round(Number(item.price) * 100);
+    const qty = Math.max(1, Number(item.quantity ?? 1));
+    foodSubtotalCents += unit * qty;
+  }
+  const taxCents = Math.round(foodSubtotalCents * Number(taxRate) || 0);
+  const subtotal = foodSubtotalCents / 100;
+  const tax = taxCents / 100;
+  const total = (foodSubtotalCents + taxCents) / 100;
   return { subtotal, tax, total, currency: "USD" };
 }
 
@@ -115,8 +119,12 @@ export async function processLoyaltyAfterPaidOrder({
   const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
   if (isAdminOrder && !isAdminBeanStampsTestModeEnabled()) return;
 
-  const total = Number(totals?.total);
-  if (Number.isNaN(total)) return;
+  const subtotal = Number(totals?.subtotal);
+  const tax = Number(totals?.tax);
+  const preTipTotal =
+    (Number.isFinite(subtotal) ? subtotal : 0) +
+    (Number.isFinite(tax) ? tax : 0);
+  if (!Number.isFinite(preTipTotal)) return;
 
   if (loyaltyRedeemApplied) {
     const uOpts = session ? { session } : {};
@@ -128,7 +136,7 @@ export async function processLoyaltyAfterPaidOrder({
   const user = await uq2;
   if (!user) return;
 
-  const meetsMinTotal = total >= LOYALTY_QUALIFY_MIN_TOTAL;
+  const meetsMinTotal = preTipTotal >= LOYALTY_QUALIFY_MIN_TOTAL;
   const adminTestQualifies = isAdminOrder && isAdminBeanStampsTestModeEnabled();
   if (!meetsMinTotal && !adminTestQualifies) return;
 

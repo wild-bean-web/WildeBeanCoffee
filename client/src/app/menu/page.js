@@ -308,13 +308,14 @@ function MenuPageContent() {
               <BeanStampsPromo variant="menu" />
             </div>
           </div>
-          
+
           {/* Section Filter */}
           {sections.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-x-2.5 gap-y-3 px-1 sm:mt-7 sm:gap-x-3 sm:gap-y-3 sm:px-0">
               <button
                 onClick={() => setSelectedSection("")}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                type="button"
+                className={`min-h-[2.75rem] rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-5 sm:py-2.5 ${
                   selectedSection === ""
                     ? "bg-[var(--lime-green)] text-white"
                     : "bg-white text-[var(--coffee-brown)] hover:bg-gray-100"
@@ -325,8 +326,9 @@ function MenuPageContent() {
               {sections.map((section) => (
                 <button
                   key={section}
+                  type="button"
                   onClick={() => setSelectedSection(section)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`min-h-[2.75rem] rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-5 sm:py-2.5 ${
                     selectedSection === section
                       ? "bg-[var(--lime-green)] text-white"
                       : "bg-white text-[var(--coffee-brown)] hover:bg-gray-100"

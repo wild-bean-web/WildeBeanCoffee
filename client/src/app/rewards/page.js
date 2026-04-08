@@ -11,8 +11,6 @@ import {
   BEAN_STAMPS_ENABLED,
   getStampImageSrc,
   LOYALTY_STAMPS_PER_REWARD,
-  LOYALTY_QUALIFY_MIN_TOTAL,
-  getLoyaltyRewardTaglineMidSentence,
   REWARD_ASSETS,
 } from "@/lib/loyaltyConstants";
 import BeanStampSlotPlaceholder from "@/components/BeanStampSlotPlaceholder";
@@ -88,12 +86,8 @@ export default function RewardsPage() {
             Bean Stamps are live
           </h1>
           <p className="mt-4 text-gray-700">
-            Create a free account and earn stamps on qualifying online orders (${LOYALTY_QUALIFY_MIN_TOTAL}+
-            after tax). At {LOYALTY_STAMPS_PER_REWARD} stamps, {getLoyaltyRewardTaglineMidSentence()} (see{" "}
-            <Link href="/rewards/terms" className="font-medium underline">
-              program terms
-            </Link>
-            ).
+            Create a free account and earn stamps on qualifying online orders. At{" "}
+            {LOYALTY_STAMPS_PER_REWARD} stamps, receive your rewards.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
@@ -109,6 +103,11 @@ export default function RewardsPage() {
               Sign in
             </Link>
           </div>
+          <p className="mt-4 text-center text-xs text-gray-500">
+            <Link href="/rewards/terms" className="font-medium underline hover:text-[var(--coffee-brown)]">
+              See program terms
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -142,9 +141,12 @@ export default function RewardsPage() {
           Bean Stamps
         </h1>
         <p className="mt-2 text-gray-600">
-          Online only. Spend at least ${LOYALTY_QUALIFY_MIN_TOTAL} after tax per
-          qualifying order to earn one stamp. At {LOYALTY_STAMPS_PER_REWARD} stamps,{" "}
-          {getLoyaltyRewardTaglineMidSentence()} at checkout.
+          Online only. Earn one stamp per qualifying order. At {LOYALTY_STAMPS_PER_REWARD} stamps, you can redeem
+          your reward at checkout. Details:{" "}
+          <Link href="/rewards/terms" className="font-medium underline hover:text-[var(--coffee-brown)]">
+            program terms
+          </Link>
+          .
         </p>
 
         {loadError && (
@@ -172,9 +174,12 @@ export default function RewardsPage() {
                 You have a reward ready!
               </p>
               <p className="mt-2 text-gray-600">
-                Go to checkout, tap <strong>Apply reward</strong> beside your pick in the cart (
-                {getLoyaltyRewardTaglineMidSentence()}, before tax). Your stamp progress resets when you place
-                that order.
+                Go to checkout and tap <strong>Apply reward</strong> beside your pick in the cart. Your stamp
+                progress resets when you place that order. Benefit limits and eligibility are in the{" "}
+                <Link href="/rewards/terms" className="font-medium underline">
+                  program terms
+                </Link>
+                .
               </p>
             </div>
           ) : stamps === 0 ? (

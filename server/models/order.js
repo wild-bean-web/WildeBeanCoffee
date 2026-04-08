@@ -35,6 +35,8 @@ const TotalsSchema = new mongoose.Schema(
   {
     subtotal: { type: Number, required: true, min: 0 },
     tax: { type: Number, required: true, min: 0, default: 0 },
+    /** Optional barista tip (USD order-total portion); not taxed. */
+    tip: { type: Number, min: 0, default: 0 },
     total: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "USD" },
   },

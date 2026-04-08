@@ -60,13 +60,30 @@ const allowedPaymentStatuses = [
 ];
 
 function computeTotals(items, taxRate = 0, currency = "USD") {
-  const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.price) * Number(item.quantity ?? 1),
-    0,
-  );
-  const tax = Number((subtotal * taxRate).toFixed(2));
-  const total = Number((subtotal + tax).toFixed(2));
+  let foodSubtotalCents = 0;
+  for (const item of items) {
+    const unit = Math.round(Number(item.price) * 100);
+    const qty = Math.max(1, Number(item.quantity ?? 1));
+    foodSubtotalCents += unit * qty;
+  }
+  const taxCents = Math.round(foodSubtotalCents * Number(taxRate) || 0);
+  const subtotal = foodSubtotalCents / 100;
+  const tax = taxCents / 100;
+  const total = (foodSubtotalCents + taxCents) / 100;
   return { subtotal, tax, total, currency };
+}
+
+/** Matches client / Hosted Checkout cent rounding (items + tax + tip). */
+function orderGrandTotalCents(items, taxRate, tipDollars = 0) {
+  let foodSubtotalCents = 0;
+  for (const item of items) {
+    const unit = Math.round(Number(item.price) * 100);
+    const qty = Math.max(1, Number(item.quantity ?? 1));
+    foodSubtotalCents += unit * qty;
+  }
+  const taxCents = Math.round(foodSubtotalCents * Number(taxRate) || 0);
+  const tipCents = Math.round(Number(tipDollars) * 100);
+  return foodSubtotalCents + taxCents + tipCents;
 }
 
 function validateOrderPayload(body) {
@@ -370,10 +387,38 @@ router.post("/", optionalAuth, async (req, res, next) => {
     }
 
     let totals = computeTotals(items, taxRate);
-    if (isAdminOrder) {
+    let tip = 0;
+    if (!isAdminOrder) {
+      const tipRaw = req.body.tip;
+      if (
+        tipRaw !== undefined &&
+        tipRaw !== null &&
+        tipRaw !== ""
+      ) {
+        const t = Number(tipRaw);
+        if (!Number.isFinite(t) || t < 0) {
+          return errorResponse(res, 400, "tip must be a non-negative number", [
+            "tip",
+          ]);
+        }
+        const maxTip = Number((totals.subtotal * 0.5).toFixed(2));
+        if (t > maxTip + 0.001) {
+          return errorResponse(res, 400, "tip exceeds maximum for this order", [
+            "tip",
+          ]);
+        }
+        tip = Number(t.toFixed(2));
+      }
+      totals = {
+        ...totals,
+        tip,
+        total: orderGrandTotalCents(items, taxRate, tip) / 100,
+      };
+    } else {
       totals = {
         subtotal: totals.subtotal,
         tax: totals.tax,
+        tip: 0,
         total: 0,
         currency: totals.currency,
       };

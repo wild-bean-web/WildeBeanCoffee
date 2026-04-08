@@ -114,6 +114,7 @@ router.post("/create-checkout", async (req, res, next) => {
       cancelUrl,
       taxRate,
       currency = "USD",
+      tipAmountCents: tipAmountCentsRaw = 0,
     } = req.body;
 
     console.log("[PAYMENT ROUTE] Request data:", JSON.stringify({
@@ -144,6 +145,24 @@ router.post("/create-checkout", async (req, res, next) => {
       return errorResponse(res, 400, "Valid payment amount is required");
     }
 
+    const tipAmountCents = Math.max(0, Math.round(Number(tipAmountCentsRaw) || 0));
+    const tr = Number(taxRate) || 0;
+    const foodSubtotalCents = items.reduce((sum, item) => {
+      const unit = Math.round((Number(item.price) || 0) * 100);
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      return sum + unit * qty;
+    }, 0);
+    const taxCents = Math.round(foodSubtotalCents * tr);
+    const expectedCents = foodSubtotalCents + taxCents + tipAmountCents;
+    if (Math.abs(Math.round(amount) - expectedCents) > 1) {
+      return errorResponse(
+        res,
+        400,
+        "Payment amount does not match items, tax, and tip",
+        ["amount"],
+      );
+    }
+
     if (!successUrl || !failureUrl || !cancelUrl) {
       return errorResponse(res, 400, "Success, failure, and cancel URLs are required");
     }
@@ -158,6 +177,7 @@ router.post("/create-checkout", async (req, res, next) => {
       cancelUrl,
       taxRate: taxRate || 0,
       currency,
+      tipAmountCents,
     });
 
     console.log("[PAYMENT ROUTE] ✅ Checkout session created");
