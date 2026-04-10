@@ -120,7 +120,20 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "1mb",
+    verify: (req, res, buf) => {
+      const url = req.originalUrl || "";
+      if (
+        url === "/api/payments/webhook" ||
+        url.endsWith("/api/payments/webhook")
+      ) {
+        req.rawBody = buf;
+      }
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 

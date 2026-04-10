@@ -1,6 +1,15 @@
 import express from "express";
 import { processPayment, printReceipt, createHostedCheckoutSession } from "../services/clover.js";
 import { errorResponse } from "../utils/validation.js";
+import { optionalAuth } from "../middleware/auth.js";
+import { HostedCheckoutDraft } from "../models/index.js";
+import { validateOrderPayload } from "../services/onlineOrderPlacement.js";
+import { orderEventEmitter } from "../services/orderEvents.js";
+import {
+  verifyCloverWebhookSignature,
+  parseHostedCheckoutPaymentApproved,
+  fulfillOrderFromHostedCheckoutWebhook,
+} from "../services/cloverHostedWebhook.js";
 
 const router = express.Router();
 
@@ -100,7 +109,7 @@ router.post("/process", async (req, res, next) => {
  * Create a Hosted Checkout session
  * Body: { items, customer, amount, successUrl, failureUrl, cancelUrl, taxRate?, currency? }
  */
-router.post("/create-checkout", async (req, res, next) => {
+router.post("/create-checkout", optionalAuth, async (req, res, next) => {
   console.log("[PAYMENT ROUTE] ========== CREATE CHECKOUT SESSION ==========");
   console.log("[PAYMENT ROUTE] Request received at /api/payments/create-checkout");
   
@@ -115,6 +124,7 @@ router.post("/create-checkout", async (req, res, next) => {
       taxRate,
       currency = "USD",
       tipAmountCents: tipAmountCentsRaw = 0,
+      orderDraft,
     } = req.body;
 
     console.log("[PAYMENT ROUTE] Request data:", JSON.stringify({
@@ -167,6 +177,21 @@ router.post("/create-checkout", async (req, res, next) => {
       return errorResponse(res, 400, "Success, failure, and cancel URLs are required");
     }
 
+    if (!orderDraft || typeof orderDraft !== "object") {
+      return errorResponse(res, 400, "orderDraft is required", ["orderDraft"]);
+    }
+
+    const draft = { ...orderDraft };
+    delete draft.checkoutId;
+    const draftErrors = validateOrderPayload({
+      ...draft,
+      paymentStatus: "paid",
+      paymentRef: "hosted-checkout-pending",
+    });
+    if (draftErrors.length) {
+      return errorResponse(res, 400, "Invalid order draft", draftErrors);
+    }
+
     // Create checkout session
     const checkoutSession = await createHostedCheckoutSession({
       items,
@@ -182,6 +207,27 @@ router.post("/create-checkout", async (req, res, next) => {
 
     console.log("[PAYMENT ROUTE] ✅ Checkout session created");
     console.log("[PAYMENT ROUTE] Checkout URL:", checkoutSession.checkoutUrl);
+    try {
+      await HostedCheckoutDraft.findOneAndUpdate(
+        { checkoutSessionId: checkoutSession.checkoutId },
+        {
+          $set: {
+            orderDraft: draft,
+            userId: req.user?._id || null,
+            amountCents: Math.round(amount),
+            status: "pending",
+          },
+        },
+        { upsert: true },
+      );
+    } catch (draftErr) {
+      console.error("[PAYMENT ROUTE] Failed to persist checkout draft:", draftErr);
+      return errorResponse(
+        res,
+        500,
+        "Could not save checkout; try again or contact support.",
+      );
+    }
 
     res.json({ data: checkoutSession });
   } catch (err) {
@@ -243,50 +289,64 @@ router.post("/print-receipt", async (req, res, next) => {
 
 /**
  * POST /api/payments/webhook
- * Handle Clover webhook notifications for payment events
- * Body: Webhook payload from Clover
+ * Clover Hosted Checkout: PAYMENT + APPROVED → create order from HostedCheckoutDraft (idempotent).
+ * Requires raw body on req.rawBody (see server index express.json verify).
  */
-router.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+router.post("/webhook", async (req, res) => {
   console.log("[PAYMENT ROUTE] ========== WEBHOOK RECEIVED ==========");
-  console.log("[PAYMENT ROUTE] Webhook headers:", JSON.stringify(req.headers, null, 2));
-  
+
   try {
-    const webhookPayload = JSON.parse(req.body.toString());
-    console.log("[PAYMENT ROUTE] Webhook payload:", JSON.stringify(webhookPayload, null, 2));
+    const rawString =
+      req.rawBody instanceof Buffer
+        ? req.rawBody.toString("utf8")
+        : typeof req.body === "object" && req.body !== null
+          ? JSON.stringify(req.body)
+          : String(req.body || "");
 
-    // TODO: Verify webhook signature if CLOVER_WEBHOOK_SECRET is configured
-    // const signature = req.headers['clover-signature'];
-    // if (signature && CLOVER_WEBHOOK_SECRET) {
-    //   // Verify signature
-    // }
+    const secret = process.env.CLOVER_WEBHOOK_SECRET;
+    const sigHeader =
+      req.headers["clover-signature"] ||
+      req.headers["Clover-Signature"] ||
+      req.headers["x-clover-signature"];
 
-    // Handle different webhook event types
-    const eventType = webhookPayload.type || webhookPayload.eventType;
-    console.log("[PAYMENT ROUTE] Event type:", eventType);
-
-    switch (eventType) {
-      case "payment.succeeded":
-      case "charge.succeeded":
-        console.log("[PAYMENT ROUTE] Payment succeeded webhook");
-        // Payment was successful - order should already be created via redirect
-        // This is just for confirmation/logging
-        break;
-      
-      case "payment.failed":
-      case "charge.failed":
-        console.log("[PAYMENT ROUTE] Payment failed webhook");
-        // Payment failed - log for review
-        break;
-      
-      default:
-        console.log("[PAYMENT ROUTE] Unknown webhook event type:", eventType);
+    if (
+      secret &&
+      !verifyCloverWebhookSignature(rawString, sigHeader, secret)
+    ) {
+      console.error("[PAYMENT ROUTE] Webhook signature verification failed");
+      return res.status(401).json({ error: "Invalid webhook signature" });
     }
 
-    // Always return 200 to acknowledge receipt
+    let webhookPayload = req.body;
+    if (!webhookPayload || typeof webhookPayload !== "object") {
+      try {
+        webhookPayload = JSON.parse(rawString);
+      } catch {
+        return res.status(400).json({ error: "Invalid JSON" });
+      }
+    }
+
+    console.log(
+      "[PAYMENT ROUTE] Webhook payload:",
+      JSON.stringify(webhookPayload, null, 2),
+    );
+
+    const approved = parseHostedCheckoutPaymentApproved(webhookPayload);
+    if (approved) {
+      const result = await fulfillOrderFromHostedCheckoutWebhook(
+        approved.checkoutSessionId,
+        { orderEventEmitter },
+      );
+      console.log(
+        "[PAYMENT ROUTE] Hosted checkout fulfill:",
+        approved.checkoutSessionId,
+        result,
+      );
+    }
+
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("[PAYMENT ROUTE] Webhook error:", err);
-    // Still return 200 to prevent Clover from retrying
     res.status(200).json({ received: true, error: err.message });
   }
 });

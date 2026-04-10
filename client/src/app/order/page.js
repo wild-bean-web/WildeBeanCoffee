@@ -878,22 +878,6 @@ function OrderPageContent() {
       const failureUrl = `${baseUrl}/order/failure`;
       const cancelUrl = `${baseUrl}/order?canceled=true`;
 
-      // Create checkout session
-      const tipAmountCents = Math.round(tipAmount * 100);
-      const checkoutSession = await paymentsApi.createCheckout({
-        items: orderItems,
-        customer: customerData,
-        amount: Math.round(total * 100), // Convert to cents
-        tipAmountCents,
-        successUrl,
-        failureUrl,
-        cancelUrl,
-        taxRate,
-        currency: "USD",
-      });
-
-      // Store order data in sessionStorage for after payment
-      // Convert customer data to format expected by Order model (customer.name required)
       const orderCustomerData = {
         name: [customerData.firstName, customerData.lastName]
           .map((s) => (s || "").trim())
@@ -903,18 +887,36 @@ function OrderPageContent() {
         email: customerData.email || undefined,
       };
 
-      // Include modifiers so kitchen/receipt have full customization (e.g. Build Your Own Bowl)
-      const orderData = {
+      const orderDraft = {
         customer: orderCustomerData,
         items: mapCartToOrderItems(checkoutCart),
         taxRate,
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
-        checkoutId: checkoutSession.checkoutId,
         ...(tipAmount > 0 ? { tip: tipAmount } : {}),
         ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
           ? { beanStampsRedeemCartKey }
           : {}),
+      };
+
+      // Create checkout session (server persists orderDraft for webhook / recovery)
+      const tipAmountCents = Math.round(tipAmount * 100);
+      const checkoutSession = await paymentsApi.createCheckout({
+        items: orderItems,
+        customer: customerData,
+        amount: Math.round(total * 100), // Convert to cents
+        tipAmountCents,
+        orderDraft,
+        successUrl,
+        failureUrl,
+        cancelUrl,
+        taxRate,
+        currency: "USD",
+      });
+
+      const orderData = {
+        ...orderDraft,
+        checkoutId: checkoutSession.checkoutId,
       };
       sessionStorage.setItem("pendingOrder", JSON.stringify(orderData));
 
