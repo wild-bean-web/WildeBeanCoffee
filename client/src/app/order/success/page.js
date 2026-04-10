@@ -17,72 +17,96 @@ function OrderSuccessContent() {
   const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
+    const completeOrder = async () => {
+      const pendingRaw = sessionStorage.getItem("pendingOrder");
 
-    // Get pending order data from sessionStorage
-    const pendingOrderData = sessionStorage.getItem("pendingOrder");
-    
-    if (!pendingOrderData) {
-      setError("No order data found. Your payment was successful, but we couldn't create your order. Please contact support.");
-      setLoading(false);
-      return;
-    }
-
-    const orderData = JSON.parse(pendingOrderData);
-
-    const leadErr = getPickupLeadTimeErrorFromIso(orderData.pickupTime);
-    if (leadErr) {
-      setError(leadErr);
-      setLoading(false);
-      return;
-    }
-
-    // Create order with payment status
-    const createOrder = async () => {
-      try {
-        const orderPayload = {
-          ...orderData,
-          paymentStatus: "paid",
-          paymentRef: checkoutId || "hosted-checkout",
-        };
-        if (!BEAN_STAMPS_ENABLED) {
-          delete orderPayload.beanStampsRedeemCartKey;
-        }
-
-        const result = await ordersApi.create(orderPayload);
-        setOrderId(result._id);
-
-        // Clear sessionStorage
-        sessionStorage.removeItem("pendingOrder");
-
-        // Attempt to print receipt (non-blocking)
+      if (pendingRaw) {
+        let orderData;
         try {
-          await fetch("/api/payments/print-receipt", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              orderId: result._id,
-            }),
-          });
-        } catch (printError) {
-          console.error("Receipt printing failed:", printError);
+          orderData = JSON.parse(pendingRaw);
+        } catch {
+          setError("Saved order data was invalid. Try recover below or contact support.");
+          setLoading(false);
+          return;
         }
 
-        // Clear cart
-        localStorage.removeItem("cart");
-      } catch (err) {
-        console.error("Error creating order:", err);
-        setError(
-          err.message ||
-            "Payment was successful, but we couldn't create your order. Please contact support with your payment reference."
-        );
-      } finally {
-        setLoading(false);
+        const leadErr = getPickupLeadTimeErrorFromIso(orderData.pickupTime);
+        if (leadErr) {
+          setError(leadErr);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const { checkoutId: _storedCheckout, ...rest } = orderData;
+          const orderPayload = {
+            ...rest,
+            paymentStatus: "paid",
+            paymentRef: checkoutId || "hosted-checkout",
+          };
+          if (!BEAN_STAMPS_ENABLED) {
+            delete orderPayload.beanStampsRedeemCartKey;
+          }
+
+          const result = await ordersApi.create(orderPayload);
+          setOrderId(result._id);
+          sessionStorage.removeItem("pendingOrder");
+
+          try {
+            await fetch("/api/payments/print-receipt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: result._id }),
+            });
+          } catch (printError) {
+            console.error("Receipt printing failed:", printError);
+          }
+          localStorage.removeItem("cart");
+        } catch (err) {
+          console.error("Error creating order:", err);
+          setError(
+            err.message ||
+              "Payment was successful, but we couldn't create your order. Please contact support with your payment reference.",
+          );
+        } finally {
+          setLoading(false);
+        }
+        return;
       }
+
+      if (checkoutId) {
+        try {
+          const result = await ordersApi.recoverHostedCheckout(checkoutId);
+          setOrderId(result._id);
+          try {
+            await fetch("/api/payments/print-receipt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: result._id }),
+            });
+          } catch (printError) {
+            console.error("Receipt printing failed:", printError);
+          }
+          localStorage.removeItem("cart");
+        } catch (err) {
+          console.error("Recover hosted checkout failed:", err);
+          setError(
+            err.message ||
+              "Your payment went through, but we could not load your order details in this browser. Your order may still have been recorded — check with the shop or contact support.",
+          );
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      setError(
+        "No order data found in this browser. If you paid, your order may still be processing — contact support with your payment confirmation.",
+      );
+      setLoading(false);
     };
 
-    createOrder();
+    completeOrder();
   }, [checkoutId]);
 
   if (loading) {

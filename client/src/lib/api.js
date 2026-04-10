@@ -193,6 +193,17 @@ export const ordersApi = {
   },
 
   /**
+   * Recover order after Hosted Checkout if sessionStorage was lost (same checkoutId from URL).
+   */
+  recoverHostedCheckout: async (checkoutId) => {
+    const result = await fetchJson("/api/orders/recover-hosted-checkout", {
+      method: "POST",
+      body: JSON.stringify({ checkoutId }),
+    });
+    return result.data;
+  },
+
+  /**
    * Get an order by ID
    * @param {string} id - Order ID
    * @returns {Promise<Object>} Order object
