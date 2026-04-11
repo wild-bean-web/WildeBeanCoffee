@@ -18,6 +18,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
+## Digital menu (in-store TVs)
+
+Café display routes: **`/digitalmenu/coffee`** and **`/digitalmenu/smoothies`** (full-screen SVGs from `public/images/DigitalMenusSVG/`). See the **root** [`README.md`](../README.md) for production URLs, asset filenames, fullscreen/kiosk notes, and source file paths.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
