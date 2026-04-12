@@ -1,6 +1,38 @@
 import crypto from "crypto";
 import { User, HostedCheckoutDraft } from "../models/index.js";
 import { placeOnlineOrder } from "./onlineOrderPlacement.js";
+import { notifyOrderOpsAlert } from "./orderOpsAlerts.js";
+
+/**
+ * Persist a placement failure so kitchen/admin queries can find stuck checkouts.
+ * @param {string} checkoutSessionId
+ * @param {string} reason
+ * @param {object} [detail]
+ */
+export async function recordHostedCheckoutPlacementFailure(
+  checkoutSessionId,
+  reason,
+  detail = null,
+) {
+  const parts = [reason];
+  if (detail != null) {
+    try {
+      parts.push(JSON.stringify(detail).slice(0, 2000));
+    } catch {
+      parts.push(String(detail));
+    }
+  }
+  const msg = parts.join(" — ").slice(0, 4000);
+  await HostedCheckoutDraft.findOneAndUpdate(
+    { checkoutSessionId },
+    {
+      $set: {
+        lastPlacementError: msg,
+        lastPlacementErrorAt: new Date(),
+      },
+    },
+  ).catch(() => {});
+}
 
 /**
  * Verify Clover Hosted Checkout webhook `Clover-Signature` header.
@@ -67,6 +99,10 @@ export async function fulfillOrderFromHostedCheckoutWebhook(
     checkoutSessionId,
   }).lean();
   if (!existing?.orderDraft || typeof existing.orderDraft !== "object") {
+    /* No draft row to attach lastPlacementError; ops alert is the paper trail. */
+    await notifyOrderOpsAlert(
+      `Hosted checkout APPROVED but no draft for session ${checkoutSessionId}. Customer may be paid with no order.`,
+    );
     return { ok: false, reason: "no_draft" };
   }
 
@@ -93,6 +129,14 @@ export async function fulfillOrderFromHostedCheckoutWebhook(
       "[CLOVER WEBHOOK] placeOnlineOrder failed:",
       checkoutSessionId,
       result,
+    );
+    await recordHostedCheckoutPlacementFailure(
+      checkoutSessionId,
+      "placement_failed",
+      result,
+    );
+    await notifyOrderOpsAlert(
+      `Hosted checkout placement FAILED session=${checkoutSessionId} detail=${JSON.stringify(result).slice(0, 500)}`,
     );
     return { ok: false, reason: "placement_failed", detail: result };
   }

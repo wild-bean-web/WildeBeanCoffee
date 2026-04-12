@@ -3,6 +3,8 @@
  * Handles all API communication with consistent error handling
  */
 
+import { localDateRangeToUtcIsoBounds } from "@/lib/kitchenDateRange";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 /**
@@ -204,6 +206,18 @@ export const ordersApi = {
   },
 
   /**
+   * Kitchen admin: create paid order from hosted-checkout draft, skipping pickup-time and
+   * online-only menu checks (stale pickup / recovery failures).
+   */
+  forceResolveHostedCheckout: async (checkoutId) => {
+    const result = await fetchJson("/api/orders/kitchen/force-resolve-hosted-checkout", {
+      method: "POST",
+      body: JSON.stringify({ checkoutId }),
+    });
+    return result.data;
+  },
+
+  /**
    * Get an order by ID
    * @param {string} id - Order ID
    * @returns {Promise<Object>} Order object
@@ -256,14 +270,34 @@ export const ordersApi = {
     if (all) {
       params.append("all", "true");
     } else if (startDate && endDate) {
+      const { rangeStart, rangeEnd } = localDateRangeToUtcIsoBounds(
+        startDate,
+        endDate,
+      );
+      params.append("rangeStart", rangeStart);
+      params.append("rangeEnd", rangeEnd);
       params.append("startDate", startDate);
       params.append("endDate", endDate);
     } else if (startDate) {
+      const { rangeStart, rangeEnd } = localDateRangeToUtcIsoBounds(
+        startDate,
+        startDate,
+      );
+      params.append("rangeStart", rangeStart);
+      params.append("rangeEnd", rangeEnd);
       params.append("date", startDate);
     }
     const queryString = params.toString();
     const url = `/api/orders/kitchen/previous${queryString ? `?${queryString}` : ""}`;
     const result = await fetchJson(url);
+    return result.data || [];
+  },
+
+  /**
+   * Kitchen dashboard: paid checkout drafts needing attention (with orderDraft for tickets).
+   */
+  getKitchenCheckoutAlerts: async () => {
+    const result = await fetchJson("/api/orders/kitchen/checkout-alerts");
     return result.data || [];
   },
 };

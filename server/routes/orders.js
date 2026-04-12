@@ -12,6 +12,9 @@ import { requireKitchenAdmin } from "../middleware/kitchenAdmin.js";
 import { revokeLoyaltyStampForOrder } from "../services/loyalty.js";
 import { placeOnlineOrder } from "../services/onlineOrderPlacement.js";
 import { orderEventEmitter } from "../services/orderEvents.js";
+import { recordHostedCheckoutPlacementFailure } from "../services/cloverHostedWebhook.js";
+import { notifyOrderOpsAlert } from "../services/orderOpsAlerts.js";
+import { resolveKitchenDateRangeFromQuery } from "../utils/kitchenQueryDateRange.js";
 
 const router = express.Router();
 
@@ -100,6 +103,10 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
 
     const result = await placeOnlineOrder(body, user, { orderEventEmitter });
     if (!result.ok) {
+      await recordHostedCheckoutPlacementFailure(checkoutId, "recover_failed", result);
+      await notifyOrderOpsAlert(
+        `recover-hosted-checkout failed checkoutId=${checkoutId} ${JSON.stringify(result).slice(0, 600)}`,
+      );
       if (result.errors?.length) {
         return errorResponse(res, result.status, "Validation failed", result.errors);
       }
@@ -120,6 +127,188 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
     next(err);
   }
 });
+
+/**
+ * GET /api/orders/kitchen/checkout-alerts
+ * Paid checkout drafts that need kitchen attention: placement errors, or recent pending
+ * with no Order yet (possible paid-but-not-synced). Includes orderDraft for display.
+ */
+router.get(
+  "/kitchen/checkout-alerts",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const pendingWindowMs = 48 * 60 * 60 * 1000;
+      const pendingSince = new Date(Date.now() - pendingWindowMs);
+
+      const withErrors = await HostedCheckoutDraft.find({
+        lastPlacementError: { $nin: [null, ""] },
+      })
+        .select(
+          "checkoutSessionId orderDraft amountCents status lastPlacementError lastPlacementErrorAt createdAt",
+        )
+        .sort({ lastPlacementErrorAt: -1 })
+        .limit(30)
+        .lean();
+
+      const pendingRecent = await HostedCheckoutDraft.find({
+        status: "pending",
+        createdAt: { $gte: pendingSince },
+      })
+        .select(
+          "checkoutSessionId orderDraft amountCents status createdAt lastPlacementError",
+        )
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+
+      const pendingIds = pendingRecent.map((d) => d.checkoutSessionId);
+      let haveOrder = new Set();
+      if (pendingIds.length) {
+        const ord = await Order.find({ paymentRef: { $in: pendingIds } })
+          .select("paymentRef")
+          .lean();
+        haveOrder = new Set(ord.map((o) => o.paymentRef));
+      }
+
+      const pendingNoOrder = pendingRecent.filter(
+        (d) =>
+          !haveOrder.has(d.checkoutSessionId) &&
+          (!d.lastPlacementError || String(d.lastPlacementError).trim() === ""),
+      );
+
+      const bySession = new Map();
+      for (const d of withErrors) {
+        bySession.set(d.checkoutSessionId, {
+          checkoutSessionId: d.checkoutSessionId,
+          orderDraft: d.orderDraft,
+          amountCents: d.amountCents,
+          createdAt: d.createdAt,
+          lastPlacementError: d.lastPlacementError,
+          lastPlacementErrorAt: d.lastPlacementErrorAt,
+          alertKind: "placement_failed",
+        });
+      }
+      for (const d of pendingNoOrder) {
+        if (!bySession.has(d.checkoutSessionId)) {
+          bySession.set(d.checkoutSessionId, {
+            checkoutSessionId: d.checkoutSessionId,
+            orderDraft: d.orderDraft,
+            amountCents: d.amountCents,
+            createdAt: d.createdAt,
+            lastPlacementError: null,
+            lastPlacementErrorAt: null,
+            alertKind: "pending_no_order",
+          });
+        }
+      }
+
+      const alerts = Array.from(bySession.values()).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      );
+
+      res.json({ data: alerts });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * POST /api/orders/kitchen/force-resolve-hosted-checkout
+ * Kitchen-only: create the paid order from the saved hosted-checkout draft while skipping
+ * pickup lead / store-hours and online-only menu checks (e.g. pickup slot long in the past).
+ */
+router.post(
+  "/kitchen/force-resolve-hosted-checkout",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const checkoutId = String(req.body?.checkoutId || "").trim();
+      if (!checkoutId) {
+        return errorResponse(res, 400, "checkoutId is required", ["checkoutId"]);
+      }
+
+      const existingOrder = await Order.findOne({ paymentRef: checkoutId }).lean();
+      if (existingOrder) {
+        await HostedCheckoutDraft.findOneAndUpdate(
+          { checkoutSessionId: checkoutId },
+          {
+            $set: {
+              status: "fulfilled",
+              fulfilledOrderId: existingOrder._id,
+            },
+            $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1 },
+          },
+        ).catch(() => {});
+        return res.status(200).json({
+          data: existingOrder,
+          idempotent: true,
+          source: "existing_order",
+        });
+      }
+
+      const draftDoc = await HostedCheckoutDraft.findOne({
+        checkoutSessionId: checkoutId,
+      }).lean();
+      if (!draftDoc?.orderDraft) {
+        return errorResponse(
+          res,
+          404,
+          "No saved checkout found for this session.",
+          ["checkoutId"],
+        );
+      }
+
+      let user = req.user || null;
+      if (draftDoc.userId) {
+        const draftUser = await User.findById(draftDoc.userId).select("-password");
+        if (draftUser) user = draftUser;
+      }
+
+      const body = {
+        ...draftDoc.orderDraft,
+        paymentStatus: "paid",
+        paymentRef: checkoutId,
+      };
+
+      const result = await placeOnlineOrder(body, user, {
+        orderEventEmitter,
+        kitchenBypassHostedCheckoutBlockers: true,
+      });
+
+      if (!result.ok) {
+        await recordHostedCheckoutPlacementFailure(
+          checkoutId,
+          "kitchen_force_resolve_failed",
+          result,
+        );
+        await notifyOrderOpsAlert(
+          `kitchen force-resolve-hosted-checkout failed checkoutId=${checkoutId} ${JSON.stringify(result).slice(0, 600)}`,
+        );
+        if (result.errors?.length) {
+          return errorResponse(res, result.status, "Validation failed", result.errors);
+        }
+        return errorResponse(
+          res,
+          result.status,
+          result.message || "Could not complete order",
+          result.message ? [result.message] : undefined,
+        );
+      }
+
+      res.status(result.idempotent ? 200 : 201).json({
+        data: result.order,
+        idempotent: Boolean(result.idempotent),
+        source: "kitchen_force_resolve_hosted_checkout",
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // GET /api/orders/kitchen
 // Get orders for kitchen dashboard (paid orders that are not completed or cancelled)
@@ -146,50 +335,27 @@ router.get(
 
 // GET /api/orders/kitchen/previous
 // Get completed (picked up) orders for previous orders page. Requires admin auth.
-// Supports date range: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-// Legacy single date: ?date=YYYY-MM-DD
-// Show all: ?all=true
+// Prefer ?rangeStart=&rangeEnd= ISO from the app. Else ?startDate=&endDate=, ?date=, ?all=true
 router.get(
   "/kitchen/previous",
   authenticate,
   requireKitchenAdmin,
   async (req, res, next) => {
     try {
-      const { date, startDate, endDate, all } = req.query;
+      const resolved = resolveKitchenDateRangeFromQuery(req.query);
 
       const query = {
         paymentStatus: "paid",
         status: "completed",
       };
 
-      if (all === "true") {
+      if (resolved.useAll) {
         // No date filtering
-      } else if (startDate && endDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        query.$or = [
-          { updatedAt: { $gte: start, $lte: end } },
-          { createdAt: { $gte: start, $lte: end } },
-        ];
-      } else if (date) {
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-        query.$or = [
-          { updatedAt: { $gte: startOfDay, $lte: endOfDay } },
-          { createdAt: { $gte: startOfDay, $lte: endOfDay } },
-        ];
       } else {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999);
+        const { rangeStart, rangeEnd } = resolved;
         query.$or = [
-          { updatedAt: { $gte: today, $lte: endOfToday } },
-          { createdAt: { $gte: today, $lte: endOfToday } },
+          { updatedAt: { $gte: rangeStart, $lte: rangeEnd } },
+          { createdAt: { $gte: rangeStart, $lte: rangeEnd } },
         ];
       }
 

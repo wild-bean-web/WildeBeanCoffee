@@ -216,11 +216,15 @@ async function validateMenuItemsOnlineOrderable(items) {
  * Create a paid (or admin-comped) online order. Used by POST /api/orders, Clover webhook, and recovery flows.
  * @param {object} body - Same shape as POST /api/orders
  * @param {object|null} user - Authenticated user document (optional for guests)
- * @param {{ orderEventEmitter?: import("events").EventEmitter, skipPrint?: boolean }} options
+ * @param {{ orderEventEmitter?: import("events").EventEmitter, skipPrint?: boolean, kitchenBypassHostedCheckoutBlockers?: boolean }} options
  * @returns {Promise<{ ok: true, order: object, idempotent?: boolean } | { ok: false, status: number, errors?: string[], message?: string }>}
  */
 export async function placeOnlineOrder(body, user, options = {}) {
-  const { orderEventEmitter = null, skipPrint = false } = options;
+  const {
+    orderEventEmitter = null,
+    skipPrint = false,
+    kitchenBypassHostedCheckoutBlockers = false,
+  } = options;
 
   const errors = validateOrderPayload(body);
   if (errors.length) {
@@ -258,6 +262,7 @@ export async function placeOnlineOrder(body, user, options = {}) {
             status: "fulfilled",
             fulfilledOrderId: existing._id,
           },
+          $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1 },
         },
       ).catch(() => {});
       return { ok: true, order: existing, idempotent: true };
@@ -280,14 +285,16 @@ export async function placeOnlineOrder(body, user, options = {}) {
     };
   }
 
-  const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
-  if (pickupLeadError) {
-    return { ok: false, status: 400, message: pickupLeadError };
-  }
+  if (!kitchenBypassHostedCheckoutBlockers) {
+    const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
+    if (pickupLeadError) {
+      return { ok: false, status: 400, message: pickupLeadError };
+    }
 
-  const pickupTimeError = await validatePickupTimeWithinHours(pickupTime);
-  if (pickupTimeError) {
-    return { ok: false, status: 400, message: pickupTimeError };
+    const pickupTimeError = await validatePickupTimeWithinHours(pickupTime);
+    if (pickupTimeError) {
+      return { ok: false, status: 400, message: pickupTimeError };
+    }
   }
 
   const isAdminOrder = paymentRefVal === "ADMIN_DISCOUNT";
@@ -298,7 +305,7 @@ export async function placeOnlineOrder(body, user, options = {}) {
       message: "Admin comped orders are disabled in this environment.",
     };
   }
-  if (!isAdminOrder) {
+  if (!isAdminOrder && !kitchenBypassHostedCheckoutBlockers) {
     const inStoreOnlyError = await validateMenuItemsOnlineOrderable(items);
     if (inStoreOnlyError) {
       return { ok: false, status: 400, message: inStoreOnlyError };
@@ -463,6 +470,7 @@ export async function placeOnlineOrder(body, user, options = {}) {
           status: "fulfilled",
           fulfilledOrderId: order._id,
         },
+        $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1 },
       },
     ).catch(() => {});
   }
