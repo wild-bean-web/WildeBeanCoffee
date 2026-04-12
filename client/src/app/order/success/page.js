@@ -1,20 +1,35 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
 import { getPickupLeadTimeErrorFromIso } from "@/lib/pickupValidation";
 import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function withRetries(fn, { tries = 3, baseMs = 700 } = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await sleep(baseMs * (i + 1));
+    }
+  }
+  throw lastErr;
+}
+
 function OrderSuccessContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutId = searchParams.get("checkoutId");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderId, setOrderId] = useState(null);
+  const [sessionRefForDisplay, setSessionRefForDisplay] = useState(null);
 
   useEffect(() => {
     const completeOrder = async () => {
@@ -37,18 +52,44 @@ function OrderSuccessContent() {
           return;
         }
 
+        const urlCheckout = (checkoutId || "").trim();
+        const storedCheckout =
+          orderData.checkoutId != null
+            ? String(orderData.checkoutId).trim()
+            : "";
+        const resolvedCheckoutId = urlCheckout || storedCheckout;
+
+        if (!resolvedCheckoutId) {
+          setError(
+            "Could not determine your checkout session (missing from this page and saved data). If you were charged, contact the shop with your email and payment time.",
+          );
+          setLoading(false);
+          return;
+        }
+
+        setSessionRefForDisplay(resolvedCheckoutId);
+
         try {
-          const { checkoutId: _storedCheckout, ...rest } = orderData;
+          const { checkoutId: _omit, ...rest } = orderData;
           const orderPayload = {
             ...rest,
             paymentStatus: "paid",
-            paymentRef: checkoutId || "hosted-checkout",
+            paymentRef: resolvedCheckoutId,
           };
           if (!BEAN_STAMPS_ENABLED) {
             delete orderPayload.beanStampsRedeemCartKey;
           }
 
-          const result = await ordersApi.create(orderPayload);
+          let result;
+          try {
+            result = await withRetries(() => ordersApi.create(orderPayload));
+          } catch (createErr) {
+            console.error("Error creating order (will try recover):", createErr);
+            result = await withRetries(() =>
+              ordersApi.recoverHostedCheckout(resolvedCheckoutId),
+            );
+          }
+
           setOrderId(result._id);
           sessionStorage.removeItem("pendingOrder");
 
@@ -63,10 +104,9 @@ function OrderSuccessContent() {
           }
           localStorage.removeItem("cart");
         } catch (err) {
-          console.error("Error creating order:", err);
+          console.error("Error creating / recovering order:", err);
           setError(
-            err.message ||
-              "Payment was successful, but we couldn't create your order. Please contact support with your payment reference.",
+            `${err.message || "Payment may have succeeded, but we could not finalize your order."} Checkout session: ${resolvedCheckoutId}. Please contact the shop with this reference.`,
           );
         } finally {
           setLoading(false);
@@ -75,8 +115,12 @@ function OrderSuccessContent() {
       }
 
       if (checkoutId) {
+        const ref = checkoutId.trim();
+        setSessionRefForDisplay(ref);
         try {
-          const result = await ordersApi.recoverHostedCheckout(checkoutId);
+          const result = await withRetries(() =>
+            ordersApi.recoverHostedCheckout(ref),
+          );
           setOrderId(result._id);
           try {
             await fetch("/api/payments/print-receipt", {
@@ -92,7 +136,7 @@ function OrderSuccessContent() {
           console.error("Recover hosted checkout failed:", err);
           setError(
             err.message ||
-              "Your payment went through, but we could not load your order details in this browser. Your order may still have been recorded — check with the shop or contact support.",
+              "Your payment may have gone through, but we could not load your order in this browser. Check with the shop or contact support.",
           );
         } finally {
           setLoading(false);
@@ -149,9 +193,9 @@ function OrderSuccessContent() {
                 Order Processing Error
               </h1>
               <p className="text-gray-600">{error}</p>
-              {checkoutId && (
+              {(sessionRefForDisplay || checkoutId) && (
                 <p className="mt-4 text-sm text-gray-500">
-                  Payment Reference: {checkoutId}
+                  Payment session: {sessionRefForDisplay || checkoutId}
                 </p>
               )}
             </div>
@@ -205,7 +249,7 @@ function OrderSuccessContent() {
               Order Placed Successfully!
             </h1>
             <p className="mb-4 text-gray-600">
-              Thank you for your order. We'll have it ready for pickup soon.
+              Thank you for your order. We&apos;ll have it ready for pickup soon.
             </p>
             {orderId && (
               <p className="text-sm text-gray-500">
@@ -249,4 +293,3 @@ export default function OrderSuccessPage() {
     </Suspense>
   );
 }
-

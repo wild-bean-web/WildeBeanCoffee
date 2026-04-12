@@ -32,6 +32,9 @@ const HostedCheckoutDraftSchema = new mongoose.Schema(
       ref: "Order",
       default: null,
     },
+    /** Set when order placement fails after payment (webhook or recover); cleared on success. */
+    lastPlacementError: { type: String, default: null },
+    lastPlacementErrorAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
