@@ -141,6 +141,7 @@ export async function fulfillOrderFromHostedCheckoutWebhook(
   const result = await placeOnlineOrder(body, user, {
     orderEventEmitter,
     skipPrint: false,
+    hostedCheckoutPaidPlacementBypassPickupScheduling: true,
   });
 
   if (!result.ok) {

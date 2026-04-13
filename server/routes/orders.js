@@ -124,7 +124,10 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
       paymentRef: checkoutId,
     };
 
-    const result = await placeOnlineOrder(body, user, { orderEventEmitter });
+    const result = await placeOnlineOrder(body, user, {
+      orderEventEmitter,
+      hostedCheckoutPaidPlacementBypassPickupScheduling: true,
+    });
     if (!result.ok) {
       await recordHostedCheckoutPlacementFailure(checkoutId, "recover_failed", result);
       await notifyOrderOpsAlert(

@@ -216,7 +216,7 @@ async function validateMenuItemsOnlineOrderable(items) {
  * Create a paid (or admin-comped) online order. Used by POST /api/orders, Clover webhook, and recovery flows.
  * @param {object} body - Same shape as POST /api/orders
  * @param {object|null} user - Authenticated user document (optional for guests)
- * @param {{ orderEventEmitter?: import("events").EventEmitter, skipPrint?: boolean, kitchenBypassHostedCheckoutBlockers?: boolean }} options
+ * @param {{ orderEventEmitter?: import("events").EventEmitter, skipPrint?: boolean, kitchenBypassHostedCheckoutBlockers?: boolean, hostedCheckoutPaidPlacementBypassPickupScheduling?: boolean }} options
  * @returns {Promise<{ ok: true, order: object, idempotent?: boolean } | { ok: false, status: number, errors?: string[], message?: string }>}
  */
 export async function placeOnlineOrder(body, user, options = {}) {
@@ -224,7 +224,12 @@ export async function placeOnlineOrder(body, user, options = {}) {
     orderEventEmitter = null,
     skipPrint = false,
     kitchenBypassHostedCheckoutBlockers = false,
+    hostedCheckoutPaidPlacementBypassPickupScheduling = false,
   } = options;
+
+  const skipPickupScheduling =
+    kitchenBypassHostedCheckoutBlockers ||
+    Boolean(hostedCheckoutPaidPlacementBypassPickupScheduling);
 
   const errors = validateOrderPayload(body);
   if (errors.length) {
@@ -285,7 +290,7 @@ export async function placeOnlineOrder(body, user, options = {}) {
     };
   }
 
-  if (!kitchenBypassHostedCheckoutBlockers) {
+  if (!skipPickupScheduling) {
     const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
     if (pickupLeadError) {
       return { ok: false, status: 400, message: pickupLeadError };

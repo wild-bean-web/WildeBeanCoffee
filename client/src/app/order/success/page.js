@@ -5,8 +5,9 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
-import { getPickupLeadTimeErrorFromIso } from "@/lib/pickupValidation";
-import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
+
+/** Clover may leave this literal in successUrl if redirect template is not substituted. */
+const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -45,14 +46,12 @@ function OrderSuccessContent() {
           return;
         }
 
-        const leadErr = getPickupLeadTimeErrorFromIso(orderData.pickupTime);
-        if (leadErr) {
-          setError(leadErr);
-          setLoading(false);
-          return;
-        }
-
-        const urlCheckout = (checkoutId || "").trim();
+        const urlCheckoutRaw = (checkoutId || "").trim();
+        const urlCheckout =
+          urlCheckoutRaw &&
+          urlCheckoutRaw !== UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER
+            ? urlCheckoutRaw
+            : "";
         const storedCheckout =
           orderData.checkoutId != null
             ? String(orderData.checkoutId).trim()
@@ -70,25 +69,11 @@ function OrderSuccessContent() {
         setSessionRefForDisplay(resolvedCheckoutId);
 
         try {
-          const { checkoutId: _omit, ...rest } = orderData;
-          const orderPayload = {
-            ...rest,
-            paymentStatus: "paid",
-            paymentRef: resolvedCheckoutId,
-          };
-          if (!BEAN_STAMPS_ENABLED) {
-            delete orderPayload.beanStampsRedeemCartKey;
-          }
-
-          let result;
-          try {
-            result = await withRetries(() => ordersApi.create(orderPayload));
-          } catch (createErr) {
-            console.error("Error creating order (will try recover):", createErr);
-            result = await withRetries(() =>
-              ordersApi.recoverHostedCheckout(resolvedCheckoutId),
-            );
-          }
+          // Use server draft + recover only: avoids rolling "5 min from now" pickup checks
+          // against wall-clock after the customer spends time on Clover, and matches webhook data.
+          const result = await withRetries(() =>
+            ordersApi.recoverHostedCheckout(resolvedCheckoutId),
+          );
 
           setOrderId(result._id);
           sessionStorage.removeItem("pendingOrder");
