@@ -22,6 +22,10 @@ const HostedCheckoutDraftSchema = new mongoose.Schema(
       default: null,
     },
     amountCents: { type: Number, min: 0 },
+    /** Set only after Clover webhook confirms PAYMENT+APPROVED for this checkout session. */
+    paymentApprovedAt: { type: Date, default: null },
+    /** Clover payment id from approved webhook event, when available. */
+    paymentId: { type: String, default: null, trim: true },
     status: {
       type: String,
       enum: ["pending", "fulfilled"],
