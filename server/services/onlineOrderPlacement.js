@@ -105,7 +105,7 @@ export function validateOrderPayload(body) {
 
 const STORE_TIMEZONE = process.env.STORE_TIMEZONE || "America/New_York";
 
-const _leadParsed = parseInt(process.env.PICKUP_MIN_LEAD_MINUTES ?? "5", 10);
+const _leadParsed = parseInt(process.env.PICKUP_MIN_LEAD_MINUTES ?? "15", 10);
 const PICKUP_MIN_LEAD_MINUTES =
   Number.isFinite(_leadParsed) && _leadParsed >= 0 ? _leadParsed : 5;
 

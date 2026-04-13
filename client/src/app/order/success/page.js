@@ -69,7 +69,7 @@ function OrderSuccessContent() {
         setSessionRefForDisplay(resolvedCheckoutId);
 
         try {
-          // Use server draft + recover only: avoids rolling "5 min from now" pickup checks
+          // Use server draft + recover only: avoids rolling minimum-lead pickup checks
           // against wall-clock after the customer spends time on Clover, and matches webhook data.
           const result = await withRetries(() =>
             ordersApi.recoverHostedCheckout(resolvedCheckoutId),

@@ -12,7 +12,11 @@ import { requireKitchenAdmin } from "../middleware/kitchenAdmin.js";
 import { revokeLoyaltyStampForOrder } from "../services/loyalty.js";
 import { placeOnlineOrder } from "../services/onlineOrderPlacement.js";
 import { orderEventEmitter } from "../services/orderEvents.js";
-import { recordHostedCheckoutPlacementFailure } from "../services/cloverHostedWebhook.js";
+import {
+  recordHostedCheckoutPlacementFailure,
+  markHostedCheckoutPaymentApproved,
+} from "../services/cloverHostedWebhook.js";
+import { tryMarkHostedCheckoutPaidFromCloverPaymentLookup } from "../services/clover.js";
 import { notifyOrderOpsAlert } from "../services/orderOpsAlerts.js";
 import { resolveKitchenDateRangeFromQuery } from "../utils/kitchenQueryDateRange.js";
 
@@ -104,10 +108,20 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
       }
     }
     if (!approvedAt) {
+      const inferred = await tryMarkHostedCheckoutPaidFromCloverPaymentLookup(
+        checkoutId,
+        draftDoc,
+      );
+      if (inferred.ok) {
+        await markHostedCheckoutPaymentApproved(checkoutId, inferred.paymentId);
+        approvedAt = new Date();
+      }
+    }
+    if (!approvedAt) {
       return errorResponse(
         res,
         409,
-        "Payment is not confirmed yet. Please wait a moment and try again.",
+        "Payment is not confirmed on our server yet. If you were charged, wait a minute and try again, or contact the shop with this checkout id. The shop should ensure Clover Hosted Checkout (Merchant Settings) webhook URL points to this API at POST /api/payments/webhook and the signing secret matches CLOVER_WEBHOOK_SECRET.",
         ["checkoutId"],
       );
     }
@@ -291,11 +305,36 @@ router.post(
           ["checkoutId"],
         );
       }
-      if (!draftDoc.paymentApprovedAt) {
+      let paymentApproved = Boolean(draftDoc.paymentApprovedAt);
+      if (!paymentApproved) {
+        for (let i = 0; i < 4; i += 1) {
+          await new Promise((r) => setTimeout(r, 750));
+          const latest = await HostedCheckoutDraft.findOne({
+            checkoutSessionId: checkoutId,
+          })
+            .select("paymentApprovedAt")
+            .lean();
+          if (latest?.paymentApprovedAt) {
+            paymentApproved = true;
+            break;
+          }
+        }
+      }
+      if (!paymentApproved) {
+        const inferred = await tryMarkHostedCheckoutPaidFromCloverPaymentLookup(
+          checkoutId,
+          draftDoc,
+        );
+        if (inferred.ok) {
+          await markHostedCheckoutPaymentApproved(checkoutId, inferred.paymentId);
+          paymentApproved = true;
+        }
+      }
+      if (!paymentApproved) {
         return errorResponse(
           res,
           409,
-          "Payment is not confirmed for this checkout session.",
+          "Payment is not confirmed for this checkout session. Configure the Clover Hosted Checkout webhook on the merchant dashboard, or retry after a short wait.",
           ["checkoutId"],
         );
       }

@@ -30,7 +30,7 @@ const _lead = parseInt(
   10,
 );
 export const PICKUP_MIN_LEAD_MINUTES =
-  Number.isFinite(_lead) && _lead >= 0 ? _lead : 5;
+  Number.isFinite(_lead) && _lead >= 0 ? _lead : 15;
 
 /**
  * Admin QA comp ($0 checkout with ADMIN_DISCOUNT). Must match server ADMIN_ORDER_COMP_ENABLED.
