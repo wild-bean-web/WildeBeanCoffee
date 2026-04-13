@@ -88,6 +88,29 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
         ["checkoutId"],
       );
     }
+    let approvedAt = draftDoc.paymentApprovedAt || null;
+    if (!approvedAt) {
+      for (let i = 0; i < 4; i += 1) {
+        await new Promise((r) => setTimeout(r, 750));
+        const latest = await HostedCheckoutDraft.findOne({
+          checkoutSessionId: checkoutId,
+        })
+          .select("paymentApprovedAt")
+          .lean();
+        if (latest?.paymentApprovedAt) {
+          approvedAt = latest.paymentApprovedAt;
+          break;
+        }
+      }
+    }
+    if (!approvedAt) {
+      return errorResponse(
+        res,
+        409,
+        "Payment is not confirmed yet. Please wait a moment and try again.",
+        ["checkoutId"],
+      );
+    }
 
     let user = req.user || null;
     if (draftDoc.userId) {
@@ -144,9 +167,10 @@ router.get(
 
       const withErrors = await HostedCheckoutDraft.find({
         lastPlacementError: { $nin: [null, ""] },
+        paymentApprovedAt: { $ne: null },
       })
         .select(
-          "checkoutSessionId orderDraft amountCents status lastPlacementError lastPlacementErrorAt createdAt",
+          "checkoutSessionId orderDraft amountCents status lastPlacementError lastPlacementErrorAt createdAt paymentApprovedAt",
         )
         .sort({ lastPlacementErrorAt: -1 })
         .limit(30)
@@ -154,10 +178,11 @@ router.get(
 
       const pendingRecent = await HostedCheckoutDraft.find({
         status: "pending",
+        paymentApprovedAt: { $ne: null },
         createdAt: { $gte: pendingSince },
       })
         .select(
-          "checkoutSessionId orderDraft amountCents status createdAt lastPlacementError",
+          "checkoutSessionId orderDraft amountCents status createdAt lastPlacementError paymentApprovedAt",
         )
         .sort({ createdAt: -1 })
         .limit(50)
@@ -184,6 +209,7 @@ router.get(
           checkoutSessionId: d.checkoutSessionId,
           orderDraft: d.orderDraft,
           amountCents: d.amountCents,
+          paymentApprovedAt: d.paymentApprovedAt || null,
           createdAt: d.createdAt,
           lastPlacementError: d.lastPlacementError,
           lastPlacementErrorAt: d.lastPlacementErrorAt,
@@ -196,6 +222,7 @@ router.get(
             checkoutSessionId: d.checkoutSessionId,
             orderDraft: d.orderDraft,
             amountCents: d.amountCents,
+            paymentApprovedAt: d.paymentApprovedAt || null,
             createdAt: d.createdAt,
             lastPlacementError: null,
             lastPlacementErrorAt: null,
@@ -258,6 +285,14 @@ router.post(
           res,
           404,
           "No saved checkout found for this session.",
+          ["checkoutId"],
+        );
+      }
+      if (!draftDoc.paymentApprovedAt) {
+        return errorResponse(
+          res,
+          409,
+          "Payment is not confirmed for this checkout session.",
           ["checkoutId"],
         );
       }

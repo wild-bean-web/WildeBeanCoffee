@@ -89,6 +89,25 @@ export function parseHostedCheckoutPaymentApproved(body) {
 }
 
 /**
+ * Mark draft as payment-approved once Clover sends PAYMENT+APPROVED.
+ * This is the gate used by recovery/kitchen alert logic to avoid unpaid orders.
+ */
+export async function markHostedCheckoutPaymentApproved(
+  checkoutSessionId,
+  paymentId = null,
+) {
+  await HostedCheckoutDraft.findOneAndUpdate(
+    { checkoutSessionId },
+    {
+      $set: {
+        paymentApprovedAt: new Date(),
+        ...(paymentId ? { paymentId: String(paymentId) } : {}),
+      },
+    },
+  ).catch(() => {});
+}
+
+/**
  * Create order from HostedCheckoutDraft when payment webhook fires (idempotent).
  */
 export async function fulfillOrderFromHostedCheckoutWebhook(

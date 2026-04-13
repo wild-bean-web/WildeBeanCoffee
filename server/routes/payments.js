@@ -8,6 +8,7 @@ import { orderEventEmitter } from "../services/orderEvents.js";
 import {
   verifyCloverWebhookSignature,
   parseHostedCheckoutPaymentApproved,
+  markHostedCheckoutPaymentApproved,
   fulfillOrderFromHostedCheckoutWebhook,
 } from "../services/cloverHostedWebhook.js";
 
@@ -216,6 +217,8 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
             userId: req.user?._id || null,
             amountCents: Math.round(amount),
             status: "pending",
+            paymentApprovedAt: null,
+            paymentId: null,
           },
         },
         { upsert: true },
@@ -333,6 +336,10 @@ router.post("/webhook", async (req, res) => {
 
     const approved = parseHostedCheckoutPaymentApproved(webhookPayload);
     if (approved) {
+      await markHostedCheckoutPaymentApproved(
+        approved.checkoutSessionId,
+        approved.paymentId,
+      );
       const result = await fulfillOrderFromHostedCheckoutWebhook(
         approved.checkoutSessionId,
         { orderEventEmitter },

@@ -727,6 +727,11 @@ export default function KitchenDashboard() {
                      .slice(-8)
                      .toUpperCase()}
                  </p>
+                {checkoutIssueModal.paymentApprovedAt && (
+                  <span className="mt-1 inline-flex rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    Payment confirmed
+                  </span>
+                )}
                  <p className="text-xs text-white/85 mt-1">
                    {checkoutIssueModal.alertKind === "placement_failed"
                      ? "Order creation failed after payment — retry or use Clover."
@@ -1168,6 +1173,11 @@ export default function KitchenDashboard() {
                           <h3 className="text-lg font-bold text-[var(--coffee-brown)]">
                             Checkout · {shortId}
                           </h3>
+                          {alert.paymentApprovedAt && (
+                            <span className="mt-1 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+                              Payment confirmed
+                            </span>
+                          )}
                           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
                             {alert.alertKind === "placement_failed"
                               ? "Placement failed"
