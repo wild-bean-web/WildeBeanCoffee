@@ -22,6 +22,7 @@ import {
   getPickupLeadTimeError,
   getPickupLeadTimeErrorFromIso,
 } from "@/lib/pickupValidation";
+import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
 
 function OrderPageContent() {
   const router = useRouter();
@@ -183,6 +184,38 @@ function OrderPageContent() {
       .catch((err) =>
         console.error("Failed to load SuccessToast Lottie animation:", err),
       );
+  }, []);
+
+  // After hosted checkout, success page clears `cart` in storage; resync when returning via
+  // bfcache, tab focus, or another tab (storage event).
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const syncCartFromStorage = () => {
+      try {
+        const raw = localStorage.getItem("cart");
+        const parsed = raw ? JSON.parse(raw) : [];
+        setCart(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setCart([]);
+      }
+    };
+    const onPageShow = (e) => {
+      if (e.persisted) syncCartFromStorage();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") syncCartFromStorage();
+    };
+    const onStorage = (e) => {
+      if (e.key === "cart" || e.key === null) syncCartFromStorage();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   // Pre-fill customer info when user is signed in
@@ -975,8 +1008,7 @@ function OrderPageContent() {
       setOrderId(result._id);
       setOrderPlaced(true);
 
-      // Clear cart
-      localStorage.removeItem("cart");
+      clearPostCheckoutClientState();
       setCart([]);
     } catch (err) {
       setError(err.message || "Failed to create order. Please try again.");
@@ -1057,8 +1089,7 @@ function OrderPageContent() {
 
       setOrderPlaced(true);
 
-      // Clear cart
-      localStorage.removeItem("cart");
+      clearPostCheckoutClientState();
       setCart([]);
     } catch (err) {
       setError(

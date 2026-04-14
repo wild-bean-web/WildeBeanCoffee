@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
+import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
 
 /** Clover may leave this literal in successUrl if redirect template is not substituted. */
 const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
@@ -80,7 +81,7 @@ function OrderSuccessContent() {
           );
 
           setOrderId(result._id);
-          sessionStorage.removeItem("pendingOrder");
+          clearPostCheckoutClientState();
 
           try {
             await fetch("/api/payments/print-receipt", {
@@ -91,7 +92,6 @@ function OrderSuccessContent() {
           } catch (printError) {
             console.error("Receipt printing failed:", printError);
           }
-          localStorage.removeItem("cart");
         } catch (err) {
           console.error("Error creating / recovering order:", err);
           setError(
@@ -112,6 +112,7 @@ function OrderSuccessContent() {
             ordersApi.recoverHostedCheckout(ref),
           );
           setOrderId(result._id);
+          clearPostCheckoutClientState();
           try {
             await fetch("/api/payments/print-receipt", {
               method: "POST",
@@ -121,7 +122,6 @@ function OrderSuccessContent() {
           } catch (printError) {
             console.error("Receipt printing failed:", printError);
           }
-          localStorage.removeItem("cart");
         } catch (err) {
           console.error("Recover hosted checkout failed:", err);
           setError(
