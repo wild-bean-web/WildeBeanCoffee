@@ -1,6 +1,10 @@
 import express from "express";
 import { processPayment, printReceipt, createHostedCheckoutSession } from "../services/clover.js";
-import { errorResponse } from "../utils/validation.js";
+import {
+  errorResponse,
+  isValidEmail,
+  normalizeEmailForPayment,
+} from "../utils/validation.js";
 import { optionalAuth } from "../middleware/auth.js";
 import { HostedCheckoutDraft } from "../models/index.js";
 import { validateOrderPayload } from "../services/onlineOrderPlacement.js";
@@ -143,13 +147,19 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
     }
 
     const firstName = (customer?.firstName || "").trim();
-    const email = (customer?.email || "").trim();
-    if (!customer || !firstName || !email) {
+    const emailRaw = (customer?.email || "").trim();
+    const email = normalizeEmailForPayment(emailRaw);
+    if (!customer || !firstName || !emailRaw) {
       return errorResponse(
         res,
         400,
         "Customer information (first name and email) is required"
       );
+    }
+    if (!email || !isValidEmail(email)) {
+      return errorResponse(res, 400, "Please enter a valid email address.", [
+        "email",
+      ]);
     }
 
     if (!amount || amount <= 0) {
@@ -184,6 +194,9 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
 
     const draft = { ...orderDraft };
     delete draft.checkoutId;
+    if (draft.customer && typeof draft.customer === "object") {
+      draft.customer = { ...draft.customer, email };
+    }
     const draftErrors = validateOrderPayload({
       ...draft,
       paymentStatus: "paid",
@@ -196,7 +209,7 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
     // Create checkout session
     const checkoutSession = await createHostedCheckoutSession({
       items,
-      customer,
+      customer: { ...customer, email },
       amount: Math.round(amount), // Ensure amount is in cents
       successUrl,
       failureUrl,
