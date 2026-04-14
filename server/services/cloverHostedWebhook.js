@@ -55,16 +55,17 @@ export function verifyCloverWebhookSignature(
     if (k === "v1") v1 = v;
   }
   if (!t || !v1) return false;
+  const v1Hex = String(v1).trim().toLowerCase();
   const signed = `${t}.${rawBodyString}`;
   const expectedHex = crypto
     .createHmac("sha256", secret)
     .update(signed, "utf8")
     .digest("hex");
   try {
-    if (expectedHex.length !== v1.length) return false;
+    if (expectedHex.length !== v1Hex.length) return false;
     return crypto.timingSafeEqual(
       Buffer.from(expectedHex, "utf8"),
-      Buffer.from(v1, "utf8"),
+      Buffer.from(v1Hex, "utf8"),
     );
   } catch {
     return false;

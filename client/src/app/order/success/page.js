@@ -9,6 +9,8 @@ import { ordersApi } from "@/lib/api";
 /** Clover may leave this literal in successUrl if redirect template is not substituted. */
 const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 
+const SHOP_CONTACT_EMAIL = "info@wildbeancoffeeshop.com";
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function withRetries(fn, { tries = 3, baseMs = 700 } = {}) {
@@ -41,7 +43,9 @@ function OrderSuccessContent() {
         try {
           orderData = JSON.parse(pendingRaw);
         } catch {
-          setError("Saved order data was invalid. Try recover below or contact support.");
+          setError(
+            "We could not read your saved order in this browser. If you completed payment, please email the shop so we can locate your order.",
+          );
           setLoading(false);
           return;
         }
@@ -60,7 +64,7 @@ function OrderSuccessContent() {
 
         if (!resolvedCheckoutId) {
           setError(
-            "Could not determine your checkout session (missing from this page and saved data). If you were charged, contact the shop with your email and payment time.",
+            "We could not link this page to your checkout. If you were charged, please call or email the shop with the time of payment and the cardholder name so we can find your order.",
           );
           setLoading(false);
           return;
@@ -91,7 +95,8 @@ function OrderSuccessContent() {
         } catch (err) {
           console.error("Error creating / recovering order:", err);
           setError(
-            `${err.message || "Payment may have succeeded, but we could not finalize your order."} Checkout session: ${resolvedCheckoutId}. Please contact the shop with this reference.`,
+            err.message ||
+              "We could not finalize your order in our system after payment. Please call or email the shop right away; do not place the same order again until someone has helped you.",
           );
         } finally {
           setLoading(false);
@@ -121,7 +126,7 @@ function OrderSuccessContent() {
           console.error("Recover hosted checkout failed:", err);
           setError(
             err.message ||
-              "Your payment may have gone through, but we could not load your order in this browser. Check with the shop or contact support.",
+              "We could not load your order in this browser after payment. Please call or email the shop so we can confirm your order.",
           );
         } finally {
           setLoading(false);
@@ -130,7 +135,7 @@ function OrderSuccessContent() {
       }
 
       setError(
-        "No order data found in this browser. If you paid, your order may still be processing — contact support with your payment confirmation.",
+        "No order information was found in this browser. If you already paid, please call or email the shop with your name and payment time so we can locate your order.",
       );
       setLoading(false);
     };
@@ -175,27 +180,38 @@ function OrderSuccessContent() {
                 </svg>
               </div>
               <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-brown)]">
-                Order Processing Error
+                We Need to Help You Finish This
               </h1>
               <p className="text-gray-600">{error}</p>
               {(sessionRefForDisplay || checkoutId) && (
                 <p className="mt-4 text-sm text-gray-500">
-                  Payment session: {sessionRefForDisplay || checkoutId}
+                  Reference for the shop (if you were sent here after paying):{" "}
+                  {sessionRefForDisplay || checkoutId}
                 </p>
               )}
+              <p className="mt-4 text-sm text-gray-600">
+                Email us at{" "}
+                <a
+                  className="font-medium text-[var(--coffee-brown)] underline"
+                  href={`mailto:${SHOP_CONTACT_EMAIL}`}
+                >
+                  {SHOP_CONTACT_EMAIL}
+                </a>
+                .
+              </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href="/order"
-                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              <a
+                href={`mailto:${SHOP_CONTACT_EMAIL}?subject=Online order help`}
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-center text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
               >
-                Try Again
-              </Link>
+                Email the shop
+              </a>
               <Link
                 href="/shop"
-                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-center text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
               >
-                Continue Shopping
+                Continue shopping
               </Link>
             </div>
           </motion.div>

@@ -121,7 +121,7 @@ router.post("/recover-hosted-checkout", optionalAuth, async (req, res, next) => 
       return errorResponse(
         res,
         409,
-        "Payment is not confirmed on our server yet. If you were charged, wait a minute and try again, or contact the shop with this checkout id. The shop should ensure Clover Hosted Checkout (Merchant Settings) webhook URL points to this API at POST /api/payments/webhook and the signing secret matches CLOVER_WEBHOOK_SECRET.",
+        "We could not confirm your payment in our ordering system yet. If you see a charge, please call or email the shop right away with the reference below so we can find your order. Please do not submit the same order again until we have helped you.",
         ["checkoutId"],
       );
     }
@@ -334,7 +334,7 @@ router.post(
         return errorResponse(
           res,
           409,
-          "Payment is not confirmed for this checkout session. Configure the Clover Hosted Checkout webhook on the merchant dashboard, or retry after a short wait.",
+          "Payment is not marked confirmed for this checkout in our system. Verify the charge in Clover, check the Hosted Checkout webhook, then retry or place the order manually. Use the checkout reference below when talking to support.",
           ["checkoutId"],
         );
       }

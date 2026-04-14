@@ -31,6 +31,23 @@ export function isValidEmail(email) {
 }
 
 /**
+ * Trim, lowercase, and fix common typos (e.g. consecutive dots in the local part)
+ * so third-party payment APIs that validate strictly are less likely to reject checkout.
+ * @param {string} email
+ * @returns {string} Normalized email, or "" if there is no usable @domain.
+ */
+export function normalizeEmailForPayment(email) {
+  const s = String(email ?? "").trim().toLowerCase();
+  const at = s.lastIndexOf("@");
+  if (at <= 0 || at >= s.length - 1) return "";
+  let local = s.slice(0, at);
+  const domain = s.slice(at + 1).replace(/\.+/g, ".").replace(/^\.+|\.+$/g, "");
+  local = local.replace(/\.+/g, ".").replace(/^\.+|\.+$/g, "");
+  if (!local || !domain) return "";
+  return `${local}@${domain}`;
+}
+
+/**
  * Validate password strength
  * Simple validation: min 8 characters, at least one letter and one number
  * @param {string} password - Password to validate
