@@ -73,6 +73,34 @@ export function verifyCloverWebhookSignature(
 }
 
 /**
+ * Hosted Checkout webhooks use `checkoutSessionId` on the payload; older docs
+ * sometimes show session id in `data` (string or nested object).
+ * @param {object} body
+ * @returns {string | null}
+ */
+function parseCheckoutSessionIdFromWebhookBody(body) {
+  const top =
+    body.checkoutSessionId ??
+    body.CheckoutSessionId ??
+    body.checkoutId ??
+    body.CheckoutId;
+  if (top != null && String(top).trim() !== "") return String(top).trim();
+
+  const d = body.data ?? body.Data;
+  if (d == null || d === "") return null;
+  if (typeof d === "string" && d.trim() !== "") return d.trim();
+  if (typeof d === "object") {
+    const nested =
+      d.checkoutSessionId ??
+      d.CheckoutSessionId ??
+      d.checkoutId ??
+      d.CheckoutId;
+    if (nested != null && String(nested).trim() !== "") return String(nested).trim();
+  }
+  return null;
+}
+
+/**
  * @returns {{ checkoutSessionId: string, paymentId: string | null } | null}
  */
 export function parseHostedCheckoutPaymentApproved(body) {
@@ -80,7 +108,7 @@ export function parseHostedCheckoutPaymentApproved(body) {
   const type = String(body.type ?? body.Type ?? "").toUpperCase();
   const status = String(body.status ?? body.Status ?? "").toUpperCase();
   if (type !== "PAYMENT" || status !== "APPROVED") return null;
-  const sessionId = body.data ?? body.Data;
+  const sessionId = parseCheckoutSessionIdFromWebhookBody(body);
   if (sessionId == null || sessionId === "") return null;
   const paymentId = body.id ?? body.Id ?? null;
   return {
