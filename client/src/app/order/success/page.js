@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
 import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
+import { PICKUP_COFFEE_FRESHNESS_NOTE } from "@/lib/pickupCoffeeFreshnessNote";
 
 /** Clover may leave this literal in successUrl if redirect template is not substituted. */
 const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
@@ -34,6 +35,8 @@ function OrderSuccessContent() {
   const [error, setError] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [sessionRefForDisplay, setSessionRefForDisplay] = useState(null);
+  const [showPickupCoffeeFreshnessNote, setShowPickupCoffeeFreshnessNote] =
+    useState(false);
 
   useEffect(() => {
     const completeOrder = async () => {
@@ -50,6 +53,10 @@ function OrderSuccessContent() {
           setLoading(false);
           return;
         }
+
+        setShowPickupCoffeeFreshnessNote(
+          Boolean(orderData.pickupUiHints?.showCoffeeFreshnessNote),
+        );
 
         const urlCheckoutRaw = (checkoutId || "").trim();
         const urlCheckout =
@@ -252,6 +259,11 @@ function OrderSuccessContent() {
             <p className="mb-4 text-gray-600">
               Thank you for your order. We&apos;ll have it ready for pickup soon.
             </p>
+            {showPickupCoffeeFreshnessNote && (
+              <p className="mx-auto mb-4 max-w-md text-sm leading-snug text-stone-600">
+                {PICKUP_COFFEE_FRESHNESS_NOTE}
+              </p>
+            )}
             {orderId && (
               <p className="text-sm text-gray-500">
                 Order ID: {orderId.slice(-8)}

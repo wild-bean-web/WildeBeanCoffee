@@ -23,6 +23,10 @@ import {
   getPickupLeadTimeErrorFromIso,
 } from "@/lib/pickupValidation";
 import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
+import {
+  PICKUP_COFFEE_FRESHNESS_NOTE,
+  cartIncludesCoffeeEspressoDrinks,
+} from "@/lib/pickupCoffeeFreshnessNote";
 
 function OrderPageContent() {
   const router = useRouter();
@@ -48,6 +52,9 @@ function OrderPageContent() {
   const [error, setError] = useState(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  /** Shown on inline success after paid order when cart included espresso drinks. */
+  const [pickupCoffeeFreshnessOnSuccess, setPickupCoffeeFreshnessOnSuccess] =
+    useState(false);
   const [paymentData, setPaymentData] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -926,6 +933,10 @@ function OrderPageContent() {
         taxRate,
         pickupTime: pickupTime || undefined,
         notes: notes || undefined,
+        pickupUiHints: {
+          showCoffeeFreshnessNote:
+            cartIncludesCoffeeEspressoDrinks(checkoutCart),
+        },
         ...(tipAmount > 0 ? { tip: tipAmount } : {}),
         ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
           ? { beanStampsRedeemCartKey }
@@ -972,6 +983,9 @@ function OrderPageContent() {
 
     try {
       const checkoutCart = getCheckoutCart();
+      setPickupCoffeeFreshnessOnSuccess(
+        cartIncludesCoffeeEspressoDrinks(checkoutCart),
+      );
       const orderItems = mapCartToOrderItems(checkoutCart);
 
       // Use user info if signed in, otherwise use form data
@@ -1033,6 +1047,9 @@ function OrderPageContent() {
 
     try {
       const checkoutCart = getCheckoutCart();
+      setPickupCoffeeFreshnessOnSuccess(
+        cartIncludesCoffeeEspressoDrinks(checkoutCart),
+      );
       const orderItems = mapCartToOrderItems(checkoutCart);
 
       // Use user info if signed in, otherwise use form data
@@ -1274,6 +1291,11 @@ function OrderPageContent() {
               <p className="text-gray-600">
                 Your order has been received and is being prepared.
               </p>
+              {pickupCoffeeFreshnessOnSuccess && (
+                <p className="mx-auto mt-3 max-w-md text-sm leading-snug text-stone-600">
+                  {PICKUP_COFFEE_FRESHNESS_NOTE}
+                </p>
+              )}
             </div>
 
             <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left">
@@ -1346,6 +1368,8 @@ function OrderPageContent() {
 
   const { subtotal, tax, total, tipAmount, tipPercent } = getCheckoutTotals();
   const checkoutCartForDisplay = getCheckoutCart();
+  const showPickupCoffeeFreshnessNote =
+    cartIncludesCoffeeEspressoDrinks(checkoutCartForDisplay);
   const beanStampsRewardLineName = beanStampsRedeemCartKey
     ? cart.find(
         (i) => String(i.cartKey || i._id) === String(beanStampsRedeemCartKey),
@@ -2239,6 +2263,12 @@ function OrderPageContent() {
                   )}
                 </div>
 
+                {showPickupCoffeeFreshnessNote && (
+                  <p className="rounded-lg border border-stone-200/80 bg-stone-50 px-3 py-2.5 text-xs leading-snug text-stone-600">
+                    {PICKUP_COFFEE_FRESHNESS_NOTE}
+                  </p>
+                )}
+
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
                     Special Instructions
@@ -2275,6 +2305,11 @@ function OrderPageContent() {
                           Admin order (QA/testing) — Comped to $0. No payment
                           required.
                         </p>
+                        {showPickupCoffeeFreshnessNote && (
+                          <p className="mb-4 text-left text-xs leading-snug text-stone-600">
+                            {PICKUP_COFFEE_FRESHNESS_NOTE}
+                          </p>
+                        )}
                         <button
                           type="button"
                           onClick={handleCreateCheckout}
@@ -2291,6 +2326,11 @@ function OrderPageContent() {
                             You will be redirected to Clover's secure payment
                             page to complete your order.
                           </p>
+                          {showPickupCoffeeFreshnessNote && (
+                            <p className="mb-4 text-left text-xs leading-snug text-stone-600">
+                              {PICKUP_COFFEE_FRESHNESS_NOTE}
+                            </p>
+                          )}
                           <button
                             type="button"
                             onClick={handleCreateCheckout}
