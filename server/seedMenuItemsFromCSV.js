@@ -48,7 +48,7 @@ export const menuItemsFromCSV = [
   {
     name: "Doppio",
     description: "A bold double shot of espresso.",
-    price: 3.25,
+    price: 3.4,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
@@ -56,7 +56,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/DoppioLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Espresso Bean",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Espresso",
@@ -69,12 +73,16 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Espresso Bean",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Flat White",
     description: "Espresso with velvety, lightly textured milk.",
-    price: 5.15,
+    price: 5.4,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
@@ -137,7 +145,7 @@ export const menuItemsFromCSV = [
   {
     name: "Espresso Macchiato",
     description: "Espresso marked with a small amount of foam.",
-    price: 5.15,
+    price: 4.2,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
@@ -145,7 +153,11 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Shot Preference", "Espresso Bean", "Extra Single Shots (Hot)"],
+    modifierGroupNames: [
+      "Shot Preference",
+      "Espresso Bean",
+      "Extra Single Shots (Hot)",
+    ],
   },
   {
     name: "Caramel Macchiato",
@@ -186,7 +198,7 @@ export const menuItemsFromCSV = [
   {
     name: "Cold Brew",
     description: "Slow-steeped cold brew for a smooth, rich taste.",
-    price: 4.65,
+    price: 4.8,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "coffee", "cold"],
@@ -205,7 +217,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Americano",
     description: "Espresso and cold water served over ice.",
-    price: 3.95,
+    price: 3.9,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
@@ -225,7 +237,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Caramel Macchiato",
     description: "Layered espresso and milk served over ice.",
-    price: 5.95,
+    price: 6.2,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
@@ -248,7 +260,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Latte",
     description: "Espresso with cold milk poured over ice.",
-    price: 4.65,
+    price: 4.8,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold"],
@@ -318,7 +330,7 @@ export const menuItemsFromCSV = [
     name: "Brown Sugar Cinnamon Shaken Espresso",
     description:
       "Double espresso shaken with ice, brown sugar, and cinnamon, finished with your choice of milk.",
-    price: 5.15,
+    price: 5.4,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold", "shaken"],
@@ -342,7 +354,7 @@ export const menuItemsFromCSV = [
     name: "Caramel Shaken Espresso",
     description:
       "Double espresso shaken with ice and caramel, finished with your choice of milk.",
-    price: 5.95,
+    price: 6.2,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold", "shaken", "caramel"],
@@ -366,9 +378,8 @@ export const menuItemsFromCSV = [
   // Smoothies
   {
     name: "Green Glow",
-    description:
-      "Spinach, kale, banana, avocado, chia seeds, milk, honey",
-    price: 7.99,
+    description: "Spinach, kale, banana, avocado, chia seeds, milk, honey",
+    price: 8.3,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "green"],
@@ -376,16 +387,12 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GreenGlowLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Smoothie Add-Ons",
-    ],
+    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
   {
     name: "Triple B",
-    description:
-      "Strawberry, blueberry, raspberry, yogurt, milk.",
-    price: 8.2,
+    description: "Strawberry, blueberry, raspberry, yogurt, milk.",
+    price: 8.5,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "berry"],
@@ -393,16 +400,12 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/BerryBoostLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Smoothie Add-Ons",
-    ],
+    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
   {
     name: "Tropical Bliss",
-    description:
-      "Mango, pineapple, banana, orange juice, coconut, lime.",
-    price: 7.5,
+    description: "Mango, pineapple, banana, orange juice, coconut, lime.",
+    price: 7.8,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical"],
@@ -415,7 +418,7 @@ export const menuItemsFromCSV = [
   {
     name: "Guava Cream",
     description: "Guava, Strawberry, Banana, Yogurt, Lime. Contains: Dairy.",
-    price: 7.75,
+    price: 8,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "tropical", "guava"],
@@ -423,16 +426,13 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GuavaCreamLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Smoothie Add-Ons",
-    ],
+    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
   {
     name: "Berry Mango Tango",
     description:
       "Strawberry, mango, vanilla protein, yogurt, honey, almond milk.",
-    price: 9.25,
+    price: 9.6,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "protein", "berry", "mango"],
@@ -440,17 +440,13 @@ export const menuItemsFromCSV = [
     image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Protein Powder",
-      "Smoothie Add-Ons",
-    ],
+    modifierGroupNames: ["Smoothie Size", "Protein Powder", "Smoothie Add-Ons"],
   },
   {
     name: "Power Couple",
     description:
       "Chia seed pudding, Vanilla protein, avocado, no-fat greek yogurt, peanut butter, honey.",
-    price: 9.5,
+    price: 9.8,
     currency: "USD",
     section: "Smoothies (Organic & Fresh)",
     tags: ["smoothie", "organic", "fresh", "protein", "chia"],
@@ -458,11 +454,7 @@ export const menuItemsFromCSV = [
     image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Smoothie Size",
-      "Protein Powder",
-      "Smoothie Add-Ons",
-    ],
+    modifierGroupNames: ["Smoothie Size", "Protein Powder", "Smoothie Add-Ons"],
   },
 
   // Wild Bowl (build-your-own and predetermined bowls)
@@ -513,7 +505,7 @@ export const menuItemsFromCSV = [
     name: "Signature Bowl",
     description:
       "½ Chia Seed Pudding, ½ Yogurt, Granola, Pecans, Sunflower Seeds, Coconut Flakes, Peanut Butter, Honey, Strawberries, Blueberries. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
-    price: 9.99,
+    price: 10.3,
     currency: "USD",
     section: "Wild Bowl",
     tags: ["bowl", "healthy", "breakfast", "signature"],
@@ -536,7 +528,7 @@ export const menuItemsFromCSV = [
     name: "Plain Croissant",
     description:
       "Handcrafted with 12 layers of high-quality butter, creating a fluffy, flaky, and artisanally buttery experience. Freshly baked throughout the day. Contains: Wheat, milk, egg.",
-    price: 4.5,
+    price: 4.7,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -551,7 +543,7 @@ export const menuItemsFromCSV = [
     name: "Chocolate Croissant",
     description:
       'Traditional "pain au chocolat" with dark chocolate sticks rolled into croissant dough for a rich chocolatey bite. Contains: Wheat, milk, egg, soy.',
-    price: 4.75,
+    price: 4.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -566,7 +558,7 @@ export const menuItemsFromCSV = [
     name: "Almond Croissant",
     description:
       "A traditional croissant filled with homemade almond cream and topped with sliced almonds for a delightful crunch. Contains: wheat, milk, egg, almond.",
-    price: 5.35,
+    price: 5.6,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -581,7 +573,7 @@ export const menuItemsFromCSV = [
     name: "Blueberry Muffin",
     description:
       "Light and fluffy, brimming with sweet blueberries and topped with pearl sugar for a delightful crunch. Contains: Wheat, milk, egg.",
-    price: 4.75,
+    price: 4.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -596,7 +588,7 @@ export const menuItemsFromCSV = [
     name: "Kouign Amann",
     description:
       "From Brittany, France, this pastry layers rich dough with butter and sugar, finished with a delicate caramel shell for extra crunch. Contains: Wheat, egg, soy, milk.",
-    price: 5.1,
+    price: 5.3,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -611,7 +603,7 @@ export const menuItemsFromCSV = [
     name: "Cannele",
     description:
       "Classic French pastry from Bordeaux with a caramelized crust and tender custard center. Contains: Wheat, milk, egg.",
-    price: 3.75,
+    price: 3.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -626,7 +618,7 @@ export const menuItemsFromCSV = [
     name: "Flourless Brownie (Gluten Free)",
     description:
       "Rich, fudgy chocolate brownie made without flour. Gluten free. Contains: Dairy, egg, soy.",
-    price: 4.75,
+    price: 4.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -641,7 +633,7 @@ export const menuItemsFromCSV = [
     name: "Vegan Muffin",
     description:
       "Plant-based muffin, moist and delicious. Made without dairy or eggs. Contains: Wheat.",
-    price: 4.75,
+    price: 4.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -656,7 +648,7 @@ export const menuItemsFromCSV = [
     name: "Apple Danish",
     description:
       "Flaky pastry filled with sweet cinnamon-spiced apple and topped with a delicate glaze. Contains: Wheat, milk, egg.",
-    price: 5.1,
+    price: 5.3,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -671,7 +663,7 @@ export const menuItemsFromCSV = [
     name: "Sweet Lemon Bread",
     description:
       "Sweet lemon quick bread with a hint of citrus. Contains: Wheat, milk, egg.",
-    price: 4.75,
+    price: 4.9,
     currency: "USD",
     section: "Bakery & Pastries",
     onlineOrderable: false,
@@ -700,7 +692,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Tea",
     description: "Fresh-brewed tea served over ice.",
-    price: 3.65,
+    price: 3.8,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced"],
@@ -713,7 +705,7 @@ export const menuItemsFromCSV = [
   {
     name: "Chai Latte (Hot)",
     description: "Spiced chai blended with steamed milk.",
-    price: 4.95,
+    price: 5.1,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "hot", "spiced"],
@@ -730,7 +722,7 @@ export const menuItemsFromCSV = [
   {
     name: "Matcha Latte (Hot)",
     description: "Matcha blended with steamed milk",
-    price: 5.25,
+    price: 5.5,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "hot", "matcha"],
@@ -747,7 +739,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Chai Latte",
     description: "Spiced chai tea blended with steamed milk.",
-    price: 5.25,
+    price: 5.5,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced", "spiced"],
@@ -765,7 +757,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Matcha Latte",
     description: "Matcha blended with milk and shaken over ice",
-    price: 5.45,
+    price: 5.7,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced", "matcha"],
@@ -784,7 +776,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Strawberry Matcha Latte",
     description: "Matcha with strawberry and milk, shaken over ice.",
-    price: 6.25,
+    price: 6.5,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced", "matcha", "strawberry"],
@@ -803,7 +795,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Blueberry Matcha Latte",
     description: "Matcha with blueberry and milk, shaken over ice.",
-    price: 6.25,
+    price: 6.5,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced", "matcha", "blueberry"],
@@ -822,7 +814,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Mango Matcha Latte",
     description: "Matcha with mango and milk, shaken over ice.",
-    price: 6.25,
+    price: 6.5,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "iced", "matcha", "mango"],
