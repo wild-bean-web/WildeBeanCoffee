@@ -9,7 +9,7 @@ export const menuItemsFromCSV = [
   {
     name: "Americano",
     description: "Espresso shot filled with hot water for a smooth finish.",
-    price: 3.6,
+    price: 3.8,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
@@ -27,7 +27,7 @@ export const menuItemsFromCSV = [
   {
     name: "Cappuccino",
     description: "Espresso with equal parts steamed milk and foam.",
-    price: 4.55,
+    price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "foam"],
@@ -65,7 +65,7 @@ export const menuItemsFromCSV = [
   {
     name: "Espresso",
     description: "1 oz espresso shot made with freshly roasted beans.",
-    price: 2.85,
+    price: 1.7,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso"],
@@ -103,7 +103,7 @@ export const menuItemsFromCSV = [
   {
     name: "Latte",
     description: "Espresso with steamed milk and a light milk crema.",
-    price: 4.55,
+    price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
@@ -124,7 +124,7 @@ export const menuItemsFromCSV = [
   {
     name: "Mocha",
     description: "Espresso blended with chocolate and steamed milk.",
-    price: 5.15,
+    price: 5.4,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "chocolate"],
@@ -162,7 +162,7 @@ export const menuItemsFromCSV = [
   {
     name: "Caramel Macchiato",
     description: "Layered espresso and milk with caramel.",
-    price: 5.5,
+    price: 5.4,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "caramel"],
@@ -183,7 +183,7 @@ export const menuItemsFromCSV = [
   {
     name: "Filtered Coffee",
     description: "Fresh filtered coffee. Select your cup size.",
-    price: 2.55,
+    price: 3.1,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "coffee"],
@@ -306,7 +306,7 @@ export const menuItemsFromCSV = [
   {
     name: "Iced Mocha",
     description: "Mocha served over ice.",
-    price: 5.85,
+    price: 6.1,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "chocolate", "cold"],
@@ -462,7 +462,7 @@ export const menuItemsFromCSV = [
     name: "Build Your Own Bowl",
     description:
       "1 base, 2 fruits, up to 8 toppings & 2 drizzles. Small / Medium +$1.",
-    price: 9.99,
+    price: 10.3,
     currency: "USD",
     section: "Wild Bowl",
     tags: ["bowl", "custom", "healthy", "breakfast", "build your own"],
@@ -483,7 +483,7 @@ export const menuItemsFromCSV = [
     name: "Wild Vegan",
     description:
       "Chia Seed Pudding, Granola, Coconut Flakes, Almonds, Dried Cranberries, Peanut Butter, Honey, Strawberries, Bananas. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
-    price: 9.99,
+    price: 10.3,
     currency: "USD",
     section: "Wild Bowl",
     tags: ["bowl", "healthy", "breakfast", "vegan"],
@@ -679,7 +679,7 @@ export const menuItemsFromCSV = [
   {
     name: "Assorted Tea",
     description: "Choose from an assortion of teas",
-    price: 3.25,
+    price: 3.4,
     currency: "USD",
     section: "Tea",
     tags: ["tea", "hot"],
