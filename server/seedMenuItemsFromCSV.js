@@ -26,7 +26,7 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Cappuccino",
-    description: "Espresso with equal parts steamed milk and foam.",
+    description: "Espresso with equal parts steamed milk and foam (8oz only).",
     price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
@@ -41,7 +41,6 @@ export const menuItemsFromCSV = [
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Whipped Cream",
-      "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
       "Milk Choice",
     ],
