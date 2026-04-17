@@ -81,12 +81,11 @@ export const modifierGroups = [
   },
   {
     name: "Smoothie Size",
-    description: "Choose your size (required). 20oz is +$0.75.",
+    description: "Smoothies are served in a standard 16oz cup.",
     type: "single",
     required: true,
     options: [
       { name: "16oz", price: 0, available: true },
-      { name: "20oz", price: 0.75, available: true },
     ],
   },
   {
