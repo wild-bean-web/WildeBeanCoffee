@@ -175,6 +175,18 @@ export const locationApi = {
     });
     return result.data.distance;
   },
+
+  /**
+   * Kitchen admin: pause/unpause online ordering.
+   * @param {{ paused: boolean, password: string }} payload
+   */
+  setOnlineOrderingState: async (payload) => {
+    const result = await fetchJson("/api/location/online-ordering-state", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return result.data;
+  },
 };
 
 /**

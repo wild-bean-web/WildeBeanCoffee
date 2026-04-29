@@ -303,6 +303,19 @@ export async function placeOnlineOrder(body, user, options = {}) {
   }
 
   const isAdminOrder = paymentRefVal === "ADMIN_DISCOUNT";
+  if (!isAdminOrder && !kitchenBypassHostedCheckoutBlockers) {
+    const location = await Location.findOne({ active: true })
+      .select("onlineOrderingPaused")
+      .lean();
+    if (location?.onlineOrderingPaused) {
+      return {
+        ok: false,
+        status: 503,
+        message:
+          "Online ordering is temporarily unavailable. Please try again later or contact the cafe.",
+      };
+    }
+  }
   if (isAdminOrder && !isAdminOrderCompEnabled()) {
     return {
       ok: false,
