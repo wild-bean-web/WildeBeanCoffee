@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ordersApi } from "@/lib/api";
 import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
+import { formatStoreDateTime } from "@/lib/dateTime";
 
 function estimateTotalFromDraft(draft) {
   if (!draft?.items || !Array.isArray(draft.items)) return null;
@@ -594,8 +595,7 @@ export default function KitchenDashboard() {
   };
 
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
+    return formatStoreDateTime(dateString, {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -603,8 +603,7 @@ export default function KitchenDashboard() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return formatStoreDateTime(dateString, {
       month: "short",
       day: "numeric",
     });
