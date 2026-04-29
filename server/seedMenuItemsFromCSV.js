@@ -26,7 +26,7 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Cappuccino",
-    description: "Espresso with equal parts steamed milk and foam (8oz only).",
+    description: "Served in a 12oz cup, filled to 8oz total: espresso with equal parts steamed milk and foam.",
     price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
@@ -81,8 +81,8 @@ export const menuItemsFromCSV = [
   },
   {
     name: "Flat White",
-    description: "Espresso with velvety, lightly textured milk.",
-    price: 5.4,
+    description: "Served in a 12oz cup, filled to 8oz total: espresso with velvety, lightly textured milk.",
+    price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "milk"],
@@ -96,7 +96,6 @@ export const menuItemsFromCSV = [
       "Syrup Pumps (+$0.25 each)",
       "Coffee Toppings",
       "Whipped Cream",
-      "Cup Size (12-16)",
       "Extra Single Shots (Hot)",
       "Milk Choice",
     ],
@@ -126,7 +125,7 @@ export const menuItemsFromCSV = [
   {
     name: "Mocha",
     description: "Espresso blended with chocolate and steamed milk.",
-    price: 5.4,
+    price: 5.8,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "chocolate"],
@@ -339,7 +338,7 @@ export const menuItemsFromCSV = [
     name: "Brown Sugar Cinnamon Shaken Espresso",
     description:
       "Double espresso shaken with ice, brown sugar, and cinnamon, finished with your choice of milk.",
-    price: 5.4,
+    price: 5.8,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "cold", "shaken"],

@@ -27,6 +27,56 @@ import {
   PICKUP_COFFEE_FRESHNESS_NOTE,
   cartIncludesCoffeeEspressoDrinks,
 } from "@/lib/pickupCoffeeFreshnessNote";
+import { STORE_TIME_ZONE } from "@/lib/dateTime";
+
+function formatInTimeZoneParts(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const map = Object.fromEntries(
+    parts.filter((p) => p.type !== "literal").map((p) => [p.type, p.value]),
+  );
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second),
+  };
+}
+
+/**
+ * Converts a store-local calendar selection (YYYY-MM-DD + HH:mm) into an ISO
+ * instant so pickup stays pinned to store time regardless of customer timezone.
+ */
+function toStorePickupIso(dateStr, timeStr, timeZone = STORE_TIME_ZONE) {
+  if (!dateStr || !timeStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hr, min] = timeStr.split(":").map(Number);
+  if ([y, m, d, hr, min].some((n) => Number.isNaN(n))) return "";
+
+  const localAsUtcMs = Date.UTC(y, m - 1, d, hr, min, 0, 0);
+  const tzParts = formatInTimeZoneParts(new Date(localAsUtcMs), timeZone);
+  const tzAsUtcMs = Date.UTC(
+    tzParts.year,
+    tzParts.month - 1,
+    tzParts.day,
+    tzParts.hour,
+    tzParts.minute,
+    tzParts.second,
+    0,
+  );
+  const offsetMs = tzAsUtcMs - localAsUtcMs;
+  return new Date(localAsUtcMs - offsetMs).toISOString();
+}
 
 function OrderPageContent() {
   const router = useRouter();
@@ -485,11 +535,6 @@ function OrderPageContent() {
   // Handle time selection
   const handleTimeSelect = (timeString) => {
     setSelectedTime(timeString);
-    if (selectedDate) {
-      // Combine date and time into ISO string
-      const dateTimeString = `${selectedDate}T${timeString}:00`;
-      setPickupTime(dateTimeString);
-    }
     setShowTimePicker(false);
   };
 
@@ -504,15 +549,10 @@ function OrderPageContent() {
   }, []);
 
   // Update pickupTime when both date and time are selected.
-  // Build a Date in the user's local timezone and send ISO (UTC) so the server stores
-  // the correct moment; otherwise the server would parse "YYYY-MM-DDTHH:mm:00" as UTC
-  // and the kitchen would show the wrong time (e.g. 5 PM local showing as 12 PM).
+  // Convert from store-local slot to UTC ISO so every device sees the same pickup slot.
   useEffect(() => {
     if (selectedDate && selectedTime) {
-      const [y, m, d] = selectedDate.split("-").map(Number);
-      const [hr, min] = selectedTime.split(":").map(Number);
-      const localDate = new Date(y, m - 1, d, hr, min, 0, 0);
-      setPickupTime(localDate.toISOString());
+      setPickupTime(toStorePickupIso(selectedDate, selectedTime));
     } else {
       setPickupTime("");
     }
