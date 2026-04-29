@@ -6,7 +6,7 @@ import {
   normalizeEmailForPayment,
 } from "../utils/validation.js";
 import { optionalAuth } from "../middleware/auth.js";
-import { HostedCheckoutDraft } from "../models/index.js";
+import { HostedCheckoutDraft, Location } from "../models/index.js";
 import { validateOrderPayload } from "../services/onlineOrderPlacement.js";
 import { orderEventEmitter } from "../services/orderEvents.js";
 import {
@@ -119,6 +119,17 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
   console.log("[PAYMENT ROUTE] Request received at /api/payments/create-checkout");
   
   try {
+    const location = await Location.findOne({ active: true })
+      .select("onlineOrderingPaused")
+      .lean();
+    if (location?.onlineOrderingPaused) {
+      return errorResponse(
+        res,
+        503,
+        "Online ordering is temporarily unavailable. Please try again later.",
+      );
+    }
+
     const {
       items,
       customer,

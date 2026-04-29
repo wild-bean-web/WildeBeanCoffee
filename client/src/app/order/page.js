@@ -131,6 +131,7 @@ function OrderPageContent() {
     closeMinute: 0,
   }); // Default fallback (6am-8pm)
   const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
+  const [onlineOrderingPaused, setOnlineOrderingPaused] = useState(false);
   const [successAnimation, setSuccessAnimation] = useState(null);
 
   /** Bean Stamps (signed-in only; server enforces) */
@@ -213,6 +214,7 @@ function OrderPageContent() {
           }
           setLocationHours(location.hours);
         }
+        setOnlineOrderingPaused(Boolean(location?.onlineOrderingPaused));
       } catch (err) {
         console.error("Failed to fetch store hours:", err);
         // Keep default fallback values
@@ -1281,6 +1283,56 @@ function OrderPageContent() {
                 className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
               >
                 View Menu
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin && onlineOrderingPaused) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-8 shadow-sm">
+            <div className="mb-4 flex justify-center">
+              <svg
+                className="h-16 w-16 text-amber-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M4.93 19h14.14a2 2 0 001.73-3L13.73 4a2 2 0 00-3.46 0L3.2 16a2 2 0 001.73 3z"
+                />
+              </svg>
+            </div>
+            <h1 className="mb-4 text-3xl font-bold text-[var(--coffee-brown)]">
+              Online Ordering Is Temporarily Unavailable
+            </h1>
+            <p className="mb-3 text-lg text-gray-700">
+              We are temporarily unable to accept online orders at this time.
+            </p>
+            <p className="mb-8 text-sm text-gray-600">
+              Thank you for your patience while we complete an operational update.
+              Please check back shortly or contact the cafe directly for assistance.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                href="/menu"
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              >
+                View Menu
+              </Link>
+              <Link
+                href="/shop"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+              >
+                Browse Shop
               </Link>
             </div>
           </div>

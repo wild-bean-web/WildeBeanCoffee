@@ -369,6 +369,9 @@ const locations = [
       { day: "Saturday", opens: "07:00", closes: "20:00" },
       { day: "Sunday", opens: "09:00", closes: "20:00" },
     ],
+    onlineOrderingPaused: false,
+    onlineOrderingPausedAt: null,
+    onlineOrderingPausedByEmail: null,
     active: true,
   },
 ];

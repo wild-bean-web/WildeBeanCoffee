@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ordersApi } from "@/lib/api";
+import { locationApi, ordersApi } from "@/lib/api";
 import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 import { formatStoreDateTime } from "@/lib/dateTime";
 
@@ -106,6 +106,15 @@ export default function KitchenDashboard() {
   );
   const [checkoutRetryBusyId, setCheckoutRetryBusyId] = useState(null);
   const [checkoutForceBusyId, setCheckoutForceBusyId] = useState(null);
+  const [onlineOrderingPaused, setOnlineOrderingPaused] = useState(false);
+  const [onlineOrderingPausedAt, setOnlineOrderingPausedAt] = useState(null);
+  const [onlineOrderingPausedByEmail, setOnlineOrderingPausedByEmail] =
+    useState(null);
+  const [onlineOrderingPassword, setOnlineOrderingPassword] = useState("");
+  const [onlineOrderingBusy, setOnlineOrderingBusy] = useState(false);
+  const [onlineOrderingModalOpen, setOnlineOrderingModalOpen] = useState(false);
+  const [onlineOrderingTargetPaused, setOnlineOrderingTargetPaused] =
+    useState(true);
   const checkoutAlertsInitRef = useRef(false);
   const prevCheckoutAlertIdsRef = useRef(new Set());
 
@@ -189,15 +198,28 @@ export default function KitchenDashboard() {
     }
   }, []);
 
+  const loadOnlineOrderingState = useCallback(async () => {
+    try {
+      const location = await locationApi.getLocation();
+      setOnlineOrderingPaused(Boolean(location?.onlineOrderingPaused));
+      setOnlineOrderingPausedAt(location?.onlineOrderingPausedAt || null);
+      setOnlineOrderingPausedByEmail(location?.onlineOrderingPausedByEmail || null);
+    } catch (error) {
+      console.error("Failed to load online ordering state:", error);
+    }
+  }, []);
+
   const refreshKitchen = useCallback(async () => {
     await loadOrders();
     await loadCheckoutAlerts();
-  }, [loadOrders, loadCheckoutAlerts]);
+    await loadOnlineOrderingState();
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
 
   // Load initial orders + SSE for live updates
   useEffect(() => {
     loadOrders();
     loadCheckoutAlerts();
+    loadOnlineOrderingState();
 
     // Set up Server-Sent Events connection (token in URL; EventSource cannot send headers)
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -248,16 +270,17 @@ export default function KitchenDashboard() {
     return () => {
       eventSource.close();
     };
-  }, [loadOrders]);
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
 
   // Full refresh every 5 minutes so missed SSE events or stale state self-heal
   useEffect(() => {
     const id = setInterval(() => {
       loadOrders();
       loadCheckoutAlerts();
+      loadOnlineOrderingState();
     }, 5 * 60 * 1000);
     return () => clearInterval(id);
-  }, [loadOrders, loadCheckoutAlerts]);
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
 
   // Poll checkout issues more often than full order list (no SSE for drafts)
   useEffect(() => {
@@ -594,6 +617,39 @@ export default function KitchenDashboard() {
     }
   };
 
+  const handleSetOnlineOrderingPaused = async (paused) => {
+    const password = String(onlineOrderingPassword || "");
+    if (!password) {
+      alert("Enter the online ordering password first.");
+      return;
+    }
+
+    setOnlineOrderingBusy(true);
+    try {
+      const result = await locationApi.setOnlineOrderingState({ paused, password });
+      setOnlineOrderingPaused(Boolean(result?.onlineOrderingPaused));
+      setOnlineOrderingPausedAt(result?.onlineOrderingPausedAt || null);
+      setOnlineOrderingPausedByEmail(result?.onlineOrderingPausedByEmail || null);
+      setOnlineOrderingPassword("");
+      setOnlineOrderingModalOpen(false);
+      alert(
+        paused
+          ? "Online ordering has been paused."
+          : "Online ordering has been resumed.",
+      );
+    } catch (error) {
+      alert(error.message || "Could not update online ordering state.");
+    } finally {
+      setOnlineOrderingBusy(false);
+    }
+  };
+
+  const openOnlineOrderingModal = (paused) => {
+    setOnlineOrderingTargetPaused(paused);
+    setOnlineOrderingPassword("");
+    setOnlineOrderingModalOpen(true);
+  };
+
   const formatTime = (dateString) => {
     return formatStoreDateTime(dateString, {
       hour: "numeric",
@@ -832,6 +888,76 @@ export default function KitchenDashboard() {
          )}
        </AnimatePresence>
 
+      <AnimatePresence>
+        {onlineOrderingModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 p-4"
+            onClick={(e) =>
+              e.target === e.currentTarget && setOnlineOrderingModalOpen(false)
+            }
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 24, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <h3 className="text-xl font-bold text-[var(--coffee-brown)]">
+                {onlineOrderingTargetPaused
+                  ? "Pause Online Ordering"
+                  : "Resume Online Ordering"}
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Enter the online ordering password to{" "}
+                {onlineOrderingTargetPaused ? "pause" : "resume"} customer
+                ordering.
+              </p>
+              <input
+                type="password"
+                value={onlineOrderingPassword}
+                onChange={(e) => setOnlineOrderingPassword(e.target.value)}
+                placeholder="Online ordering password"
+                className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                autoFocus
+              />
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOnlineOrderingModalOpen(false)}
+                  disabled={onlineOrderingBusy}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSetOnlineOrderingPaused(onlineOrderingTargetPaused)
+                  }
+                  disabled={onlineOrderingBusy}
+                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${
+                    onlineOrderingTargetPaused
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-emerald-500 hover:bg-emerald-600"
+                  }`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingTargetPaused
+                      ? "Pause ordering"
+                      : "Resume ordering"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
        {/* Header */}
        <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -881,6 +1007,22 @@ export default function KitchenDashboard() {
                    </svg>
                    Test sound
                  </button>
+                <button
+                  type="button"
+                  onClick={() => openOnlineOrderingModal(!onlineOrderingPaused)}
+                  disabled={onlineOrderingBusy}
+                  className={`w-full min-w-[7rem] rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                    onlineOrderingPaused
+                      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                      : "bg-red-500 text-white hover:bg-red-600"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingPaused
+                      ? "Resume ordering"
+                      : "Pause ordering"}
+                </button>
                </div>
              </div>
 
@@ -1005,6 +1147,24 @@ export default function KitchenDashboard() {
                    Test sound
                  </button>
                </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => openOnlineOrderingModal(!onlineOrderingPaused)}
+                  disabled={onlineOrderingBusy}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                    onlineOrderingPaused
+                      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                      : "bg-red-500 text-white hover:bg-red-600"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingPaused
+                      ? "Resume ordering"
+                      : "Pause ordering"}
+                </button>
+              </div>
                <Link
                  href="/kitchen/previous"
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"
@@ -1017,6 +1177,35 @@ export default function KitchenDashboard() {
        </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div
+          className={`mb-6 rounded-lg border p-4 ${
+            onlineOrderingPaused
+              ? "border-red-200 bg-red-50"
+              : "border-emerald-200 bg-emerald-50"
+          }`}
+        >
+          <p
+            className={`text-sm font-semibold ${
+              onlineOrderingPaused ? "text-red-800" : "text-emerald-800"
+            }`}
+          >
+            {onlineOrderingPaused
+              ? "Online ordering is currently paused."
+              : "Online ordering is currently active."}
+          </p>
+          {onlineOrderingPaused && (
+            <p className="mt-1 text-xs text-red-700">
+              Paused{" "}
+              {onlineOrderingPausedAt
+                ? `${getTimeAgo(onlineOrderingPausedAt)}`
+                : "recently"}
+              {onlineOrderingPausedByEmail
+                ? ` by ${onlineOrderingPausedByEmail}`
+                : ""}
+              .
+            </p>
+          )}
+        </div>
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
