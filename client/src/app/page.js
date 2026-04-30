@@ -447,7 +447,7 @@ export default function Home() {
 
       <BeanStampsPromo variant="home" />
 
-      {/* Now at the cafe — coffee, açaí bowls, ice cream */}
+      {/* Now at the cafe — coffee, bowls, gelato */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[var(--coffee-brown)] via-[var(--coffee-brown)] to-[var(--coffee-brown-dark)] py-14 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cpath fill=\'%23ffffff\' fill-opacity=\'0.03\' d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/svg%3E')] opacity-90" aria-hidden />
         <div className="relative mx-auto max-w-5xl">
@@ -491,10 +491,10 @@ export default function Home() {
               className="rounded-2xl border border-white/15 bg-white/10 p-6 text-center backdrop-blur-sm"
             >
               <h3 className="text-xl font-bold text-[var(--lime-green)] sm:text-2xl">
-                Açaí bowls
+                Vegan Bowl &amp; Signature Bowl
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
-                Organic Brazilian açaí — tropical, berry-forward flavor with a rich, creamy sorbet texture. Naturally vegan, gluten-free &amp; dairy-free, loaded with antioxidants. We top it with fresh fruit, granola, and more—indulgent taste that still fits a health-conscious day.
+                Our Vegan Bowl is packed with fruit-forward ingredients, healthy fats, and fiber-rich toppings for clean energy and a satisfying finish. Our Signature Bowl adds a balanced mix of fruit, granola, and nutrient-dense add-ons for a wholesome, feel-good meal any time of day.
               </p>
             </motion.div>
             <motion.div
@@ -505,10 +505,10 @@ export default function Home() {
               className="rounded-2xl border border-white/15 bg-white/10 p-6 text-center backdrop-blur-sm"
             >
               <h3 className="text-xl font-bold text-[var(--lime-green)] sm:text-2xl">
-                Ice cream
+                Villa Dolce Gelato
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
-                Premium scoop ice cream — rich chocolate and real vanilla bean (Madagascar vanilla), extra-creamy with no artificial flavors or colors. We also offer a vegan pistachio with real nut pieces—so everyone gets a dessert worth coming back for.
+                We now serve premium Villa Dolce gelato in customer favorites like Tiramisu, Madagascar Vanilla Bean, and Dark Chocolate. Try our Tiramisu Affogato: creamy tiramisu gelato served with a double shot of espresso for the perfect rich-and-bold dessert experience.
               </p>
             </motion.div>
           </div>
