@@ -169,7 +169,7 @@ export const menuItemsFromCSV = [
     section: "Coffee & Espresso",
     tags: ["hot", "espresso", "caramel"],
     allergens: ["Dairy"],
-    image: "",
+    image: "/images/menu/Coffee/CaramelMacchiatoLand.png",
     available: true,
     active: true,
     modifierGroupNames: [
@@ -408,8 +408,8 @@ export const menuItemsFromCSV = [
     tags: ["smoothie", "organic", "fresh", "berry"],
     allergens: ["Dairy"],
     image: "/images/menu/Smoothies/BerryBoostLand.png",
-    available: true,
-    active: true,
+    available: false,
+    active: false,
     modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
   },
   {
@@ -590,8 +590,8 @@ export const menuItemsFromCSV = [
     tags: ["bakery", "muffin", "berry"],
     allergens: ["Gluten", "Dairy", "Eggs"],
     image: "/images/menu/Bakery/BlueberryMuffin.png",
-    available: true,
-    active: true,
+    available: false,
+    active: false,
     modifierGroupNames: ["Warmed"],
   },
   {
@@ -680,8 +680,8 @@ export const menuItemsFromCSV = [
     tags: ["bakery", "bread", "lemon"],
     allergens: ["Gluten", "Dairy", "Eggs"],
     image: "",
-    available: true,
-    active: true,
+    available: false,
+    active: false,
     modifierGroupNames: ["Warmed"],
   },
 
