@@ -4,6 +4,92 @@
  * from the Clover POS system.
  */
 
+/** Extra Single Shots always immediately after Shot Preference. */
+const HOT_LATTE_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Hot)",
+  "Espresso Bean",
+  "Cup Size (12-16)",
+  "Syrup Pumps (+$0.25 each)",
+  "Coffee Toppings",
+  "Whipped Cream",
+  "Milk Choice",
+];
+
+const RED_EYE_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Hot)",
+  "Espresso Bean",
+  "Cup Size (12-16) Red Eye",
+  "Syrup Pumps (+$0.25 each)",
+  "Coffee Toppings",
+  "Whipped Cream",
+  "Milk Choice",
+];
+
+const HOT_AMERICANO_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Hot)",
+  "Espresso Bean",
+  "Cup Size (12-16)",
+];
+
+const HOT_CAPPUCCINO_STYLE_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Hot)",
+  "Espresso Bean",
+  "Syrup Pumps (+$0.25 each)",
+  "Coffee Toppings",
+  "Whipped Cream",
+  "Milk Choice",
+];
+
+const HOT_ESPRESSO_4OZ_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Hot)",
+  "Espresso Bean",
+];
+
+const CORTADO_MODIFIERS = [...HOT_ESPRESSO_4OZ_MODIFIERS, "Milk Choice"];
+
+const ICED_LATTE_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Iced)",
+  "Espresso Bean",
+  "Cup Size (16-20)",
+  "Syrup Pumps (+$0.25 each)",
+  "Coffee Toppings",
+  "Whipped Cream",
+  "Ice Level",
+  "Milk Choice",
+  "Cold Foam",
+];
+
+const ICED_AMERICANO_MODIFIERS = [
+  "Shot Preference",
+  "Extra Single Shots (Iced)",
+  "Espresso Bean",
+  "Cup Size (16-20)",
+  "Ice Level",
+  "Cold Foam",
+];
+
+const ICED_STRAWBERRY_MATCHA_MODIFIERS = [
+  "Cold Brew Cup Size (16-20)",
+  "Syrup Pumps (+$0.25 each)",
+  "Milk Choice",
+  "Cold Foam",
+  "Ice Level",
+];
+
+const HOT_CHOCOLATE_MODIFIERS = ["Cup Size (12-16)", "Milk Choice"];
+
+const LONDON_FOG_MODIFIERS = [
+  "Hot Cup Size",
+  "Milk Choice",
+  "Syrup Pumps (+$0.25 each)",
+];
+
 export const menuItemsFromCSV = [
   // Coffee & Espresso (Espresso Bar)
   {
@@ -17,16 +103,12 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/AmericanoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (12-16)",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_AMERICANO_MODIFIERS,
   },
   {
     name: "Cappuccino",
-    description: "Served in a 12oz cup, filled to 8oz total: espresso with equal parts steamed milk and foam.",
+    description:
+      "Served in a 12oz cup, filled to 8oz total: espresso with equal parts steamed milk and foam.",
     price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
@@ -35,15 +117,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/CappuccinoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Extra Single Shots (Hot)",
-      "Milk Choice",
-    ],
+    modifierGroupNames: HOT_CAPPUCCINO_STYLE_MODIFIERS,
   },
   {
     name: "Doppio",
@@ -56,11 +130,35 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/DoppioLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_ESPRESSO_4OZ_MODIFIERS,
+  },
+  {
+    name: "Cortado",
+    description:
+      "Double shot of espresso with a small amount of steamed milk, served in a 4oz cup (whole milk by default).",
+    price: 4.0,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "espresso"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: CORTADO_MODIFIERS,
+  },
+  {
+    name: "Lungo",
+    description:
+      "A long-pull double shot of espresso for a milder, more voluminous 4oz cup.",
+    price: 3.4,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "espresso"],
+    allergens: [],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: HOT_ESPRESSO_4OZ_MODIFIERS,
   },
   {
     name: "Espresso",
@@ -73,15 +171,12 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_ESPRESSO_4OZ_MODIFIERS,
   },
   {
     name: "Flat White",
-    description: "Served in a 12oz cup, filled to 8oz total: espresso with velvety, lightly textured milk.",
+    description:
+      "Served in a 12oz cup, filled to 8oz total: espresso with velvety, lightly textured milk.",
     price: 4.7,
     currency: "USD",
     section: "Coffee & Espresso",
@@ -90,15 +185,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/LatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Extra Single Shots (Hot)",
-      "Milk Choice",
-    ],
+    modifierGroupNames: HOT_CAPPUCCINO_STYLE_MODIFIERS,
   },
   {
     name: "Latte",
@@ -111,16 +198,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/LatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (12-16)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Milk Choice",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_LATTE_MODIFIERS,
   },
   {
     name: "Mocha",
@@ -133,16 +211,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/MochaLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Cup Size (12-16)",
-      "Extra Single Shots (Hot)",
-      "Milk Choice",
-    ],
+    modifierGroupNames: HOT_LATTE_MODIFIERS,
   },
   {
     name: "Espresso Macchiato",
@@ -155,11 +224,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/EspressoMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_ESPRESSO_4OZ_MODIFIERS,
   },
   {
     name: "Caramel Macchiato",
@@ -172,16 +237,63 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/CaramelMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (12-16)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Milk Choice",
-      "Extra Single Shots (Hot)",
-    ],
+    modifierGroupNames: HOT_LATTE_MODIFIERS,
+  },
+  {
+    name: "Spiced Honey Ritual",
+    description:
+      "Honey with vanilla, cinnamon, and drops of orange extract, served hot with a double shot of espresso and steamed milk (whole milk by default).",
+    price: 5.7,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "espresso", "honey", "specialty"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: HOT_LATTE_MODIFIERS,
+  },
+  {
+    name: "Hot Chocolate",
+    description:
+      "Premium chocolate sauce with milk of your choice, served hot (whole milk by default).",
+    price: 4.2,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "chocolate"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: HOT_CHOCOLATE_MODIFIERS,
+  },
+  {
+    name: "Cafe Au Lait",
+    description:
+      "Drip coffee with steamed milk, served hot (whole milk by default).",
+    price: 4.1,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "coffee", "milk"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: HOT_LATTE_MODIFIERS,
+  },
+  {
+    name: "Red Eye",
+    description:
+      "Drip coffee with a double shot of espresso, served hot in 12oz or 16oz.",
+    price: 5.2,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["hot", "coffee", "espresso"],
+    allergens: [],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: RED_EYE_MODIFIERS,
   },
   {
     name: "Filtered Coffee",
@@ -228,14 +340,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedAmericanoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Ice Level",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_AMERICANO_MODIFIERS,
   },
   {
     name: "Iced Caramel Macchiato",
@@ -248,18 +353,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedCaramelMacchiatoLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
   {
     name: "Iced Latte",
@@ -272,18 +366,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedLatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
   {
     name: "Iced Flat White",
@@ -296,43 +379,49 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Coffee/IcedFlatWhiteLand.png",
     available: true,
     active: false,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
   {
-    name: "Iced Mocha",
+    name: "Iced Mocha Latte",
     description:
-      "Espresso, chocolate, and cold milk over ice, finished with whipped cream. Includes whipped cream in the drink; add below only if you want extra (+$0.75).",
+      "Double shot of espresso with premium chocolate sauce and milk of your choice, served over ice (whole milk by default).",
     price: 6.1,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["iced", "espresso", "chocolate", "cold"],
     allergens: ["Dairy"],
-    image: "/images/menu/Coffee/IcedMochaLand.png",
+    image: "",
     available: true,
-    active: false,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    active: true,
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
+  },
+  {
+    name: "B-Berry White Chocolate Bloom",
+    description:
+      "Double shot of espresso over white chocolate and milk of your choice, topped with blueberry cold foam, served iced (whole milk by default).",
+    price: 7.3,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["iced", "espresso", "cold", "specialty"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
+  },
+  {
+    name: "Shaken Ube Meadow",
+    description:
+      "Toasted marshmallow and ube over a double shot of espresso, shaken with ice; served 16–20oz with ube garnish (whole milk by default).",
+    price: 6.5,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["iced", "espresso", "cold", "shaken", "specialty"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
   {
     name: "Brown Sugar Cinnamon Shaken Espresso",
@@ -346,18 +435,7 @@ export const menuItemsFromCSV = [
     image: "", // UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
   {
     name: "Caramel Shaken Espresso",
@@ -371,18 +449,7 @@ export const menuItemsFromCSV = [
     image: "", // UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Shot Preference",
-      "Espresso Bean",
-      "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Coffee Toppings",
-      "Whipped Cream",
-      "Ice Level",
-      "Milk Choice",
-      "Cold Foam",
-      "Extra Single Shots (Iced)",
-    ],
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
   },
 
   // Smoothies
@@ -751,6 +818,20 @@ export const menuItemsFromCSV = [
     ],
   },
   {
+    name: "London Fog",
+    description:
+      "Earl grey with steamed milk and vanilla, topped with a dust of cinnamon, served hot.",
+    price: 5.1,
+    currency: "USD",
+    section: "Tea",
+    tags: ["tea", "hot", "earl grey"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: LONDON_FOG_MODIFIERS,
+  },
+  {
     name: "Iced Chai Latte",
     description: "Spiced chai tea blended with steamed milk.",
     price: 5.5,
@@ -798,13 +879,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/StrawberryMatchaLatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Milk Choice",
-      "Cold Foam",
-      "Ice Level",
-    ],
+    modifierGroupNames: ICED_STRAWBERRY_MATCHA_MODIFIERS,
   },
   {
     name: "Iced Blueberry Matcha Latte",
@@ -817,13 +892,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/BlueberryMatchaLatteLand.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Milk Choice",
-      "Cold Foam",
-      "Ice Level",
-    ],
+    modifierGroupNames: ICED_STRAWBERRY_MATCHA_MODIFIERS,
   },
   {
     name: "Iced Mango Matcha Latte",
@@ -836,12 +905,20 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Favorites/MangoMatchaLatte.png",
     available: true,
     active: true,
-    modifierGroupNames: [
-      "Cold Brew Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
-      "Milk Choice",
-      "Cold Foam",
-      "Ice Level",
-    ],
+    modifierGroupNames: ICED_STRAWBERRY_MATCHA_MODIFIERS,
+  },
+  {
+    name: "Ube Matcha Lemonade",
+    description:
+      "Lemonade mixed with ube over ice, topped with matcha (2% milk by default when milk is selected).",
+    price: 6.5,
+    currency: "USD",
+    section: "Tea",
+    tags: ["tea", "iced", "matcha", "ube", "lemonade"],
+    allergens: ["Dairy"],
+    image: "",
+    available: true,
+    active: true,
+    modifierGroupNames: ICED_STRAWBERRY_MATCHA_MODIFIERS,
   },
 ];
