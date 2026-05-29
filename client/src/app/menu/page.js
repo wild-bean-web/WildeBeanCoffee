@@ -12,6 +12,59 @@ import CustomizationModal from "@/components/CustomizationModal";
 import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { GRAND_OPENING_DATE, PASTRIES_ORDERING_ENABLED, PASTRIES_SECTION_NAME } from "@/lib/constants";
 
+const COFFEE_ESPRESSO_SECTION = "Coffee & Espresso";
+
+/** Matches server menu route: iced/cold tags or name prefix. */
+function isCoffeeEspressoColdItem(item) {
+  const hasColdTag =
+    Array.isArray(item.tags) &&
+    (item.tags.includes("cold") || item.tags.includes("iced"));
+  const name = (item.name || "").toLowerCase();
+  return name.startsWith("iced") || name.startsWith("cold") || hasColdTag;
+}
+
+function buildMenuSectionRenderEntries(section, items) {
+  if (section !== COFFEE_ESPRESSO_SECTION) {
+    return items.map((item) => ({ kind: "item", key: item._id, item }));
+  }
+  const hot = [];
+  const cold = [];
+  for (const item of items) {
+    if (isCoffeeEspressoColdItem(item)) cold.push(item);
+    else hot.push(item);
+  }
+  const entries = [];
+  if (hot.length > 0) {
+    entries.push({ kind: "divider", key: "coffee-hot-divider", label: "Hot Drinks" });
+    hot.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
+  }
+  if (cold.length > 0) {
+    entries.push({
+      kind: "divider",
+      key: "coffee-cold-divider",
+      label: "Iced & Cold Drinks",
+    });
+    cold.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
+  }
+  return entries;
+}
+
+function CoffeeSubsectionDivider({ label }) {
+  return (
+    <div
+      className="col-span-full flex items-center gap-4 py-2"
+      role="separator"
+      aria-label={label}
+    >
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
+      <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-[var(--coffee-brown)]">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
+    </div>
+  );
+}
+
 function MenuPageContent() {
   const searchParams = useSearchParams();
   const [selectedSection, setSelectedSection] = useState("");
@@ -342,14 +395,16 @@ function MenuPageContent() {
         </div>
       </div>
 
-      {/* Cafe highlights: coffee, bowls, gelato */}
+      {/* Cafe highlights: coffee, gelato */}
       <div className="border-y border-[var(--lime-green)]/30 bg-gradient-to-r from-[var(--coffee-brown)]/10 to-[var(--lime-green)]/10 py-3 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl text-center space-y-1.5 sm:space-y-0 sm:space-x-2">
-          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base sm:inline">
-            <span className="font-semibold text-[var(--lime-green)]">Our coffee:</span> Yirgacheffe — specialty Ethiopian Arabica from high-altitude farms; bright, light-bodied, with floral jasmine, citrus &amp; bergamot, and fruit notes. Our house bean for drinks at the cafe.
+        <div className="mx-auto flex max-w-4xl flex-col gap-2.5 text-center sm:gap-3">
+          <p className="text-sm font-medium leading-relaxed text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold text-[var(--lime-green)]">Our coffee:</span>{" "}
+            Yirgacheffe — specialty Ethiopian Arabica from high-altitude farms; bright, light-bodied, with floral jasmine, citrus &amp; bergamot, and fruit notes. Our house bean for drinks at the cafe.
           </p>
-          <p className="text-sm font-medium text-[var(--coffee-brown)] sm:text-base sm:inline sm:before:content-['\00a0•\00a0']">
-            <span className="font-semibold text-[var(--lime-green)]">In store:</span> Vegan Bowl &amp; Signature Bowl built with wholesome ingredients, plus Villa Dolce gelato favorites including Tiramisu, Madagascar Vanilla Bean, and Dark Chocolate. Our Tiramisu Affogato is served with a double shot of espresso.
+          <p className="text-sm font-medium leading-relaxed text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold text-[var(--lime-green)]">In store:</span>{" "}
+            Villa Dolce gelato favorites including Tiramisu, Madagascar Vanilla Bean, and Dark Chocolate. Our Tiramisu Affogato is served with a double shot of espresso.
           </p>
         </div>
       </div>
@@ -406,9 +461,19 @@ function MenuPageContent() {
                 </div>
               )}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {items.map((item) => (
+                {buildMenuSectionRenderEntries(section, items).map((entry) => {
+                  if (entry.kind === "divider") {
+                    return (
+                      <CoffeeSubsectionDivider
+                        key={entry.key}
+                        label={entry.label}
+                      />
+                    );
+                  }
+                  const item = entry.item;
+                  return (
                   <motion.div
-                    key={item._id}
+                    key={entry.key}
                     whileHover={{ y: -4 }}
                     className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg flex flex-col h-full"
                     onClick={() => openMenuItemModal(item)}
@@ -571,7 +636,8 @@ function MenuPageContent() {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           ))}

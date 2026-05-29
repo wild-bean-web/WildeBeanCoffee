@@ -106,8 +106,12 @@ export default function CustomizationModal({
               group.name === "Milk Choice" ||
               group.name === "Milk Choice (Smoothies)"
             ) {
+              const isMatchaDrink =
+                menuItem?.tags?.includes("matcha") ||
+                /matcha/i.test(menuItem?.name || "");
+              const defaultMilk = isMatchaDrink ? "2% Milk" : "Whole Milk";
               defaultOption = group.options.find(
-                (opt) => opt.name === "Whole Milk" && opt.available,
+                (opt) => opt.name === defaultMilk && opt.available,
               );
             } else if (group.name === "Yogurt Choice") {
               defaultOption = group.options.find(
