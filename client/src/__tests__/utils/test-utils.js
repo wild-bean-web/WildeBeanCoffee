@@ -31,7 +31,7 @@ export const mockCart = [mockCartItem];
  */
 export const mockProduct = {
   _id: "product-1",
-  name: "Ethiopia Yirgacheffe",
+  name: "Ethiopian Yirgacheffe",
   description: "A delicious coffee",
   price: 16.5,
   currency: "USD",

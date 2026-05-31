@@ -538,7 +538,7 @@ export const menuItemsFromCSV = [
   {
     name: "Build Your Own Bowl",
     description:
-      "1 base, 2 fruits, up to 8 toppings & 2 drizzles. Small / Medium +$1.",
+      "Choose your base and size. Add up to 8 toppings, 2 fruits, and 2 drizzles if you like. Medium +$1.",
     price: 10.3,
     currency: "USD",
     section: "Wild Bowl",
@@ -550,9 +550,9 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Base",
       "Bowl Size",
-      "Toppings",
+      "Toppings (Build Your Own)",
       "Drizzels",
-      "Fruit Toppings",
+      "Fruit Toppings (Build Your Own)",
       "Extra Add-Ons",
     ],
   },
