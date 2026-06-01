@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
 import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
 import { PICKUP_COFFEE_FRESHNESS_NOTE } from "@/lib/pickupCoffeeFreshnessNote";
+import PickupArrivalNotice from "@/components/PickupArrivalNotice";
 
 /** Clover may leave this literal in successUrl if redirect template is not substituted. */
 const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
@@ -259,8 +260,9 @@ function OrderSuccessContent() {
             <p className="mb-4 text-gray-600">
               Thank you for your order. We&apos;ll have it ready for pickup soon.
             </p>
+            <PickupArrivalNotice className="mx-auto mb-4 max-w-md text-left" />
             {showPickupCoffeeFreshnessNote && (
-              <p className="mx-auto mb-4 max-w-md text-sm leading-snug text-stone-600">
+              <p className="mx-auto mb-4 max-w-md text-left text-sm leading-snug text-stone-600">
                 {PICKUP_COFFEE_FRESHNESS_NOTE}
               </p>
             )}

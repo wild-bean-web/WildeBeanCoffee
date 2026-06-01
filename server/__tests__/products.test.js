@@ -77,9 +77,9 @@ describe("Products API", () => {
     });
 
     it("should search by name", async () => {
-      const p1 = await createTestProduct({ name: "Ethiopia Yirgacheffe", active: true });
+      const p1 = await createTestProduct({ name: "Ethiopian Yirgacheffe", active: true });
       const p2 = await createTestProduct({ name: "Colombian Supremo", active: true });
-      const p3 = await createTestProduct({ name: "Ethiopia Sidamo", active: true });
+      const p3 = await createTestProduct({ name: "Ethiopian Sidamo", active: true });
 
       expect(p1._id).toBeDefined();
       expect(p2._id).toBeDefined();
@@ -88,7 +88,7 @@ describe("Products API", () => {
       const response = await request(app).get("/api/products?search=Ethiopia");
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveLength(2);
-      expect(response.body.data.every((p) => p.name.includes("Ethiopia"))).toBe(true);
+      expect(response.body.data.every((p) => p.name.includes("Ethiopian"))).toBe(true);
     });
 
     it("should return 404 for invalid product ID", async () => {

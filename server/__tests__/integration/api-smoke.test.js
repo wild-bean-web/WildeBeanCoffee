@@ -26,7 +26,7 @@ describe('API Integration Smoke Tests', () => {
     it('should allow user to browse products, filter, and view details', async () => {
       // Create test products
       const product1 = await createTestProduct({
-        name: 'Ethiopia Yirgacheffe',
+        name: 'Ethiopian Yirgacheffe',
         categories: ['single-origin', 'medium-roast'],
         inStock: true,
         active: true,
@@ -65,13 +65,13 @@ describe('API Integration Smoke Tests', () => {
       const searchRes = await request(app).get('/api/products?search=Ethiopia')
       expect(searchRes.status).toBe(200)
       expect(searchRes.body.data.length).toBe(1)
-      expect(searchRes.body.data[0].name).toContain('Ethiopia')
+      expect(searchRes.body.data[0].name).toContain('Ethiopian')
 
       // 5. View product details
       const detailRes = await request(app).get(`/api/products/${product1._id}`)
       expect(detailRes.status).toBe(200)
       expect(detailRes.body.data._id).toBe(product1._id.toString())
-      expect(detailRes.body.data.name).toBe('Ethiopia Yirgacheffe')
+      expect(detailRes.body.data.name).toBe('Ethiopian Yirgacheffe')
     })
   })
 
@@ -288,7 +288,7 @@ describe('API Integration Smoke Tests', () => {
     it('should complete full order flow: browse -> select -> order -> track', async () => {
       // Setup: Create products and menu items
       const product = await createTestProduct({
-        name: 'Ethiopia Yirgacheffe',
+        name: 'Ethiopian Yirgacheffe',
         price: 16.50,
         inStock: true,
         active: true,

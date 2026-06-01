@@ -27,6 +27,7 @@ import {
   PICKUP_COFFEE_FRESHNESS_NOTE,
   cartIncludesCoffeeEspressoDrinks,
 } from "@/lib/pickupCoffeeFreshnessNote";
+import PickupArrivalNotice from "@/components/PickupArrivalNotice";
 import { STORE_TIME_ZONE } from "@/lib/dateTime";
 
 function formatInTimeZoneParts(date, timeZone) {
@@ -1383,8 +1384,9 @@ function OrderPageContent() {
               <p className="text-gray-600">
                 Your order has been received and is being prepared.
               </p>
+              <PickupArrivalNotice className="mx-auto mt-4 max-w-md text-left" />
               {pickupCoffeeFreshnessOnSuccess && (
-                <p className="mx-auto mt-3 max-w-md text-sm leading-snug text-stone-600">
+                <p className="mx-auto mt-3 max-w-md text-left text-sm leading-snug text-stone-600">
                   {PICKUP_COFFEE_FRESHNESS_NOTE}
                 </p>
               )}
@@ -2354,6 +2356,8 @@ function OrderPageContent() {
                     </p>
                   )}
                 </div>
+
+                <PickupArrivalNotice />
 
                 {showPickupCoffeeFreshnessNote && (
                   <p className="rounded-lg border border-stone-200/80 bg-stone-50 px-3 py-2.5 text-xs leading-snug text-stone-600">

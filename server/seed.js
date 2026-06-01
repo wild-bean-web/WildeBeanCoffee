@@ -28,7 +28,7 @@ const mongoUri = isTestSeed
 
 const products = [
   {
-    name: "Ethiopia Yirgacheffe",
+    name: "Ethiopian Yirgacheffe",
     description:
       "Floral, citrus, and tea-like with bright acidity. A classic Ethiopian coffee with delicate notes.",
     price: 0,
@@ -45,7 +45,7 @@ const products = [
     comingSoon: true,
   },
   {
-    name: "Ethiopia Sidamo",
+    name: "Ethiopian Sidamo",
     description:
       "Rich and full-bodied with wine-like acidity and fruity notes. A distinctive Ethiopian coffee.",
     price: 0,
