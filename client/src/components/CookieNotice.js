@@ -54,6 +54,7 @@ export default function CookieNotice() {
             <button
               type="button"
               onClick={handleAccept}
+              aria-label="Accept cookies and continue"
               className="shrink-0 rounded-lg bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-[var(--coffee-brown)] transition-colors hover:bg-[var(--lime-green-light)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green-light)] focus:ring-offset-2 focus:ring-offset-[var(--coffee-brown)]"
             >
               Accept

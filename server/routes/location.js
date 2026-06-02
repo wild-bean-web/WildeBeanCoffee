@@ -1,6 +1,8 @@
 import express from "express";
 import { Location } from "../models/index.js";
 import { errorResponse, safeParseNumber } from "../utils/validation.js";
+import { authenticate } from "../middleware/auth.js";
+import { requireKitchenAdmin } from "../middleware/kitchenAdmin.js";
 
 const router = express.Router();
 
@@ -34,6 +36,69 @@ router.get("/", async (_req, res, next) => {
     next(err);
   }
 });
+
+// PATCH /api/location/online-ordering-state
+// Kitchen admin only: pause/unpause online ordering with env password.
+router.patch(
+  "/online-ordering-state",
+  authenticate,
+  requireKitchenAdmin,
+  async (req, res, next) => {
+    try {
+      const togglePassword = String(
+        process.env.ONLINE_ORDERING_TOGGLE_PASSWORD || "",
+      ).trim();
+      if (!togglePassword) {
+        return errorResponse(
+          res,
+          500,
+          "Online ordering toggle password is not configured on the server.",
+        );
+      }
+
+      const providedPassword = String(req.body?.password || "");
+      if (!providedPassword) {
+        return errorResponse(res, 400, "password is required", ["password"]);
+      }
+      if (providedPassword !== togglePassword) {
+        return errorResponse(res, 401, "Incorrect password");
+      }
+
+      const paused = Boolean(req.body?.paused);
+      const update = paused
+        ? {
+            onlineOrderingPaused: true,
+            onlineOrderingPausedAt: new Date(),
+            onlineOrderingPausedByEmail: req.user?.email || null,
+          }
+        : {
+            onlineOrderingPaused: false,
+            onlineOrderingPausedAt: null,
+            onlineOrderingPausedByEmail: null,
+          };
+
+      const location = await Location.findOneAndUpdate(
+        { active: true },
+        { $set: update },
+        { new: true },
+      ).lean();
+
+      if (!location) {
+        return errorResponse(res, 404, "No active location found");
+      }
+
+      res.json({
+        data: {
+          onlineOrderingPaused: Boolean(location.onlineOrderingPaused),
+          onlineOrderingPausedAt: location.onlineOrderingPausedAt || null,
+          onlineOrderingPausedByEmail: location.onlineOrderingPausedByEmail || null,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // POST /api/location/distance
 // Body: { lat: number, lng: number }

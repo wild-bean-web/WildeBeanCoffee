@@ -103,6 +103,27 @@ export default function TermsOfUsePage() {
               <p className="mb-4 leading-relaxed">
                 We strive to display accurate pricing and product information. We do not warrant that descriptions, pricing, or other content on the Site are accurate, complete, or current. We reserve the right to correct errors and to change or update information at any time. If an order is placed at an incorrect price due to an error, we may cancel the order or contact you to confirm the correct price.
               </p>
+              <h3 className="mb-3 text-xl font-semibold text-[var(--coffee-brown)]">
+                5.4 Product and Menu Images (Visual Depictions)
+              </h3>
+              <p className="mb-4 leading-relaxed">
+                Images of menu items, beverages, food products, coffee beans, and other visual content on the Site are for <strong>illustration and display purposes only</strong>. Such images may be <strong>computer-generated, AI-generated, digitally created, stock photography, or otherwise representational</strong> and are <strong>not necessarily photographs of actual products</strong> prepared or served by Wild Bean Coffee. They may be stylized, enhanced, or simulated. <strong>We do not represent or guarantee that the actual products you receive will match the images shown</strong> in appearance, portion size, color, plating, or otherwise. By using the Site and placing orders, you acknowledge and agree that you have not relied on any image as a precise or accurate depiction of the product and that Wild Bean Coffee is not liable for any difference between depicted and actual products.
+              </p>
+              <h3 className="mb-3 text-xl font-semibold text-[var(--coffee-brown)]">
+                5.5 Accuracy of Content; No False Advertising
+              </h3>
+              <p className="mb-4 leading-relaxed">
+                We strive to present accurate information about our menu, products, and services. However, <strong>marketing copy, descriptions, and other content on the Site (including taglines, promotional text, and third-party or search listings that derive from our Site) are for general information only</strong>. We do not guarantee that any such content is accurate, complete, current, or free of errors. Product names, descriptions, ingredients, allergens, pricing, and availability may change without notice. <strong>Nothing on the Site shall be construed as a guarantee, warranty, or legally binding representation</strong> except as expressly stated in these Terms (e.g., our obligations regarding orders you have placed). To the extent any general statements about our offerings could be read as promises (e.g., quality or sourcing), they reflect our goals and standards only and do not create additional legal obligations beyond these Terms and applicable law.
+              </p>
+              <h3 className="mb-3 text-xl font-semibold text-[var(--coffee-brown)]">
+                5.6 Refunds, Cancellations, and Payment or Order Failures
+              </h3>
+              <p className="mb-4 leading-relaxed">
+                <strong>Refunds and cancellations:</strong> Our refund and order-cancellation policy is as follows. You may request to cancel an order before it is prepared; we will attempt to accommodate such requests but are not obligated to do so. If you have already paid and we cancel the order or cannot fulfill it, we will refund you in accordance with our policy and applicable law. Refunds for orders placed online are processed through our payment processor (Clover) or otherwise at our discretion; refund timing may depend on your financial institution. We do not guarantee a refund in every circumstance (e.g., if you simply change your mind after pickup time has passed or the order has been prepared).
+              </p>
+              <p className="mb-4 leading-relaxed">
+                <strong>Payment succeeded but order not created:</strong> In the rare event that your payment is processed successfully but your order is not recorded in our system (e.g., due to a technical failure after payment), contact us immediately with your payment confirmation or transaction details. We will work in good faith to either fulfill your order or arrange a refund. Your sole remedy in such a situation is to contact us; we are not liable for any consequential or other damages beyond fulfilling the order or refunding the amount paid.
+              </p>
             </section>
 
             <section>
@@ -117,9 +138,38 @@ export default function TermsOfUsePage() {
               </p>
             </section>
 
+            <section id="accessibility">
+              <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
+                7. Accessibility
+              </h2>
+              <p className="mb-4 leading-relaxed">
+                Wild Bean Coffee is committed to ensuring digital accessibility for people with disabilities. We strive to make our Site and Services accessible and usable by everyone, including users who rely on assistive technologies such as screen readers, keyboard navigation, or voice control. We follow applicable accessibility standards and guidelines where practicable, including aspects of the Web Content Accessibility Guidelines (WCAG).
+              </p>
+              <p className="mb-4 leading-relaxed">
+                We continue to improve the accessibility of our Site. If you encounter any barrier to accessing the Site or our online ordering services—such as an inaccessible page, feature, or content—please contact us. We will work with you to provide the information, item, or transaction you need through an alternative method, and we will consider your feedback as we work to improve our accessibility.
+              </p>
+              <p className="leading-relaxed">
+                <strong>Contact for accessibility issues:</strong> Email us at{" "}
+                <a
+                  href="mailto:info@wildbeancoffeeshop.com"
+                  className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
+                >
+                  info@wildbeancoffeeshop.com
+                </a>{" "}
+                or call{" "}
+                <a
+                  href="tel:+12406456203"
+                  className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
+                >
+                  240-645-6203
+                </a>
+                . We aim to respond to accessibility feedback in a timely manner.
+              </p>
+            </section>
+
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                7. Intellectual Property
+                8. Intellectual Property
               </h2>
               <p className="mb-4 leading-relaxed">
                 The Site and its entire contents, features, and functionality (including but not limited to text, graphics, logos, images, and software) are owned by Wild Bean Coffee or its licensors and are protected by United States and international copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or create derivative works from any part of the Site or our content without our prior written consent.
@@ -128,16 +178,16 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                8. Disclaimers
+                9. Disclaimers
               </h2>
               <p className="mb-4 leading-relaxed">
-                THE SITE AND SERVICES ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR COURSE OF PERFORMANCE. WE DO NOT WARRANT THAT THE SITE OR SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS. WE DO NOT CONTROL AND ARE NOT RESPONSIBLE FOR THE AVAILABILITY, CONTENT, OR CONDUCT OF THIRD-PARTY SERVICES SUCH AS CLOVER.
+                THE SITE AND SERVICES ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR COURSE OF PERFORMANCE. WE DO NOT WARRANT THAT THE SITE OR SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS. WE DO NOT WARRANT THE ACCURACY, COMPLETENESS, OR RELIABILITY OF ANY CONTENT, DESCRIPTIONS, IMAGERY, OR INFORMATION ON THE SITE. WE DO NOT CONTROL AND ARE NOT RESPONSIBLE FOR THE AVAILABILITY, CONTENT, OR CONDUCT OF THIRD-PARTY SERVICES SUCH AS CLOVER.
               </p>
             </section>
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                9. Limitation of Liability
+                10. Limitation of Liability
               </h2>
               <p className="mb-4 leading-relaxed">
                 TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, WILD BEAN COFFEE AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, DATA, USE, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SITE OR SERVICES, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE), OR ANY OTHER LEGAL THEORY, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
@@ -152,7 +202,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                10. Indemnification
+                11. Indemnification
               </h2>
               <p className="leading-relaxed">
                 You agree to indemnify, defend, and hold harmless Wild Bean Coffee and its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to (a) your use of the Site or Services, (b) your violation of these Terms, (c) your violation of any third-party right, or (d) any dispute between you and a third party, including Clover, to the extent arising from your use of the Services.
@@ -161,7 +211,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                11. Third-Party Services
+                12. Third-Party Services
               </h2>
               <p className="mb-4 leading-relaxed">
                 Our Services may integrate or link to third-party services, including Clover for payment processing. Your use of such third-party services is subject to their respective terms and privacy policies. We are not responsible for the content, privacy practices, or availability of third-party services. Links to third-party sites or services do not constitute our endorsement. Clover's terms and privacy policy are available at{" "}
@@ -187,16 +237,16 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                12. Governing Law and Disputes
+                13. Governing Law and Disputes
               </h2>
               <p className="mb-4 leading-relaxed">
-                These Terms and any dispute or claim arising out of or related to them or the Site or Services shall be governed by and construed in accordance with the laws of the State in which Wild Bean Coffee operates, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the state and federal courts located in that State for the resolution of any disputes.
+                These Terms and any dispute or claim arising out of or related to them or the Site or Services shall be governed by and construed in accordance with the laws of the State of Maryland, without regard to its conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of the state and federal courts located in Maryland for the resolution of any disputes.
               </p>
             </section>
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                13. Changes to These Terms
+                14. Changes to These Terms
               </h2>
               <p className="leading-relaxed">
                 We may revise these Terms at any time. We will post the updated Terms on this page and update the "Last updated" date. Your continued use of the Site or Services after the posting of changes constitutes your acceptance of the revised Terms. If you do not agree to the new Terms, you must stop using the Site and Services.
@@ -205,7 +255,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                14. Severability
+                15. Severability
               </h2>
               <p className="leading-relaxed">
                 If any provision of these Terms is held to be invalid or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable while preserving the parties' intent, or if modification is not possible, severed from these Terms. The remaining provisions shall remain in full force and effect.
@@ -214,7 +264,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                15. Entire Agreement
+                16. Entire Agreement
               </h2>
               <p className="leading-relaxed">
                 These Terms, together with our Privacy Policy and any other policies or guidelines we post on the Site, constitute the entire agreement between you and Wild Bean Coffee regarding the Site and Services and supersede any prior agreements.
@@ -223,7 +273,7 @@ export default function TermsOfUsePage() {
 
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-[var(--coffee-brown)]">
-                16. Contact Us
+                17. Contact Us
               </h2>
               <p className="mb-4 leading-relaxed">
                 If you have questions about these Terms of Use, please contact us:
@@ -233,10 +283,10 @@ export default function TermsOfUsePage() {
                 <li>
                   Email:{" "}
                   <a
-                    href="mailto:wildbeancoffeellc@gmail.com"
+                    href="mailto:info@wildbeancoffeeshop.com"
                     className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                   >
-                    wildbeancoffeellc@gmail.com
+                    info@wildbeancoffeeshop.com
                   </a>
                 </li>
                 <li>

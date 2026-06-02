@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import { MenuItem, ModifierGroup } from "../models/index.js";
 import { errorResponse, validateQueryBoolean } from "../utils/validation.js";
+import { isMenuItemHiddenFromCustomer } from "../config/customerMenuExclusions.js";
 
 const router = express.Router();
 
@@ -34,18 +35,28 @@ router.get("/", async (req, res, next) => {
       ];
     }
 
-    const items = await MenuItem.find(query)
+    let items = await MenuItem.find(query)
       .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
-    
+    items = items.filter((item) => !isMenuItemHiddenFromCustomer(item.name));
+
     // For Coffee & Espresso section, sort hot items before iced/cold items
     if (section === "Coffee & Espresso" || (!section && items.some(item => item.section === "Coffee & Espresso"))) {
       items.sort((a, b) => {
         // Only apply custom sorting to Coffee & Espresso items
         if (a.section === "Coffee & Espresso" && b.section === "Coffee & Espresso") {
-          const aIsCold = a.name.toLowerCase().startsWith("iced") || a.name.toLowerCase().startsWith("cold");
-          const bIsCold = b.name.toLowerCase().startsWith("iced") || b.name.toLowerCase().startsWith("cold");
+          const coldTags = (tags) =>
+            Array.isArray(tags) &&
+            (tags.includes("cold") || tags.includes("iced"));
+          const aIsCold =
+            a.name.toLowerCase().startsWith("iced") ||
+            a.name.toLowerCase().startsWith("cold") ||
+            coldTags(a.tags);
+          const bIsCold =
+            b.name.toLowerCase().startsWith("iced") ||
+            b.name.toLowerCase().startsWith("cold") ||
+            coldTags(b.tags);
           
           // Hot items come first
           if (aIsCold && !bIsCold) return 1;
@@ -59,14 +70,16 @@ router.get("/", async (req, res, next) => {
       });
     }
 
-    // For Wild Bowl section, sort "Build Your Own Bowl" to appear last
+    // For Wild Bowl section, sort Signature Bowl, Wild Vegan, then Build Your Own Bowl last
     if (section === "Wild Bowl" || (!section && items.some(item => item.section === "Wild Bowl"))) {
       items.sort((a, b) => {
         if (a.section === "Wild Bowl" && b.section === "Wild Bowl") {
-          const aIsBuildYourOwn = a.name.toLowerCase() === "build your own bowl";
-          const bIsBuildYourOwn = b.name.toLowerCase() === "build your own bowl";
-          if (aIsBuildYourOwn && !bIsBuildYourOwn) return 1;
-          if (!aIsBuildYourOwn && bIsBuildYourOwn) return -1;
+          const order = ["Signature Bowl", "Wild Vegan", "Build Your Own Bowl"];
+          const aIndex = order.indexOf(a.name);
+          const bIndex = order.indexOf(b.name);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
           return a.name.localeCompare(b.name);
         }
         return 0;
@@ -77,30 +90,22 @@ router.get("/", async (req, res, next) => {
     if (section === "Smoothies (Organic & Fresh)" || (!section && items.some(item => item.section === "Smoothies (Organic & Fresh)"))) {
       const smoothieOrder = [
         "Green Glow",
-        "Berry Boost",
+        "Triple B",
         "Tropical Bliss",
-        "Nutty Banana Bliss",
         "Guava Cream",
-        "Dirty Banana Smoothie",
+        "Berry Mango Tango",
+        "Power Couple",
       ];
-      
+
       items.sort((a, b) => {
-        // Only apply custom sorting to Smoothies items
         if (a.section === "Smoothies (Organic & Fresh)" && b.section === "Smoothies (Organic & Fresh)") {
           const aIndex = smoothieOrder.indexOf(a.name);
           const bIndex = smoothieOrder.indexOf(b.name);
-          
-          // If both are in the order list, sort by their position
-          if (aIndex !== -1 && bIndex !== -1) {
-            return aIndex - bIndex;
-          }
-          // If only one is in the list, prioritize it
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
           if (aIndex !== -1) return -1;
           if (bIndex !== -1) return 1;
-          // If neither is in the list, sort alphabetically
           return a.name.localeCompare(b.name);
         }
-        // For items in different sections, maintain original order
         return 0;
       });
     }
@@ -121,6 +126,9 @@ router.get("/:id", async (req, res, next) => {
       .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .lean();
     if (!item) {
+      return errorResponse(res, 404, "Menu item not found");
+    }
+    if (isMenuItemHiddenFromCustomer(item.name)) {
       return errorResponse(res, 404, "Menu item not found");
     }
     res.json({ data: item });

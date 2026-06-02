@@ -67,6 +67,17 @@ describe("Menu API", () => {
       expect(response.body.data[0].available).toBe(true);
     });
 
+    it("should omit customer-hidden menu items from list", async () => {
+      await createTestMenuItem({ name: "Almond Croissant", active: true });
+      await createTestMenuItem({ name: "Plain Croissant", active: true });
+
+      const response = await request(app).get("/api/menu");
+      expect(response.status).toBe(200);
+      const names = response.body.data.map((i) => i.name);
+      expect(names).not.toContain("Almond Croissant");
+      expect(names).toContain("Plain Croissant");
+    });
+
     it("should search by name", async () => {
       const item1 = await createTestMenuItem({ name: "Iced Latte", active: true });
       const item2 = await createTestMenuItem({ name: "Hot Latte", active: true });
@@ -95,6 +106,15 @@ describe("Menu API", () => {
       expect(response.status).toBe(200);
       expect(response.body.data).toHaveProperty("_id", menuItem._id.toString());
       expect(response.body.data.name).toBe("Test Latte");
+    });
+
+    it("should return 404 for customer-hidden menu item by id", async () => {
+      const menuItem = await createTestMenuItem({
+        name: "Almond Croissant",
+        active: true,
+      });
+      const response = await request(app).get(`/api/menu/${menuItem._id}`);
+      expect(response.status).toBe(404);
     });
 
     it("should return 404 for invalid menu item ID", async () => {

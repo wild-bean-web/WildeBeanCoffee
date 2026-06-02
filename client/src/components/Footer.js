@@ -70,7 +70,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-lg font-semibold">Wild Bean Coffee</h3>
             <p className="text-sm text-gray-300">
-              Fresh roasted coffee beans and handcrafted beverages. Visit us in
+              Premium coffee and handcrafted beverages. Visit us in
               store or order online for pickup.
             </p>
           </div>
@@ -130,6 +130,14 @@ export default function Footer() {
                   Terms of Use
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/terms#accessibility"
+                  className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
+                >
+                  Accessibility
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -140,8 +148,8 @@ export default function Footer() {
               </a>
             </p>
             <p className="mb-4 text-sm text-gray-300">
-              <a href="mailto:wildbeancoffeellc@gmail.com" className="transition-colors hover:text-[var(--lime-green)]">
-                wildbeancoffeellc@gmail.com
+              <a href="mailto:info@wildbeancoffeeshop.com" className="transition-colors hover:text-[var(--lime-green)]">
+                info@wildbeancoffeeshop.com
               </a>
             </p>
             <p className="mb-8 text-sm text-gray-300">
@@ -215,7 +223,14 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-gray-700 pt-8 pb-[60px] text-center text-sm text-gray-400">
-          <p>&copy; {currentYear} Wild Bean Coffee. All rights reserved.</p>
+          <p className="mb-1">&copy; {currentYear} Wild Bean Coffee. All rights reserved.</p>
+          <p className="text-xs text-gray-500">
+            Menu and product images are illustrative only. They may be digitally created, generated, or stock imagery and do not represent actual items.             See{" "}
+            <Link href="/terms" className="text-gray-400 underline hover:text-[var(--lime-green)]">
+              Terms of Use
+            </Link>{" "}
+            for details.
+          </p>
         </div>
       </div>
     </footer>

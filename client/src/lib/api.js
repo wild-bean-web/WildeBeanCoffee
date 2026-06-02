@@ -3,6 +3,8 @@
  * Handles all API communication with consistent error handling
  */
 
+import { localDateRangeToUtcIsoBounds } from "@/lib/kitchenDateRange";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 /**
@@ -173,6 +175,18 @@ export const locationApi = {
     });
     return result.data.distance;
   },
+
+  /**
+   * Kitchen admin: pause/unpause online ordering.
+   * @param {{ paused: boolean, password: string }} payload
+   */
+  setOnlineOrderingState: async (payload) => {
+    const result = await fetchJson("/api/location/online-ordering-state", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return result.data;
+  },
 };
 
 /**
@@ -193,6 +207,29 @@ export const ordersApi = {
   },
 
   /**
+   * Recover order after Hosted Checkout if sessionStorage was lost (same checkoutId from URL).
+   */
+  recoverHostedCheckout: async (checkoutId) => {
+    const result = await fetchJson("/api/orders/recover-hosted-checkout", {
+      method: "POST",
+      body: JSON.stringify({ checkoutId }),
+    });
+    return result.data;
+  },
+
+  /**
+   * Kitchen admin: create paid order from hosted-checkout draft, skipping pickup-time and
+   * online-only menu checks (stale pickup / recovery failures).
+   */
+  forceResolveHostedCheckout: async (checkoutId) => {
+    const result = await fetchJson("/api/orders/kitchen/force-resolve-hosted-checkout", {
+      method: "POST",
+      body: JSON.stringify({ checkoutId }),
+    });
+    return result.data;
+  },
+
+  /**
    * Get an order by ID
    * @param {string} id - Order ID
    * @returns {Promise<Object>} Order object
@@ -208,10 +245,18 @@ export const ordersApi = {
    * @param {string} status - New status
    * @returns {Promise<Object>} Updated order object
    */
-  updateStatus: async (id, status) => {
+  /**
+   * @param {string} id
+   * @param {string|{status?: string, paymentStatus?: string}} statusOrBody - legacy: status string; or body object
+   */
+  updateStatus: async (id, statusOrBody) => {
+    const body =
+      typeof statusOrBody === "string"
+        ? { status: statusOrBody }
+        : statusOrBody;
     const result = await fetchJson(`/api/orders/${id}/status`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
     return result.data;
   },
@@ -237,15 +282,45 @@ export const ordersApi = {
     if (all) {
       params.append("all", "true");
     } else if (startDate && endDate) {
+      const { rangeStart, rangeEnd } = localDateRangeToUtcIsoBounds(
+        startDate,
+        endDate,
+      );
+      params.append("rangeStart", rangeStart);
+      params.append("rangeEnd", rangeEnd);
       params.append("startDate", startDate);
       params.append("endDate", endDate);
     } else if (startDate) {
+      const { rangeStart, rangeEnd } = localDateRangeToUtcIsoBounds(
+        startDate,
+        startDate,
+      );
+      params.append("rangeStart", rangeStart);
+      params.append("rangeEnd", rangeEnd);
       params.append("date", startDate);
     }
     const queryString = params.toString();
     const url = `/api/orders/kitchen/previous${queryString ? `?${queryString}` : ""}`;
     const result = await fetchJson(url);
     return result.data || [];
+  },
+
+  /**
+   * Kitchen dashboard: paid checkout drafts needing attention (with orderDraft for tickets).
+   */
+  getKitchenCheckoutAlerts: async () => {
+    const result = await fetchJson("/api/orders/kitchen/checkout-alerts");
+    return result.data || [];
+  },
+};
+
+/**
+ * Bean Stamps loyalty (authenticated users only)
+ */
+export const loyaltyApi = {
+  getMe: async () => {
+    const result = await fetchJson("/api/loyalty/me");
+    return result.data;
   },
 };
 

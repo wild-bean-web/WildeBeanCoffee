@@ -6,4 +6,6 @@ export { default as User } from "./user.js";
 export { default as ModifierGroup } from "./modifierGroup.js";
 export { default as EmailVerification } from "./emailVerification.js";
 export { default as PasswordReset } from "./passwordReset.js";
+export { default as LoyaltyStampCredit } from "./loyaltyStampCredit.js";
+export { default as HostedCheckoutDraft } from "./hostedCheckoutDraft.js";
 

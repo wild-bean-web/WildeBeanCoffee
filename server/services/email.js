@@ -2,10 +2,24 @@ import nodemailer from "nodemailer";
 
 /**
  * Create email transporter based on environment variables
- * Supports SMTP (Gmail, custom SMTP) or service-specific configs
+ * Supports custom SMTP first (Postmark, etc.), then Gmail.
  */
 function createTransporter() {
-  // Check if using Gmail OAuth2
+  if (process.env.SMTP_HOST) {
+    console.log("✅ Using custom SMTP");
+    console.log("   SMTP_HOST:", process.env.SMTP_HOST);
+    console.log("   EMAIL_FROM:", process.env.EMAIL_FROM || "(set EMAIL_FROM to a Postmark-verified sender)");
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587", 10),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
   if (process.env.EMAIL_SERVICE === "gmail" && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     console.log("✅ Using Gmail SMTP configuration");
     console.log("   EMAIL_USER:", process.env.EMAIL_USER);
@@ -14,25 +28,11 @@ function createTransporter() {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // Use App Password for Gmail
+        pass: process.env.EMAIL_PASS,
       },
     });
   }
 
-  // Check if using custom SMTP
-  if (process.env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
-
-  // No config: caller must use getTransporterAsync() to create a real Ethereal test account
   return null;
 }
 
@@ -43,9 +43,9 @@ let testTransporterPromise = null;
 function getTransporter() {
   if (!transporter) {
     console.log("📧 Creating email transporter...");
+    console.log("   SMTP_HOST:", process.env.SMTP_HOST ? "Set" : "Not set");
     console.log("   EMAIL_SERVICE:", process.env.EMAIL_SERVICE || "not set");
     console.log("   EMAIL_USER:", process.env.EMAIL_USER ? "Set" : "Not set");
-    console.log("   EMAIL_PASS:", process.env.EMAIL_PASS ? "***" : "Not set");
     transporter = createTransporter();
   }
   return transporter;
@@ -61,7 +61,7 @@ async function getTransporterAsync() {
 
   if (testTransporterPromise) return testTransporterPromise;
   console.warn(
-    "⚠️  No email config (EMAIL_USER/EMAIL_PASS or SMTP_*). Creating Ethereal test account so emails can be sent in dev."
+    "⚠️  No email config (SMTP_* or Gmail EMAIL_*). Creating Ethereal test account so emails can be sent in dev."
   );
   testTransporterPromise = nodemailer.createTestAccount().then((account) => {
     const t = nodemailer.createTransport({
@@ -86,7 +86,7 @@ async function getTransporterAsync() {
 export async function sendVerificationCode(email, code) {
   // For Gmail, FROM address should match EMAIL_USER or be a verified alias
   // If EMAIL_FROM is different, Gmail will use EMAIL_USER as the sender
-  const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@wildbeancoffee.com";
+  const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@wildbeancoffeeshop.com";
   
   const mailOptions = {
     from: `"Wild Bean Coffee" <${fromAddress}>`, // Add friendly name to improve deliverability
@@ -166,7 +166,7 @@ export async function sendVerificationCode(email, code) {
  * @returns {Promise<Object>} Email send result
  */
 export async function sendPasswordResetCode(email, code) {
-  const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@wildbeancoffee.com";
+  const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@wildbeancoffeeshop.com";
   
   const mailOptions = {
     from: `"Wild Bean Coffee" <${fromAddress}>`,

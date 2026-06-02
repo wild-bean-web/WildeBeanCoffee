@@ -27,6 +27,9 @@ const LocationSchema = new mongoose.Schema(
     email: { type: String, trim: true },
     mapsUrl: { type: String, trim: true },
     hours: [HoursSchema],
+    onlineOrderingPaused: { type: Boolean, default: false },
+    onlineOrderingPausedAt: { type: Date, default: null },
+    onlineOrderingPausedByEmail: { type: String, trim: true, default: null },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

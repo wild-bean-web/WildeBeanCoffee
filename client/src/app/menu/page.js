@@ -9,7 +9,61 @@ import { useMenu } from "@/hooks/useMenu";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import CustomizationModal from "@/components/CustomizationModal";
+import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { GRAND_OPENING_DATE, PASTRIES_ORDERING_ENABLED, PASTRIES_SECTION_NAME } from "@/lib/constants";
+
+const COFFEE_ESPRESSO_SECTION = "Coffee & Espresso";
+
+/** Matches server menu route: iced/cold tags or name prefix. */
+function isCoffeeEspressoColdItem(item) {
+  const hasColdTag =
+    Array.isArray(item.tags) &&
+    (item.tags.includes("cold") || item.tags.includes("iced"));
+  const name = (item.name || "").toLowerCase();
+  return name.startsWith("iced") || name.startsWith("cold") || hasColdTag;
+}
+
+function buildMenuSectionRenderEntries(section, items) {
+  if (section !== COFFEE_ESPRESSO_SECTION) {
+    return items.map((item) => ({ kind: "item", key: item._id, item }));
+  }
+  const hot = [];
+  const cold = [];
+  for (const item of items) {
+    if (isCoffeeEspressoColdItem(item)) cold.push(item);
+    else hot.push(item);
+  }
+  const entries = [];
+  if (hot.length > 0) {
+    entries.push({ kind: "divider", key: "coffee-hot-divider", label: "Hot Drinks" });
+    hot.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
+  }
+  if (cold.length > 0) {
+    entries.push({
+      kind: "divider",
+      key: "coffee-cold-divider",
+      label: "Iced & Cold Drinks",
+    });
+    cold.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
+  }
+  return entries;
+}
+
+function CoffeeSubsectionDivider({ label }) {
+  return (
+    <div
+      className="col-span-full flex items-center gap-4 py-2"
+      role="separator"
+      aria-label={label}
+    >
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
+      <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-[var(--coffee-brown)]">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
+    </div>
+  );
+}
 
 function MenuPageContent() {
   const searchParams = useSearchParams();
@@ -204,6 +258,7 @@ function MenuPageContent() {
   };
 
   const handleAddToCartClick = (menuItem) => {
+    if (menuItem.onlineOrderable === false) return;
     // Check if item has modifier groups
     const hasModifiers = menuItem.modifierGroups && menuItem.modifierGroups.length > 0;
     
@@ -302,14 +357,18 @@ function MenuPageContent() {
             <p className="mb-6 text-lg text-gray-600">
               Explore our selection of beverages, pastries, and smoothies
             </p>
+            <div className="mx-auto max-w-3xl text-left">
+              <BeanStampsPromo variant="menu" />
+            </div>
           </div>
-          
+
           {/* Section Filter */}
           {sections.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-x-2.5 gap-y-3 px-1 sm:mt-7 sm:gap-x-3 sm:gap-y-3 sm:px-0">
               <button
                 onClick={() => setSelectedSection("")}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                type="button"
+                className={`min-h-[2.75rem] rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-5 sm:py-2.5 ${
                   selectedSection === ""
                     ? "bg-[var(--lime-green)] text-white"
                     : "bg-white text-[var(--coffee-brown)] hover:bg-gray-100"
@@ -320,8 +379,9 @@ function MenuPageContent() {
               {sections.map((section) => (
                 <button
                   key={section}
+                  type="button"
                   onClick={() => setSelectedSection(section)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`min-h-[2.75rem] rounded-full px-4 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-5 sm:py-2.5 ${
                     selectedSection === section
                       ? "bg-[var(--lime-green)] text-white"
                       : "bg-white text-[var(--coffee-brown)] hover:bg-gray-100"
@@ -332,6 +392,20 @@ function MenuPageContent() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Cafe highlights: coffee, gelato */}
+      <div className="border-y border-[var(--lime-green)]/30 bg-gradient-to-r from-[var(--coffee-brown)]/10 to-[var(--lime-green)]/10 py-3 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-4xl flex-col gap-2.5 text-center sm:gap-3">
+          <p className="text-sm font-medium leading-relaxed text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold text-[var(--lime-green)]">Our coffee:</span>{" "}
+            Yirgacheffe — specialty Ethiopian Arabica from high-altitude farms; bright, light-bodied, with floral jasmine, citrus &amp; bergamot, and fruit notes. Our house bean for drinks at the cafe.
+          </p>
+          <p className="text-sm font-medium leading-relaxed text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold text-[var(--lime-green)]">In store:</span>{" "}
+            Villa Dolce gelato favorites including Tiramisu, Madagascar Vanilla Bean, and Dark Chocolate. Our Tiramisu Affogato is served with a double shot of espresso.
+          </p>
         </div>
       </div>
 
@@ -351,16 +425,61 @@ function MenuPageContent() {
               <h2 className="mb-6 border-b-2 border-[var(--lime-green)] pb-2 text-2xl font-bold text-[var(--coffee-brown)]">
                 {section}
               </h2>
+              {section === PASTRIES_SECTION_NAME && (
+                <div
+                  id="bakery-in-store-notice"
+                  className="mb-6 flex gap-3 rounded-xl border-2 border-[var(--lime-green)]/50 bg-gradient-to-r from-[var(--lime-green)]/15 to-amber-50/80 px-4 py-3 shadow-sm sm:items-center sm:gap-4 sm:px-5 sm:py-4"
+                  role="region"
+                  aria-label="Bakery and pastries ordering policy"
+                >
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--coffee-brown)] text-white sm:h-12 sm:w-12"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-[var(--coffee-brown)] sm:text-lg">
+                      In-store only — not available for online order
+                    </p>
+                    <p className="mt-1 text-sm leading-snug text-gray-700">
+                      Browse our pastries below, then visit the cafe to buy. Selection and availability change daily.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {items.map((item) => (
+                {buildMenuSectionRenderEntries(section, items).map((entry) => {
+                  if (entry.kind === "divider") {
+                    return (
+                      <CoffeeSubsectionDivider
+                        key={entry.key}
+                        label={entry.label}
+                      />
+                    );
+                  }
+                  const item = entry.item;
+                  return (
                   <motion.div
-                    key={item._id}
+                    key={entry.key}
                     whileHover={{ y: -4 }}
                     className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg flex flex-col h-full"
                     onClick={() => openMenuItemModal(item)}
                   >
                     {/* Image Section */}
-                    {item.image && (
+                    {item.image ? (
                       <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                         <Image
                           src={item.image}
@@ -369,6 +488,15 @@ function MenuPageContent() {
                           className="object-cover transition-transform duration-300 group-hover:scale-110"
                           unoptimized
                         />
+                      </div>
+                    ) : (
+                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 border-b border-gray-100">
+                        <div className="text-center px-4">
+                          <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-xs font-medium text-gray-400">Photo coming soon</p>
+                        </div>
                       </div>
                     )}
                     
@@ -422,7 +550,9 @@ function MenuPageContent() {
                       
                       <div className="mt-auto">
                         {item.available ? (
-                          // For items with modifiers, always show "Add to Cart" to allow different customizations
+                          item.onlineOrderable === false ? (
+                            <div className="min-h-[42px]" aria-hidden="true" />
+                          ) : // For items with modifiers, always show "Add to Cart" to allow different customizations
                           // For items without modifiers, show quantity controls if already in cart
                           (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
                             <button
@@ -506,7 +636,8 @@ function MenuPageContent() {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           ))}
@@ -592,7 +723,7 @@ function MenuPageContent() {
                 className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-2xl"
               >
                 {/* Image Section */}
-                {selectedMenuItem.image && (
+                {selectedMenuItem.image ? (
                   <div className="relative h-80 w-full bg-gray-200 sm:h-96">
                     <Image
                       src={selectedMenuItem.image}
@@ -601,6 +732,33 @@ function MenuPageContent() {
                       className="object-contain"
                       unoptimized
                     />
+                    <button
+                      onClick={closeMenuItemModal}
+                      className="absolute right-4 top-4 rounded-full bg-white/90 p-2 shadow-md transition-colors hover:bg-white"
+                    >
+                      <svg
+                        className="h-6 w-6 text-[var(--coffee-brown)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex h-80 w-full items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 sm:h-96">
+                    <div className="text-center px-6">
+                      <svg className="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="mt-3 text-sm font-medium text-gray-400">Photo coming soon</p>
+                    </div>
                     <button
                       onClick={closeMenuItemModal}
                       className="absolute right-4 top-4 rounded-full bg-white/90 p-2 shadow-md transition-colors hover:bg-white"
@@ -682,16 +840,23 @@ function MenuPageContent() {
                   <div className="mt-6 flex items-center justify-between border-t pt-4">
                     <div>
                       {selectedMenuItem.available ? (
+                        selectedMenuItem.onlineOrderable === false ? (
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold text-[var(--coffee-brown)]">In-store purchase only.</span>{" "}
+                            Not available for online order — selection varies daily.
+                          </p>
+                        ) : (
                         <p className="text-sm text-[var(--lime-green)]">
                           ✓ Available
                         </p>
+                        )
                       ) : (
                         <p className="text-sm text-red-600">
                           Currently Unavailable
                         </p>
                       )}
                     </div>
-                    {selectedMenuItem.available && (
+                    {selectedMenuItem.available && selectedMenuItem.onlineOrderable !== false && (
                       // For items with modifiers, always show "Add to Cart" to allow different customizations
                       // For items without modifiers, show quantity controls if already in cart
                       (selectedMenuItem.modifierGroups && selectedMenuItem.modifierGroups.length > 0) || getCartQuantity(selectedMenuItem._id) === 0 ? (

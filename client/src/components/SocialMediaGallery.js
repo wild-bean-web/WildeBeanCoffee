@@ -120,15 +120,15 @@ export default function SocialMediaGallery() {
     },
     {
       id: 2,
-      src: "/images/menu/Oatmeals/PowerBreakfastOatmeal.png",
-      alt: "PowerBreakfastOatmeal",
+      src: "/images/menu/Oatmeals/WildVegan.png",
+      alt: "Wild Vegan bowl",
       platform: "instagram",
       link: SOCIAL_MEDIA_LINKS.instagram,
     },
     {
       id: 3,
-      src: "/images/menu/Bakery/ButterCroissantLand.png",
-      alt: "Bakery",
+      src: "/images/menu/Bakery/PlainCroissant.png",
+      alt: "Plain croissant",
       platform: "facebook",
       link: SOCIAL_MEDIA_LINKS.facebook,
       title: "Sip. Snap. Share",
@@ -155,7 +155,7 @@ export default function SocialMediaGallery() {
       alt: "Chai Latte",
       platform: "Espresso Macchiato",
       link: SOCIAL_MEDIA_LINKS.instagram,
-      title: "Tag @loveWildBeanCoffee",
+      title: "Tag @wild.bean.coffee",
       text: "Espresso yourself… we won't judge",
       animation: "espressoSelfie",
     },
@@ -168,8 +168,8 @@ export default function SocialMediaGallery() {
     },
     {
       id: 8,
-      src: "/images/menu/Bakery/ChocolateMuffinLand.png",
-      alt: "ChocolateMuffin",
+      src: "/images/menu/Bakery/ChocolateCroissant.png",
+      alt: "Chocolate croissant",
       platform: "facebook",
       link: SOCIAL_MEDIA_LINKS.facebook,
     },
@@ -437,7 +437,7 @@ export default function SocialMediaGallery() {
           <p className="text-gray-600">
             Tag us{" "}
             <span className="font-semibold text-[var(--coffee-brown)]">
-              @lovewildbeancoffee
+              @wild.bean.coffee
             </span>{" "}
             for a chance to be featured!
           </p>

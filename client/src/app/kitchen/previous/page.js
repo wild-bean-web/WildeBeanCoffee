@@ -4,63 +4,11 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ordersApi } from "@/lib/api";
-
-// Format a Date as YYYY-MM-DD in local time (avoid UTC/date-shift bugs)
-function toLocalDateString(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-// Parse YYYY-MM-DD as local date (not UTC midnight)
-function parseLocalDate(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function getRangeForPreset(preset) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const copy = (d) => new Date(d.getTime());
-
-  switch (preset) {
-    case "today":
-      return { start: toLocalDateString(today), end: toLocalDateString(today) };
-    case "yesterday": {
-      const y = copy(today);
-      y.setDate(y.getDate() - 1);
-      return { start: toLocalDateString(y), end: toLocalDateString(y) };
-    }
-    case "lastWeek": {
-      const end = copy(today);
-      const start = copy(today);
-      start.setDate(start.getDate() - 6);
-      return { start: toLocalDateString(start), end: toLocalDateString(end) };
-    }
-    case "lastMonth": {
-      const start = copy(today);
-      start.setMonth(start.getMonth() - 1);
-      start.setDate(1);
-      const end = copy(today);
-      end.setDate(0);
-      return { start: toLocalDateString(start), end: toLocalDateString(end) };
-    }
-    case "lastYear": {
-      const start = copy(today);
-      start.setFullYear(start.getFullYear() - 1);
-      start.setMonth(0);
-      start.setDate(1);
-      const end = copy(today);
-      end.setFullYear(end.getFullYear() - 1);
-      end.setMonth(11);
-      end.setDate(31);
-      return { start: toLocalDateString(start), end: toLocalDateString(end) };
-    }
-    default:
-      return null;
-  }
-}
+import {
+  toLocalDateString,
+  parseLocalDate,
+  getRangeForPreset,
+} from "@/lib/kitchenDateRange";
 
 export default function PreviousKitchenOrders() {
   const todayStr = toLocalDateString(new Date());
@@ -356,12 +304,35 @@ function OrderCard({ order, formatTime, formatDate }) {
                   </span>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">
-                      {item.modifiers.map((modifier, modIdx) => (
-                        <li key={modIdx} className="text-xs">
-                          <span className="font-medium">{modifier.modifierGroupName}:</span>{" "}
-                          {modifier.selectedOptions.map((opt) => opt.name).join(", ")}
-                        </li>
-                      ))}
+                      {item.modifiers.map((modifier, modIdx) => {
+                        const isQuantityBasedGroup =
+                          (modifier.modifierGroupName || "").includes("Syrup Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Extra Single Shot");
+                        const isSyrupPump = (modifier.modifierGroupName || "").includes("Syrup");
+                        const rawGroupName = modifier.modifierGroupName || "";
+                        let groupDisplayName = rawGroupName.replace(/\s*\(\+?\$[^)]*\)\s*$/g, "").trim() || rawGroupName;
+                        if (["Cup Size (12-16)", "Cup Size (16-20)", "Cold Brew Cup Size (16-20)"].includes(rawGroupName)) {
+                          groupDisplayName = "Cup Size";
+                        }
+                        const optionsText = modifier.selectedOptions
+                          .map((opt) => {
+                            const q = opt.quantity || 1;
+                            if (isQuantityBasedGroup) {
+                              const baseName = isSyrupPump ? (opt.name || "").replace(/\s+Pump\s*$/i, "").trim() || opt.name : opt.name;
+                              const pumpLabel = isSyrupPump ? (q > 1 ? " pumps" : " pump") : "";
+                              return `${q} x ${baseName}${pumpLabel}`;
+                            }
+                            return opt.name;
+                          })
+                          .join(", ");
+                        return (
+                          <li key={modIdx} className="text-xs">
+                            <span className="font-medium">{groupDisplayName}:</span>{" "}
+                            {optionsText}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                   {item.notes && (

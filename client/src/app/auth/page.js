@@ -1,18 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SignUpForm from "@/components/auth/SignUpForm";
 import SignInForm from "@/components/auth/SignInForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import Toast from "@/components/Toast";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function AuthPage() {
+function AuthPageContent() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState("signin"); // "signin", "signup", or "forgot-password"
   const [toast, setToast] = useState(null);
-  const { user, signUp, signIn, refetch } = useAuth();
+  const { user, refetch } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    const s = searchParams.get("signup");
+    if (s === "1" || s === "true" || (typeof s === "string" && s.toLowerCase() === "yes")) {
+      setMode("signup");
+    }
+  }, [searchParams]);
 
   // Redirect if already signed in (but not immediately after sign up - let toast show first)
   useEffect(() => {
@@ -204,3 +212,16 @@ export default function AuthPage() {
   );
 }
 
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[var(--coffee-brown-very-light)] to-white px-4">
+          <p className="text-[var(--coffee-brown)]">Loading…</p>
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
+  );
+}

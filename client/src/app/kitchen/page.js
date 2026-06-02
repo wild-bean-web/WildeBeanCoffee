@@ -1,10 +1,94 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ordersApi } from "@/lib/api";
+import { locationApi, ordersApi } from "@/lib/api";
+import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
+import { formatStoreDateTime } from "@/lib/dateTime";
+
+function estimateTotalFromDraft(draft) {
+  if (!draft?.items || !Array.isArray(draft.items)) return null;
+  let food = 0;
+  for (const it of draft.items) {
+    food += Number(it.price || 0) * Math.max(1, Number(it.quantity || 1));
+  }
+  const tax = food * Number(draft.taxRate || 0);
+  const tip = Number(draft.tip || 0);
+  return food + tax + tip;
+}
+
+function checkoutAlertDisplayTotal(alert) {
+  const draft = alert?.orderDraft;
+  if (draft?.totals?.total != null && !Number.isNaN(Number(draft.totals.total))) {
+    return Number(draft.totals.total);
+  }
+  const est = estimateTotalFromDraft(draft);
+  if (est != null) return est;
+  if (alert?.amountCents != null) return alert.amountCents / 100;
+  return null;
+}
+
+function formatDraftItemsForKitchen(items) {
+  if (!items?.length) {
+    return <p className="text-sm text-gray-500">No line items in saved draft</p>;
+  }
+  return (
+    <ul className="space-y-2">
+      {items.map((item, idx) => (
+        <li key={idx} className="text-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <span className="font-medium">
+                {item.quantity}x {item.name}
+              </span>
+              {(item.modifiers || []).length > 0 && (
+                <span className="text-gray-600">
+                  {" "}
+                  —{" "}
+                  {(item.modifiers || [])
+                    .map((m) => (m.selectedOptions || []).map((o) => o.name).join(", "))
+                    .join("; ")}
+                </span>
+              )}
+              {item.notes && (
+                <p className="mt-0.5 text-xs italic text-gray-500">Note: {item.notes}</p>
+              )}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** lastPlacementError is often `reason — ${JSON.stringify(result)}`; show result.message when present. */
+function humanizeCheckoutPlacementError(raw) {
+  if (raw == null || raw === "") return "";
+  const s = String(raw).trim();
+  const sep = " — ";
+  const idx = s.indexOf(sep);
+  if (idx === -1) return s;
+  const jsonPart = s.slice(idx + sep.length).trim();
+  try {
+    const parsed = JSON.parse(jsonPart);
+    if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+    if (Array.isArray(parsed?.errors) && parsed.errors.length) {
+      return parsed.errors.map((e) => String(e)).join("; ");
+    }
+  } catch {
+    /* ignore */
+  }
+  return s;
+}
+
+const FORCE_RESOLVE_CHECKOUT_CONFIRM =
+  "Are you sure this order has been resolved?\n\n" +
+  "This will create the paid order on the kitchen board (skipping pickup-time and online-only menu checks) and remove this checkout alert. " +
+  "Only continue if the guest was taken care of or you handled it another way.";
 
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState([]);
@@ -14,6 +98,25 @@ export default function KitchenDashboard() {
   const [newOrderIds, setNewOrderIds] = useState(new Set());
   const [isReadyCollapsed, setIsReadyCollapsed] = useState(false);
   const [isPendingCollapsed, setIsPendingCollapsed] = useState(false);
+  const [isCheckoutIssuesCollapsed, setIsCheckoutIssuesCollapsed] = useState(false);
+  const [checkoutAlerts, setCheckoutAlerts] = useState([]);
+  const [checkoutIssueModal, setCheckoutIssueModal] = useState(null);
+  const [newCheckoutAlertSessions, setNewCheckoutAlertSessions] = useState(
+    () => new Set(),
+  );
+  const [checkoutRetryBusyId, setCheckoutRetryBusyId] = useState(null);
+  const [checkoutForceBusyId, setCheckoutForceBusyId] = useState(null);
+  const [onlineOrderingPaused, setOnlineOrderingPaused] = useState(false);
+  const [onlineOrderingPausedAt, setOnlineOrderingPausedAt] = useState(null);
+  const [onlineOrderingPausedByEmail, setOnlineOrderingPausedByEmail] =
+    useState(null);
+  const [onlineOrderingPassword, setOnlineOrderingPassword] = useState("");
+  const [onlineOrderingBusy, setOnlineOrderingBusy] = useState(false);
+  const [onlineOrderingModalOpen, setOnlineOrderingModalOpen] = useState(false);
+  const [onlineOrderingTargetPaused, setOnlineOrderingTargetPaused] =
+    useState(true);
+  const checkoutAlertsInitRef = useRef(false);
+  const prevCheckoutAlertIdsRef = useRef(new Set());
 
   // New order alert modal (pops up center screen, alarm loops until dismissed)
   const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -76,9 +179,47 @@ export default function KitchenDashboard() {
     };
   }, []);
 
-  // Load initial orders
+  const loadOrders = useCallback(async () => {
+    try {
+      const data = await ordersApi.getKitchenOrders();
+      setOrders(data);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    }
+  }, []);
+
+  const loadCheckoutAlerts = useCallback(async () => {
+    try {
+      const data = await ordersApi.getKitchenCheckoutAlerts();
+      setCheckoutAlerts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to load checkout alerts:", error);
+    }
+  }, []);
+
+  const loadOnlineOrderingState = useCallback(async () => {
+    try {
+      const location = await locationApi.getLocation();
+      setOnlineOrderingPaused(Boolean(location?.onlineOrderingPaused));
+      setOnlineOrderingPausedAt(location?.onlineOrderingPausedAt || null);
+      setOnlineOrderingPausedByEmail(location?.onlineOrderingPausedByEmail || null);
+    } catch (error) {
+      console.error("Failed to load online ordering state:", error);
+    }
+  }, []);
+
+  const refreshKitchen = useCallback(async () => {
+    await loadOrders();
+    await loadCheckoutAlerts();
+    await loadOnlineOrderingState();
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
+
+  // Load initial orders + SSE for live updates
   useEffect(() => {
     loadOrders();
+    loadCheckoutAlerts();
+    loadOnlineOrderingState();
 
     // Set up Server-Sent Events connection (token in URL; EventSource cannot send headers)
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -129,7 +270,23 @@ export default function KitchenDashboard() {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
+
+  // Full refresh every 5 minutes so missed SSE events or stale state self-heal
+  useEffect(() => {
+    const id = setInterval(() => {
+      loadOrders();
+      loadCheckoutAlerts();
+      loadOnlineOrderingState();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [loadOrders, loadCheckoutAlerts, loadOnlineOrderingState]);
+
+  // Poll checkout issues more often than full order list (no SSE for drafts)
+  useEffect(() => {
+    const id = setInterval(loadCheckoutAlerts, 45 * 1000);
+    return () => clearInterval(id);
+  }, [loadCheckoutAlerts]);
 
   // Remove new order highlight after 5 seconds
   useEffect(() => {
@@ -140,16 +297,6 @@ export default function KitchenDashboard() {
       return () => clearTimeout(timer);
     }
   }, [newOrderIds]);
-
-  const loadOrders = async () => {
-    try {
-      const data = await ordersApi.getKitchenOrders();
-      setOrders(data);
-      setLastUpdate(new Date());
-    } catch (error) {
-      console.error("Failed to load orders:", error);
-    }
-  };
 
   // Initialize audio context (requires user interaction)
   const initializeAudio = async () => {
@@ -341,6 +488,77 @@ export default function KitchenDashboard() {
     setNewOrderAlert(null);
   };
 
+  const dismissCheckoutIssueModal = () => {
+    stopAlarmLoop();
+    setCheckoutIssueModal(null);
+  };
+
+  useEffect(() => {
+    const ids = new Set(checkoutAlerts.map((a) => a.checkoutSessionId));
+    if (!checkoutAlertsInitRef.current) {
+      checkoutAlertsInitRef.current = true;
+      prevCheckoutAlertIdsRef.current = ids;
+      return;
+    }
+    const prev = prevCheckoutAlertIdsRef.current;
+    const newOnes = checkoutAlerts.filter((a) => !prev.has(a.checkoutSessionId));
+    prevCheckoutAlertIdsRef.current = ids;
+    if (newOnes.length === 0) return;
+
+    setIsCheckoutIssuesCollapsed(false);
+    setNewCheckoutAlertSessions((s) => {
+      const next = new Set(s);
+      newOnes.forEach((n) => next.add(n.checkoutSessionId));
+      return next;
+    });
+    window.setTimeout(() => {
+      setNewCheckoutAlertSessions((s) => {
+        const next = new Set(s);
+        newOnes.forEach((n) => next.delete(n.checkoutSessionId));
+        return next;
+      });
+    }, 8000);
+    playNotificationSound();
+    startAlarmLoop();
+    setCheckoutIssueModal((cur) => cur || newOnes[0]);
+  }, [checkoutAlerts]);
+
+  const handleRetryCheckoutOrder = async (checkoutSessionId) => {
+    setCheckoutRetryBusyId(checkoutSessionId);
+    try {
+      await ordersApi.recoverHostedCheckout(checkoutSessionId);
+      dismissCheckoutIssueModal();
+      await loadCheckoutAlerts();
+      await loadOrders();
+    } catch (err) {
+      alert(err.message || "Could not create order from checkout. Try again or use Clover.");
+    } finally {
+      setCheckoutRetryBusyId(null);
+    }
+  };
+
+  const checkoutActionBusy = (checkoutSessionId) =>
+    checkoutRetryBusyId === checkoutSessionId ||
+    checkoutForceBusyId === checkoutSessionId;
+
+  const handleForceResolveCheckoutOrder = async (checkoutSessionId) => {
+    if (!window.confirm(FORCE_RESOLVE_CHECKOUT_CONFIRM)) return;
+    setCheckoutForceBusyId(checkoutSessionId);
+    try {
+      await ordersApi.forceResolveHostedCheckout(checkoutSessionId);
+      dismissCheckoutIssueModal();
+      await loadCheckoutAlerts();
+      await loadOrders();
+    } catch (err) {
+      alert(
+        err.message ||
+          "Could not force-create the order. Check the error, try normal retry, or use Clover.",
+      );
+    } finally {
+      setCheckoutForceBusyId(null);
+    }
+  };
+
   const handleMarkReady = async (orderId) => {
     try {
       await ordersApi.updateStatus(orderId, "ready");
@@ -363,9 +581,77 @@ export default function KitchenDashboard() {
     }
   };
 
+  /** Bean Stamps: refunds do not remove stamps (per program rules). */
+  const handleMarkRefunded = async (orderId) => {
+    if (
+      !window.confirm(
+        "Record refund for this order? Bean Stamps earned for this order will NOT be removed.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(orderId, { paymentStatus: "refunded" });
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (error) {
+      console.error("Failed to mark refunded:", error);
+      alert("Failed to record refund. Please try again.");
+    }
+  };
+
+  /** Bean Stamps: cancel revokes stamp tied to this order. */
+  const handleMarkCancelledLoyalty = async (orderId) => {
+    if (
+      !window.confirm(
+        "Cancel this order? Any Bean Stamp earned from this order will be removed from the customer’s card.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(orderId, { status: "cancelled" });
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      alert("Failed to cancel order. Please try again.");
+    }
+  };
+
+  const handleSetOnlineOrderingPaused = async (paused) => {
+    const password = String(onlineOrderingPassword || "");
+    if (!password) {
+      alert("Enter the online ordering password first.");
+      return;
+    }
+
+    setOnlineOrderingBusy(true);
+    try {
+      const result = await locationApi.setOnlineOrderingState({ paused, password });
+      setOnlineOrderingPaused(Boolean(result?.onlineOrderingPaused));
+      setOnlineOrderingPausedAt(result?.onlineOrderingPausedAt || null);
+      setOnlineOrderingPausedByEmail(result?.onlineOrderingPausedByEmail || null);
+      setOnlineOrderingPassword("");
+      setOnlineOrderingModalOpen(false);
+      alert(
+        paused
+          ? "Online ordering has been paused."
+          : "Online ordering has been resumed.",
+      );
+    } catch (error) {
+      alert(error.message || "Could not update online ordering state.");
+    } finally {
+      setOnlineOrderingBusy(false);
+    }
+  };
+
+  const openOnlineOrderingModal = (paused) => {
+    setOnlineOrderingTargetPaused(paused);
+    setOnlineOrderingPassword("");
+    setOnlineOrderingModalOpen(true);
+  };
+
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
+    return formatStoreDateTime(dateString, {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -373,8 +659,7 @@ export default function KitchenDashboard() {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return formatStoreDateTime(dateString, {
       month: "short",
       day: "numeric",
     });
@@ -471,6 +756,208 @@ export default function KitchenDashboard() {
          )}
        </AnimatePresence>
 
+       {/* Checkout issue alert (paid draft missing kitchen order or placement failed) */}
+       <AnimatePresence>
+         {checkoutIssueModal && (
+           <motion.div
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+             onClick={(e) => e.target === e.currentTarget && dismissCheckoutIssueModal()}
+           >
+             <motion.div
+               initial={{ scale: 0.9, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               exit={{ scale: 0.9, opacity: 0 }}
+               transition={{ type: "spring", damping: 25, stiffness: 300 }}
+               onClick={(e) => e.stopPropagation()}
+               className="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-4 ring-amber-400 overflow-hidden"
+             >
+               <div className="bg-amber-500 px-6 py-4 text-center">
+                 <h2 className="text-xl font-bold text-white">Checkout issue</h2>
+                 <p className="text-sm text-white/90 mt-0.5">
+                   Session{" "}
+                   {String(checkoutIssueModal.checkoutSessionId || "")
+                     .slice(-8)
+                     .toUpperCase()}
+                 </p>
+                {checkoutIssueModal.paymentApprovedAt && (
+                  <span className="mt-1 inline-flex rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                    Payment confirmed
+                  </span>
+                )}
+                 <p className="text-xs text-white/85 mt-1">
+                   {checkoutIssueModal.alertKind === "placement_failed"
+                     ? "Order creation failed after payment — retry or use Clover."
+                     : "Paid checkout with no kitchen order yet — retry sync."}
+                 </p>
+               </div>
+               <div className="max-h-[60vh] overflow-y-auto p-6">
+                 {checkoutIssueModal.lastPlacementError && (
+                   <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                     <p className="text-xs font-semibold text-red-800">Last error</p>
+                     <p className="text-sm text-red-900">
+                       {humanizeCheckoutPlacementError(checkoutIssueModal.lastPlacementError)}
+                     </p>
+                   </div>
+                 )}
+                 <div className="mb-4">
+                   <p className="font-semibold text-[var(--coffee-brown)]">
+                     {checkoutIssueModal.orderDraft?.customer?.name || "Customer"}
+                   </p>
+                   <p className="text-sm text-gray-600">
+                     {checkoutIssueModal.orderDraft?.customer?.phone || "—"}
+                   </p>
+                   {checkoutIssueModal.orderDraft?.customer?.email && (
+                     <p className="text-sm text-gray-600">
+                       {checkoutIssueModal.orderDraft.customer.email}
+                     </p>
+                   )}
+                 </div>
+                 <div className="mb-4">
+                   <h4 className="mb-2 font-semibold text-[var(--coffee-brown)]">Make this order</h4>
+                   {formatDraftItemsForKitchen(checkoutIssueModal.orderDraft?.items)}
+                 </div>
+                 {checkoutIssueModal.orderDraft?.notes && (
+                   <div className="mb-4 rounded-lg bg-amber-50 p-2">
+                     <p className="text-xs font-semibold text-amber-800">Order note</p>
+                     <p className="text-sm text-amber-900">{checkoutIssueModal.orderDraft.notes}</p>
+                   </div>
+                 )}
+                 {checkoutIssueModal.orderDraft?.pickupTime && (
+                   <div className="mb-4">
+                     <p className="text-sm text-gray-600">
+                       <span className="font-semibold">Pickup:</span>{" "}
+                       {formatDate(checkoutIssueModal.orderDraft.pickupTime)} at{" "}
+                       {formatTime(checkoutIssueModal.orderDraft.pickupTime)}
+                     </p>
+                   </div>
+                 )}
+                 <div className="flex justify-between border-t border-gray-200 pt-3">
+                   <span className="font-semibold text-[var(--coffee-brown)]">Total</span>
+                   <span className="text-lg font-bold text-[var(--coffee-brown)]">
+                     {(() => {
+                       const t = checkoutAlertDisplayTotal(checkoutIssueModal);
+                       return t != null ? `$${t.toFixed(2)}` : "—";
+                     })()}
+                   </span>
+                 </div>
+                 <p className="mt-4 text-xs text-gray-600">
+                   If normal retry fails because pickup is in the past or the store was closed
+                   for that slot, use force create after you have handled the guest.
+                 </p>
+               </div>
+               <div className="flex flex-col gap-2 p-6 pt-0">
+                 <button
+                   type="button"
+                   onClick={() =>
+                     handleRetryCheckoutOrder(checkoutIssueModal.checkoutSessionId)
+                   }
+                   disabled={checkoutActionBusy(checkoutIssueModal.checkoutSessionId)}
+                   className="w-full rounded-xl bg-[var(--lime-green)] px-6 py-3 text-base font-bold text-white transition-all hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
+                 >
+                   {checkoutRetryBusyId === checkoutIssueModal.checkoutSessionId
+                     ? "Creating order…"
+                     : "Retry — create kitchen order"}
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() =>
+                     handleForceResolveCheckoutOrder(
+                       checkoutIssueModal.checkoutSessionId,
+                     )
+                   }
+                   disabled={checkoutActionBusy(checkoutIssueModal.checkoutSessionId)}
+                   className="w-full rounded-xl border-2 border-amber-600 bg-amber-50 px-6 py-3 text-base font-bold text-amber-950 transition-all hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                 >
+                   {checkoutForceBusyId === checkoutIssueModal.checkoutSessionId
+                     ? "Force creating…"
+                     : "Force create order and clear alert…"}
+                 </button>
+                 <button
+                   type="button"
+                   onClick={dismissCheckoutIssueModal}
+                   className="w-full rounded-xl bg-[var(--coffee-brown)] px-6 py-3 text-base font-bold text-white transition-all hover:bg-[var(--coffee-brown-dark)] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
+                 >
+                   Got it — stop alarm
+                 </button>
+               </div>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
+
+      <AnimatePresence>
+        {onlineOrderingModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 p-4"
+            onClick={(e) =>
+              e.target === e.currentTarget && setOnlineOrderingModalOpen(false)
+            }
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", damping: 24, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <h3 className="text-xl font-bold text-[var(--coffee-brown)]">
+                {onlineOrderingTargetPaused
+                  ? "Pause Online Ordering"
+                  : "Resume Online Ordering"}
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Enter the online ordering password to{" "}
+                {onlineOrderingTargetPaused ? "pause" : "resume"} customer
+                ordering.
+              </p>
+              <input
+                type="password"
+                value={onlineOrderingPassword}
+                onChange={(e) => setOnlineOrderingPassword(e.target.value)}
+                placeholder="Online ordering password"
+                className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                autoFocus
+              />
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOnlineOrderingModalOpen(false)}
+                  disabled={onlineOrderingBusy}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSetOnlineOrderingPaused(onlineOrderingTargetPaused)
+                  }
+                  disabled={onlineOrderingBusy}
+                  className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${
+                    onlineOrderingTargetPaused
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-emerald-500 hover:bg-emerald-600"
+                  }`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingTargetPaused
+                      ? "Pause ordering"
+                      : "Resume ordering"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
        {/* Header */}
        <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -499,9 +986,9 @@ export default function KitchenDashboard() {
                </div>
                <div className="flex flex-col gap-2">
                  <button
-                   onClick={loadOrders}
+                   onClick={refreshKitchen}
                    className="rounded-lg bg-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center justify-center gap-2 w-full min-w-[7rem]"
-                   title="Refresh orders"
+                   title="Refresh orders and checkout issues"
                  >
                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -520,6 +1007,22 @@ export default function KitchenDashboard() {
                    </svg>
                    Test sound
                  </button>
+                <button
+                  type="button"
+                  onClick={() => openOnlineOrderingModal(!onlineOrderingPaused)}
+                  disabled={onlineOrderingBusy}
+                  className={`w-full min-w-[7rem] rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                    onlineOrderingPaused
+                      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                      : "bg-red-500 text-white hover:bg-red-600"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingPaused
+                      ? "Resume ordering"
+                      : "Pause ordering"}
+                </button>
                </div>
              </div>
 
@@ -556,7 +1059,7 @@ export default function KitchenDashboard() {
                  </button>
                )}
                
-               {/* Previous Orders Button */}
+               {/* Previous Orders + checkout health */}
                <Link
                  href="/kitchen/previous"
                  className="w-full rounded-lg bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 text-center"
@@ -622,9 +1125,9 @@ export default function KitchenDashboard() {
 
                <div className="flex flex-col gap-2">
                  <button
-                   onClick={loadOrders}
+                   onClick={refreshKitchen}
                    className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 flex items-center gap-2"
-                   title="Refresh orders"
+                   title="Refresh orders and checkout issues"
                  >
                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -644,6 +1147,24 @@ export default function KitchenDashboard() {
                    Test sound
                  </button>
                </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => openOnlineOrderingModal(!onlineOrderingPaused)}
+                  disabled={onlineOrderingBusy}
+                  className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                    onlineOrderingPaused
+                      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                      : "bg-red-500 text-white hover:bg-red-600"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {onlineOrderingBusy
+                    ? "Updating..."
+                    : onlineOrderingPaused
+                      ? "Resume ordering"
+                      : "Pause ordering"}
+                </button>
+              </div>
                <Link
                  href="/kitchen/previous"
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"
@@ -656,6 +1177,35 @@ export default function KitchenDashboard() {
        </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div
+          className={`mb-6 rounded-lg border p-4 ${
+            onlineOrderingPaused
+              ? "border-red-200 bg-red-50"
+              : "border-emerald-200 bg-emerald-50"
+          }`}
+        >
+          <p
+            className={`text-sm font-semibold ${
+              onlineOrderingPaused ? "text-red-800" : "text-emerald-800"
+            }`}
+          >
+            {onlineOrderingPaused
+              ? "Online ordering is currently paused."
+              : "Online ordering is currently active."}
+          </p>
+          {onlineOrderingPaused && (
+            <p className="mt-1 text-xs text-red-700">
+              Paused{" "}
+              {onlineOrderingPausedAt
+                ? `${getTimeAgo(onlineOrderingPausedAt)}`
+                : "recently"}
+              {onlineOrderingPausedByEmail
+                ? ` by ${onlineOrderingPausedByEmail}`
+                : ""}
+              .
+            </p>
+          )}
+        </div>
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
@@ -687,6 +1237,14 @@ export default function KitchenDashboard() {
                       getTimeAgo={getTimeAgo}
                       isReady={true}
                       onMarkPickedUp={handleMarkPickedUp}
+                      onMarkRefunded={
+                        BEAN_STAMPS_ENABLED ? handleMarkRefunded : undefined
+                      }
+                      onMarkCancelledLoyalty={
+                        BEAN_STAMPS_ENABLED
+                          ? handleMarkCancelledLoyalty
+                          : undefined
+                      }
                     />
                   ))}
                 </AnimatePresence>
@@ -696,7 +1254,7 @@ export default function KitchenDashboard() {
         )}
 
         {/* Pending Orders Section */}
-        <div>
+        <div className="mb-8">
           <button
             onClick={() => setIsPendingCollapsed(!isPendingCollapsed)}
             className="mb-4 flex w-full items-center gap-2 text-left hover:opacity-80 transition-opacity"
@@ -731,9 +1289,156 @@ export default function KitchenDashboard() {
                         getTimeAgo={getTimeAgo}
                         onMarkReady={handleMarkReady}
                         isReady={false}
+                        onMarkRefunded={
+                          BEAN_STAMPS_ENABLED ? handleMarkRefunded : undefined
+                        }
+                        onMarkCancelledLoyalty={
+                          BEAN_STAMPS_ENABLED
+                            ? handleMarkCancelledLoyalty
+                            : undefined
+                        }
                       />
                     ))}
                   </AnimatePresence>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Checkout issues (hosted checkout drafts that need attention) — last so primary work stays on top */}
+        <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => setIsCheckoutIssuesCollapsed(!isCheckoutIssuesCollapsed)}
+            className="mb-4 flex w-full items-center gap-2 text-left hover:opacity-80 transition-opacity"
+          >
+            <h2 className="text-2xl font-bold text-[var(--coffee-brown)]">
+              Checkout issues ({checkoutAlerts.length})
+            </h2>
+            <Image
+              src={
+                isCheckoutIssuesCollapsed
+                  ? "/images/icons/caret-double-down.svg"
+                  : "/images/icons/caret-double-up.svg"
+              }
+              alt={isCheckoutIssuesCollapsed ? "Expand" : "Collapse"}
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+          </button>
+          {!isCheckoutIssuesCollapsed && (
+            <>
+              {checkoutAlerts.length === 0 ? (
+                <div className="rounded-lg bg-white p-8 text-center shadow-md">
+                  <p className="text-gray-500">No checkout issues</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {checkoutAlerts.map((alert) => {
+                    const draft = alert.orderDraft || {};
+                    const sid = String(alert.checkoutSessionId || "");
+                    const shortId = sid.slice(-8).toUpperCase();
+                    const isNew = newCheckoutAlertSessions.has(alert.checkoutSessionId);
+                    const total = checkoutAlertDisplayTotal(alert);
+                    return (
+                      <motion.div
+                        key={alert.checkoutSessionId}
+                        layout
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`relative rounded-lg bg-white p-6 shadow-lg ${
+                          isNew ? "ring-4 ring-amber-400 ring-offset-2" : ""
+                        } border border-amber-100`}
+                      >
+                        {isNew && (
+                          <div className="absolute -right-2 -top-2 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white shadow-lg">
+                            NEW
+                          </div>
+                        )}
+                        <div className="mb-3 border-b border-gray-200 pb-3">
+                          <h3 className="text-lg font-bold text-[var(--coffee-brown)]">
+                            Checkout · {shortId}
+                          </h3>
+                          {alert.paymentApprovedAt && (
+                            <span className="mt-1 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+                              Payment confirmed
+                            </span>
+                          )}
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                            {alert.alertKind === "placement_failed"
+                              ? "Placement failed"
+                              : "Paid — no kitchen order yet"}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-600">{getTimeAgo(alert.createdAt)}</p>
+                        </div>
+                        {alert.lastPlacementError && (
+                          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2">
+                            <p className="text-xs font-semibold text-red-800">Error</p>
+                            <p className="text-sm text-red-900">
+                              {humanizeCheckoutPlacementError(alert.lastPlacementError)}
+                            </p>
+                          </div>
+                        )}
+                        <div className="mb-3">
+                          <p className="font-semibold text-[var(--coffee-brown)]">
+                            {draft.customer?.name || "Customer"}
+                          </p>
+                          <p className="text-sm text-gray-600">{draft.customer?.phone || "—"}</p>
+                        </div>
+                        <div className="mb-3">
+                          <h4 className="mb-1 text-sm font-semibold text-[var(--coffee-brown)]">Items</h4>
+                          <div className="max-h-40 overflow-y-auto pr-1">
+                            {formatDraftItemsForKitchen(draft.items)}
+                          </div>
+                        </div>
+                        {draft.pickupTime && (
+                          <p className="mb-3 text-sm text-gray-600">
+                            <span className="font-semibold">Pickup:</span>{" "}
+                            {formatDate(draft.pickupTime)} at {formatTime(draft.pickupTime)}
+                          </p>
+                        )}
+                        <div className="mb-4 flex justify-between border-t border-gray-200 pt-3">
+                          <span className="font-semibold text-[var(--coffee-brown)]">Total</span>
+                          <span className="text-lg font-bold text-[var(--coffee-brown)]">
+                            {total != null ? `$${total.toFixed(2)}` : "—"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCheckoutIssueModal(alert)}
+                            className="w-full rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                          >
+                            Open full ticket
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRetryCheckoutOrder(alert.checkoutSessionId)}
+                            disabled={checkoutActionBusy(alert.checkoutSessionId)}
+                            className="w-full rounded-lg bg-[var(--lime-green)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {checkoutRetryBusyId === alert.checkoutSessionId
+                              ? "Creating order…"
+                              : "Retry — create kitchen order"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleForceResolveCheckoutOrder(alert.checkoutSessionId)
+                            }
+                            disabled={checkoutActionBusy(alert.checkoutSessionId)}
+                            className="w-full rounded-lg border-2 border-amber-600 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {checkoutForceBusyId === alert.checkoutSessionId
+                              ? "Force creating…"
+                              : "Force create order and clear alert…"}
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -753,9 +1458,18 @@ function OrderCard({
   onMarkReady,
   onMarkPickedUp,
   isReady,
+  onMarkRefunded,
+  onMarkCancelledLoyalty,
 }) {
   const [isMarkingReady, setIsMarkingReady] = useState(false);
   const [isMarkingPickedUp, setIsMarkingPickedUp] = useState(false);
+  const [loyaltyBusy, setLoyaltyBusy] = useState(false);
+
+  const showLoyaltyActions =
+    order.paymentStatus === "paid" &&
+    order.status !== "cancelled" &&
+    onMarkRefunded &&
+    onMarkCancelledLoyalty;
 
   const handleMarkReadyClick = async () => {
     setIsMarkingReady(true);
@@ -843,12 +1557,35 @@ function OrderCard({
                   </span>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">
-                      {item.modifiers.map((modifier, modIdx) => (
-                        <li key={modIdx} className="text-xs">
-                          <span className="font-medium">{modifier.modifierGroupName}:</span>{" "}
-                          {modifier.selectedOptions.map((opt) => opt.name).join(", ")}
-                        </li>
-                      ))}
+                      {item.modifiers.map((modifier, modIdx) => {
+                        const isQuantityBasedGroup =
+                          (modifier.modifierGroupName || "").includes("Syrup Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Extra Single Shot");
+                        const isSyrupPump = (modifier.modifierGroupName || "").includes("Syrup");
+                        const rawGroupName = modifier.modifierGroupName || "";
+                        let groupDisplayName = rawGroupName.replace(/\s*\(\+?\$[^)]*\)\s*$/g, "").trim() || rawGroupName;
+                        if (["Cup Size (12-16)", "Cup Size (16-20)", "Cold Brew Cup Size (16-20)"].includes(rawGroupName)) {
+                          groupDisplayName = "Cup Size";
+                        }
+                        const optionsText = modifier.selectedOptions
+                          .map((opt) => {
+                            const q = opt.quantity || 1;
+                            if (isQuantityBasedGroup) {
+                              const baseName = isSyrupPump ? (opt.name || "").replace(/\s+Pump\s*$/i, "").trim() || opt.name : opt.name;
+                              const pumpLabel = isSyrupPump ? (q > 1 ? " pumps" : " pump") : "";
+                              return `${q} x ${baseName}${pumpLabel}`;
+                            }
+                            return opt.name;
+                          })
+                          .join(", ");
+                        return (
+                          <li key={modIdx} className="text-xs">
+                            <span className="font-medium">{groupDisplayName}:</span>{" "}
+                            {optionsText}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                   {item.notes && (
@@ -908,6 +1645,46 @@ function OrderCard({
          >
            {isMarkingPickedUp ? "Marking..." : "Picked Up"}
          </button>
+       )}
+
+       {showLoyaltyActions && (
+         <div className="mt-3 space-y-2 border-t border-dashed border-gray-200 pt-3">
+           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+             Bean Stamps / refunds
+           </p>
+           <div className="flex flex-wrap gap-2">
+             <button
+               type="button"
+               disabled={loyaltyBusy}
+               onClick={async () => {
+                 setLoyaltyBusy(true);
+                 try {
+                   await onMarkRefunded(order._id);
+                 } finally {
+                   setLoyaltyBusy(false);
+                 }
+               }}
+               className="rounded-lg border border-amber-600 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+             >
+               Record refund
+             </button>
+             <button
+               type="button"
+               disabled={loyaltyBusy}
+               onClick={async () => {
+                 setLoyaltyBusy(true);
+                 try {
+                   await onMarkCancelledLoyalty(order._id);
+                 } finally {
+                   setLoyaltyBusy(false);
+                 }
+               }}
+               className="rounded-lg border border-red-600 bg-red-50 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-100 disabled:opacity-50"
+             >
+               Cancel order (remove stamp)
+             </button>
+           </div>
+         </div>
        )}
     </motion.div>
   );

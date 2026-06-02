@@ -10,16 +10,16 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     password: { type: String, required: true }, // Will be hashed with bcrypt
     phone: { type: String, required: true, trim: true },
+    /** Bean Stamps: incremented when a reward is redeemed (new stamp cycle). */
+    loyaltyCycle: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );
 
-// Index for email lookups
-UserSchema.index({ email: 1 });
+// unique: true on email already creates the index — no schema.index({ email }) to avoid duplicate index warnings
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 export default User;

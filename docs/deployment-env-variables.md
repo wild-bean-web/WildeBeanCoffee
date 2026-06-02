@@ -28,6 +28,11 @@ CLOVER_MERCHANT_ID=your-clover-merchant-id-here
 CLOVER_ENVIRONMENT=production
 ```
 
+**Kitchen pause/unpause online ordering password**:
+```
+ONLINE_ORDERING_TOGGLE_PASSWORD=choose-a-strong-password
+```
+
 **Optional MongoDB Settings** (if you want to customize):
 ```
 MONGO_MAX_RETRIES=5

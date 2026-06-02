@@ -75,6 +75,102 @@ function getCloverHeaders() {
   };
 }
 
+function paymentCreatedTimeMs(createdTime) {
+  const n = Number(createdTime);
+  if (!Number.isFinite(n)) return NaN;
+  if (n > 0 && n < 1e12) return Math.round(n * 1000);
+  return Math.round(n);
+}
+
+/**
+ * When the Hosted Checkout merchant webhook never reaches our server, infer approval from
+ * Clover v3 payments: exactly one SUCCESS payment matching draft amount (cents) in a time
+ * window around the draft. Safer than trusting the client; still requires a unique match.
+ *
+ * @param {string} checkoutSessionId
+ * @param {{ amountCents?: number, createdAt?: Date|string }} draftLean
+ * @returns {Promise<{ ok: true, paymentId: string } | { ok: false, reason: string }>}
+ */
+export async function tryMarkHostedCheckoutPaidFromCloverPaymentLookup(
+  checkoutSessionId,
+  draftLean,
+) {
+  initializeConfig();
+  const id = String(checkoutSessionId || "").trim();
+  const expectedCents = Math.round(Number(draftLean?.amountCents));
+  if (!id || !Number.isFinite(expectedCents) || expectedCents <= 0) {
+    return { ok: false, reason: "bad_inputs" };
+  }
+  if (!CLOVER_API_KEY || !CLOVER_MERCHANT_ID) {
+    return { ok: false, reason: "no_clover_config" };
+  }
+
+  const draftMs = draftLean?.createdAt
+    ? new Date(draftLean.createdAt).getTime()
+    : Date.now() - 30 * 60 * 1000;
+  const windowStart = draftMs - 5 * 60 * 1000;
+  const windowEnd = Date.now() + 10 * 60 * 1000;
+
+  const url = `${CLOVER_API_BASE_URL}/v3/merchants/${CLOVER_MERCHANT_ID}/payments?limit=200`;
+  const headers = {
+    ...getCloverHeaders(),
+    "User-Agent": "WildBeanCoffee/1.0 (hosted-checkout-recover)",
+  };
+
+  try {
+    const response = await fetch(url, { method: "GET", headers });
+    const text = await response.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      /* ignore */
+    }
+    if (!response.ok) {
+      console.error(
+        "[CLOVER] list payments for hosted approval sync",
+        response.status,
+        String(text || "").slice(0, 400),
+      );
+      return { ok: false, reason: "clover_http_error" };
+    }
+
+    const elements = Array.isArray(data?.elements) ? data.elements : [];
+    const candidates = elements.filter((p) => {
+      const amt = Number(p?.amount);
+      const ct = paymentCreatedTimeMs(p?.createdTime);
+      const res = String(p?.result || "").toUpperCase();
+      if (res !== "SUCCESS") return false;
+      if (!Number.isFinite(amt) || amt !== expectedCents) return false;
+      if (!Number.isFinite(ct) || ct < windowStart || ct > windowEnd) return false;
+      if (p?.voided === true) return false;
+      return true;
+    });
+
+    if (candidates.length === 0) {
+      return { ok: false, reason: "no_match" };
+    }
+    if (candidates.length > 1) {
+      console.warn(
+        "[CLOVER] hosted checkout payment lookup ambiguous",
+        id,
+        "expectedCents=",
+        expectedCents,
+        "matches=",
+        candidates.length,
+      );
+      return { ok: false, reason: "ambiguous" };
+    }
+
+    const paymentId = String(candidates[0].id || "").trim();
+    if (!paymentId) return { ok: false, reason: "no_payment_id" };
+    return { ok: true, paymentId };
+  } catch (err) {
+    console.error("[CLOVER] tryMarkHostedCheckoutPaidFromCloverPaymentLookup", err);
+    return { ok: false, reason: "exception" };
+  }
+}
+
 /**
  * Process a payment through Clover
  * @param {Object} paymentData - Payment information
@@ -487,6 +583,14 @@ function formatReceiptContent(order) {
     text: `Tax: $${order.totals.tax.toFixed(2)}`,
     align: "LEFT",
   });
+  const tipVal = Number(order.totals.tip);
+  if (Number.isFinite(tipVal) && tipVal > 0) {
+    lines.push({
+      type: "TEXT",
+      text: `Tip: $${tipVal.toFixed(2)}`,
+      align: "LEFT",
+    });
+  }
   lines.push({
     type: "TEXT",
     text: `TOTAL: $${order.totals.total.toFixed(2)}`,
@@ -533,13 +637,14 @@ function formatReceiptContent(order) {
  * Create a Hosted Checkout session
  * @param {Object} checkoutData - Checkout information
  * @param {Array} checkoutData.items - Array of items with name, quantity, price
- * @param {Object} checkoutData.customer - Customer information (firstName, lastName, email, phone?)
+ * @param {Object} checkoutData.customer - Customer information (firstName, email required; lastName optional for Clover uses "." if empty)
  * @param {number} checkoutData.amount - Total amount in cents
  * @param {string} checkoutData.successUrl - URL to redirect after successful payment
  * @param {string} checkoutData.failureUrl - URL to redirect after failed payment
  * @param {string} checkoutData.cancelUrl - URL to redirect if payment is cancelled
  * @param {number} checkoutData.taxRate - Tax rate (optional, e.g., 0.0875 for 8.75%)
  * @param {string} checkoutData.currency - Currency code (default: USD)
+ * @param {number} [checkoutData.tipAmountCents] - Tip in cents (shoppingCart.tipAmount); not taxed
  * @returns {Promise<Object>} Checkout session with URL
  */
 export async function createHostedCheckoutSession(checkoutData) {
@@ -557,6 +662,8 @@ export async function createHostedCheckoutSession(checkoutData) {
     cancelUrl,
     taxRate = 0,
     currency = "USD",
+    /** Tip in cents (not taxed). Passed as shoppingCart.tipAmount for Hosted Checkout. */
+    tipAmountCents = 0,
   } = checkoutData;
 
   console.log(
@@ -564,10 +671,10 @@ export async function createHostedCheckoutSession(checkoutData) {
     JSON.stringify(
       {
         itemCount: items?.length || 0,
-        customerName:
-          customer?.firstName && customer?.lastName
-            ? `${customer.firstName} ${customer.lastName}`
-            : "N/A",
+        customerName: [customer?.firstName, customer?.lastName]
+          .map((s) => (s || "").trim())
+          .filter(Boolean)
+          .join(" ") || "N/A",
         customerEmail: customer?.email || "N/A",
         amount: amount,
         amountInDollars: amount ? (amount / 100).toFixed(2) : "N/A",
@@ -592,16 +699,16 @@ export async function createHostedCheckoutSession(checkoutData) {
     throw new Error("Checkout items are required");
   }
 
-  if (
-    !customer ||
-    !customer.firstName ||
-    !customer.lastName ||
-    !customer.email
-  ) {
+  const firstName = (customer?.firstName || "").trim();
+  const lastNameRaw = (customer?.lastName || "").trim();
+  const email = (customer?.email || "").trim();
+  if (!customer || !firstName || !email) {
     throw new Error(
-      "Customer information (firstName, lastName, email) is required"
+      "Customer information (firstName, email) is required; lastName is optional"
     );
   }
+  /** Clover expects a lastName string; use placeholder when guest omits it. */
+  const lastNameForClover = lastNameRaw || ".";
 
   if (!amount || amount <= 0) {
     throw new Error("Valid payment amount is required");
@@ -626,7 +733,8 @@ export async function createHostedCheckoutSession(checkoutData) {
       0
     );
     const taxAmount = Math.round(subtotal * taxRate);
-    const totalAmount = subtotal + taxAmount;
+    const tipCents = Math.max(0, Math.round(Number(tipAmountCents) || 0));
+    const totalAmount = subtotal + taxAmount + tipCents;
 
     // Clover calculates the total automatically, but we validate it matches
     const finalAmount = Math.round(amount);
@@ -639,6 +747,8 @@ export async function createHostedCheckoutSession(checkoutData) {
           subtotalInDollars: (subtotal / 100).toFixed(2),
           taxAmount: taxAmount,
           taxAmountInDollars: (taxAmount / 100).toFixed(2),
+          tipCents: tipCents,
+          tipInDollars: (tipCents / 100).toFixed(2),
           totalAmount: totalAmount,
           totalAmountInDollars: (totalAmount / 100).toFixed(2),
           providedAmount: finalAmount,
@@ -654,16 +764,19 @@ export async function createHostedCheckoutSession(checkoutData) {
     // If set in Merchant Dashboard, those URLs override the API call URLs
     // Clover requires HTTPS URLs, so we only include redirectUrls if they're HTTPS
     // Tax rate must be an integer where 10% = 1000000 (so 0.06 = 600000)
+    const shoppingCart = {
+      lineItems: lineItems,
+      ...(tipCents > 0 ? { tipAmount: tipCents } : {}),
+    };
+
     const checkoutPayload = {
       customer: {
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        email: customer.email,
+        firstName,
+        lastName: lastNameForClover,
+        email,
         phoneNumber: customer.phone || undefined,
       },
-      shoppingCart: {
-        lineItems: lineItems,
-      },
+      shoppingCart,
       taxRates:
         taxRate > 0
           ? [

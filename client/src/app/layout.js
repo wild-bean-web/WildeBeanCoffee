@@ -1,8 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "@/components/Nav";
-import Footer from "@/components/Footer";
-import CookieNotice from "@/components/CookieNotice";
+import AppChrome from "@/components/AppChrome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,9 +19,9 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: "Wild Bean Coffee - Fresh Roasted Coffee & Handcrafted Beverages",
+  title: "Wild Bean Coffee - Premium Coffee & Handcrafted Beverages",
   description:
-    "Wild Bean Coffee offers fresh roasted coffee beans, handcrafted beverages, and delicious treats. Order online for pickup or visit us in store.",
+    "Wild Bean Coffee offers premium coffee, handcrafted beverages, and delicious treats. Order online for pickup or visit us in store.",
   icons: {
     icon: [
       {
@@ -53,10 +51,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased overflow-x-hidden`}
       >
-        <Nav />
-        <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
-        <Footer />
-        <CookieNotice />
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );

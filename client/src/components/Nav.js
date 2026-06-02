@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ProfileDropdown from "./ProfileDropdown";
 import Lottie from "lottie-react";
 import Toast from "./Toast";
+import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -18,7 +19,10 @@ export default function Nav() {
   const [toast, setToast] = useState(null);
 
   // Admin emails
-  const ADMIN_EMAILS = ["danielwoldehana@yahoo.com", "wildbeancoffeellc@gmail.com"];
+  const ADMIN_EMAILS = [
+    "danielwoldehana@yahoo.com",
+    "info@wildbeancoffeeshop.com",
+  ];
   const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   // Load userAvatar animation
@@ -46,6 +50,14 @@ export default function Nav() {
     return pathname.startsWith(path);
   };
 
+  /** Main cart/checkout lives at /order; success/failure are separate. */
+  const orderNavIsCheckout =
+    pathname === "/order" ||
+    (pathname.startsWith("/order/") &&
+      pathname !== "/order/success" &&
+      pathname !== "/order/failure");
+  const orderNavLabel = orderNavIsCheckout ? "Checkout" : "Order Online";
+
   const linkClass = (path) => {
     const baseClass =
       "text-sm font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:transition-all";
@@ -54,6 +66,22 @@ export default function Nav() {
     }
     return `${baseClass} text-[var(--coffee-brown)] hover:text-[var(--lime-green)] after:w-0 after:bg-[var(--lime-green)] hover:after:w-full`;
   };
+
+  const beanStampsIcon = (
+    <Image
+      src="/images/RewardIcons/ApplyReward/Apply-reward.png"
+      alt=""
+      width={24}
+      height={24}
+      className="h-6 w-6 shrink-0 object-contain drop-shadow-sm"
+      aria-hidden
+    />
+  );
+
+  const beanStampsPillBase =
+    "inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 font-semibold transition-colors shadow-sm";
+  const beanStampsNavActive = `${beanStampsPillBase} border-[var(--lime-green)] bg-[var(--lime-green)]/15 text-[var(--lime-green)]`;
+  const beanStampsNavIdle = `${beanStampsPillBase} border-amber-400/70 bg-gradient-to-r from-amber-50 to-lime-50 text-[var(--coffee-brown)] hover:border-[var(--lime-green)] hover:from-lime-50 hover:to-amber-50 hover:shadow`;
 
   const handleSignOutSuccess = (errorMessage) => {
     if (errorMessage) {
@@ -112,6 +140,15 @@ export default function Nav() {
             <Link href="/location" className={linkClass("/location")}>
               Location
             </Link>
+            {BEAN_STAMPS_ENABLED && (
+              <Link
+                href="/rewards"
+                className={`text-sm ${isActive("/rewards") ? beanStampsNavActive : beanStampsNavIdle}`}
+              >
+                {beanStampsIcon}
+                <span>Bean Stamps</span>
+              </Link>
+            )}
             <Link
               href="/order"
               className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors ${
@@ -120,7 +157,7 @@ export default function Nav() {
                   : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
               }`}
             >
-              Order Online
+              {orderNavLabel}
             </Link>
             {/* Kitchen Dashboard - Admin Only */}
             {isAdmin && (
@@ -240,6 +277,18 @@ export default function Nav() {
               >
                 Location
               </Link>
+              {BEAN_STAMPS_ENABLED && (
+                <Link
+                  href="/rewards"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`text-base w-fit ${
+                    isActive("/rewards") ? beanStampsNavActive : beanStampsNavIdle
+                  }`}
+                >
+                  {beanStampsIcon}
+                  <span>Bean Stamps</span>
+                </Link>
+              )}
               <Link
                 href="/order"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -249,7 +298,7 @@ export default function Nav() {
                     : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
                 }`}
               >
-                Order Online
+                {orderNavLabel}
               </Link>
               {/* Kitchen Dashboard - Admin Only (Mobile) */}
               {isAdmin && (

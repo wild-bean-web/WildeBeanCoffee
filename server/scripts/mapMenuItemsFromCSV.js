@@ -11,14 +11,14 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync } from "fs";
 import { MenuItem, ModifierGroup } from "../models/index.js";
+import { resolveMongoUri } from "../config/mongoUri.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: join(__dirname, "../.env") });
 
-const mongoUri = process.env.MONGODB_URI;
+const mongoUri = resolveMongoUri();
 
 // Section mapping from CSV categories to our sections
 const sectionMapping = {
@@ -156,14 +156,6 @@ function parseCSVData() {
       allergens: [],
     },
     {
-      name: "Iced Cappuccino",
-      description: "Chilled espresso with milk and foam over ice.",
-      price: 4.85,
-      section: "Cold Coffee",
-      modifierGroups: ["Shot Preference", "Cup Size", "Cup Size (16-20)", "Syrup Pumps (+$0.20 each)", "Coffee Toppings", "Ice Level", "Milk Choice", "Extra Single Shots (Iced)"],
-      allergens: ["Dairy"],
-    },
-    {
       name: "Iced Latte",
       description: "Espresso with cold milk poured over ice.",
       price: 4.65,
@@ -259,11 +251,11 @@ function parseCSVData() {
       price: 9.99,
       section: "Oatmeal Bar",
       modifierGroups: [
-        "Oatmeal Base",
-        "Oatmeal Dried Toppings",
-        "Oatmeal Drizzels",
-        "Oatmeal Fruit Toppings",
-        "Oatmeal EXTRA Add-Ons",
+        "Base",
+        "Toppings",
+        "Drizzels",
+        "Fruit Toppings",
+        "Extra Add-Ons",
       ],
       allergens: [],
     },
@@ -277,7 +269,7 @@ function parseCSVData() {
     },
     {
       name: "Berry Boost",
-      description: "Strawberry, blueberry, raspberry, vanilla yogurt, almond milk\nAllergens: Dairy, tree nuts",
+      description: "Strawberry, blueberry, raspberry, vanilla yogurt, milk\nAllergens: Dairy",
       price: 8.95,
       section: "Smoothies",
       modifierGroups: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
@@ -293,7 +285,7 @@ function parseCSVData() {
     },
     {
       name: "Green Glow",
-      description: "Spinach, kale, banana, avocado, chia seeds, almond milk, honey\nAllergens: Tree Nuts",
+      description: "Spinach, kale, banana, avocado, chia seeds, milk, honey\nAllergens: Dairy",
       price: 8.75,
       section: "Smoothies",
       modifierGroups: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
@@ -301,7 +293,7 @@ function parseCSVData() {
     },
     {
       name: "Nutty Banana Bliss",
-      description: "Banana, peanut butter, chia seeds, almonds, cinnamon, and almond milk\nAllergens: Peanuts, Tree Nuts",
+      description: "Banana, peanut butter, chia seeds, almonds, cinnamon, and milk\nAllergens: Dairy, Peanuts, Tree Nuts",
       price: 8.25,
       section: "Smoothies",
       modifierGroups: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],
@@ -309,7 +301,7 @@ function parseCSVData() {
     },
     {
       name: "Guava Cream",
-      description: "Guava, yogurt, almond milk, avocado, fresh lime\nAllergens: Dairy, Tree Nuts",
+      description: "Guava, yogurt, milk, avocado, fresh lime\nAllergens: Dairy",
       price: 8.50,
       section: "Smoothies",
       modifierGroups: ["Milk Choice", "Smoothie Add-Ons", "Yogurt Choice"],

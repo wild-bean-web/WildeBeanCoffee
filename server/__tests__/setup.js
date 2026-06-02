@@ -9,17 +9,38 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env.test first, then fall back to .env
-dotenv.config({ path: join(__dirname, "..", ".env.test") });
+// Base credentials from .env, then optional .env.test overrides (override: true).
+// Loading .env.test *first* breaks tests when .env.test has stale MONGODB_URI — dotenv does not
+// overwrite existing process.env keys, so seed (which often only loads .env) would work while Jest would not.
 dotenv.config({ path: join(__dirname, "..", ".env") });
+dotenv.config({ path: join(__dirname, "..", ".env.test"), override: true });
+
+/**
+ * Same cluster/user as MONGODB_URI but DB name wildbeancoffee_test (preserves ?retryWrites=…).
+ */
+function deriveTestDatabaseUri(uri) {
+  if (!uri || typeof uri !== "string") return null;
+  const qIndex = uri.indexOf("?");
+  const withoutQuery = qIndex === -1 ? uri : uri.slice(0, qIndex);
+  const query = qIndex === -1 ? "" : uri.slice(qIndex);
+
+  const srv = withoutQuery.match(/^(mongodb\+srv:\/\/[^/]+)\/([^/]+)$/);
+  if (srv) {
+    return `${srv[1]}/wildbeancoffee_test${query}`;
+  }
+  const std = withoutQuery.match(/^(mongodb:\/\/[^/]+(?::\d+)?)\/([^/]+)$/);
+  if (std) {
+    return `${std[1]}/wildbeancoffee_test${query}`;
+  }
+  return null;
+}
 
 // Get test database URI with fallbacks
 const TEST_DB_URI =
   process.env.MONGODB_TEST_URI ||
   process.env.MONGODB_URI_TEST ||
-  (process.env.MONGODB_URI
-    ? process.env.MONGODB_URI.replace(/\/[^/]+$/, "/wildbeancoffee_test")
-    : "mongodb://localhost:27017/wildbeancoffee_test");
+  deriveTestDatabaseUri(process.env.MONGODB_URI) ||
+  "mongodb://localhost:27017/wildbeancoffee_test";
 
 if (!TEST_DB_URI) {
   throw new Error(

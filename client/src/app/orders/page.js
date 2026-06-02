@@ -4,8 +4,10 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { authApi } from "@/lib/api";
+import { formatStoreDateTime } from "@/lib/dateTime";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import PickupArrivalNotice from "@/components/PickupArrivalNotice";
 
 function OrdersPageContent() {
   const { user, loading: authLoading } = useAuth();
@@ -61,16 +63,14 @@ function OrdersPageContent() {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+  const formatDate = (dateString) =>
+    formatStoreDateTime(dateString, {
       year: "numeric",
       month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   // Get customer-friendly status display
   const getCustomerStatus = (status) => {
@@ -124,6 +124,7 @@ function OrdersPageContent() {
           </div>
         ) : (
           <div className="space-y-4">
+            <PickupArrivalNotice className="mb-2" />
             {orders.map((order) => (
               <div
                 id={`order-${order._id}`}

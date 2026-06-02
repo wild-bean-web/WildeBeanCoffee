@@ -13,48 +13,60 @@ const __dirname = dirname(__filename);
 const isTestSeed =
   process.argv.includes("--test") || process.env.NODE_ENV === "test";
 
+dotenv.config({ path: join(__dirname, ".env") });
 if (isTestSeed) {
-  // Load .env.test for test database seeding
-  dotenv.config({ path: join(__dirname, ".env.test") });
+  // Test seed: .env.test overrides so MONGODB_TEST_URI can differ from .env.
+  dotenv.config({ path: join(__dirname, ".env.test"), override: true });
 }
 
-// Also load regular .env as fallback
-dotenv.config({ path: join(__dirname, ".env") });
-
-// Use test URI if seeding test database, otherwise use production URI
+// Prefer test URI by default for local safety when MONGODB_URI is unset.
 const mongoUri = isTestSeed
   ? process.env.MONGODB_TEST_URI || process.env.MONGODB_URI
-  : process.env.MONGODB_URI;
+  : process.env.MONGODB_URI || process.env.MONGODB_TEST_URI;
+
+if (!mongoUri) {
+  throw new Error(
+    "Missing Mongo URI. Set MONGODB_URI or MONGODB_TEST_URI before running seed.",
+  );
+}
+
+if (!isTestSeed && !process.env.MONGODB_URI && process.env.MONGODB_TEST_URI) {
+  console.warn(
+    "[seed] MONGODB_URI is not set. Falling back to MONGODB_TEST_URI for safety.",
+  );
+}
 
 const products = [
   {
-    name: "Ethiopia Yirgacheffe",
+    name: "Ethiopian Yirgacheffe",
     description:
       "Floral, citrus, and tea-like with bright acidity. A classic Ethiopian coffee with delicate notes.",
-    price: 16.5,
+    price: 0,
+    priceUnknown: true,
     currency: "USD",
-    roastLevel: "Light",
+    roastLevel: "Medium",
     origin: "Ethiopia",
     flavorNotes: ["Bergamot", "Jasmine", "Lemon", "Tea-like"],
     inStock: true,
     inventory: 40,
     images: ["/images/products/single-origin/ethiopia-yirgacheffe.jpeg"],
-    categories: ["single-origin", "light-roast"],
+    categories: ["single-origin", "medium-roast"],
     active: true,
     comingSoon: true,
   },
   {
-    name: "Ethiopia Sedamo",
+    name: "Ethiopian Sidamo",
     description:
       "Rich and full-bodied with wine-like acidity and fruity notes. A distinctive Ethiopian coffee.",
-    price: 17.0,
+    price: 0,
+    priceUnknown: true,
     currency: "USD",
     roastLevel: "Medium",
     origin: "Ethiopia",
     flavorNotes: ["Wine", "Berry", "Citrus", "Floral"],
     inStock: true,
     inventory: 35,
-    images: ["/images/products/single-origin/ethiopia-sedamo.jpeg"],
+    images: ["/images/products/single-origin/ethiopia-sidamo.jpeg"],
     categories: ["single-origin", "medium-roast"],
     active: true,
     comingSoon: true,
@@ -356,26 +368,48 @@ const locations = [
     country: "US",
     coordinates: { lat: 39.0629, lng: -77.1291 },
     phone: "+1 240-645-6203",
-    email: "wildbeancoffeellc@gmail.com",
+    email: "info@wildbeancoffeeshop.com",
     mapsUrl: "",
     hours: [
-      { day: "Monday", opens: "06:00", closes: "16:00" },
-      { day: "Tuesday", opens: "06:00", closes: "16:00" },
-      { day: "Wednesday", opens: "06:00", closes: "16:00" },
-      { day: "Thursday", opens: "06:00", closes: "16:00" },
-      { day: "Friday", opens: "06:00", closes: "16:00" },
-      { day: "Saturday", opens: "06:00", closes: "16:00" },
-      { day: "Sunday", opens: "06:00", closes: "16:00" },
+      { day: "Monday", opens: "07:00", closes: "20:00" },
+      { day: "Tuesday", opens: "07:00", closes: "20:00" },
+      { day: "Wednesday", opens: "07:00", closes: "20:00" },
+      { day: "Thursday", opens: "07:00", closes: "20:00" },
+      { day: "Friday", opens: "07:00", closes: "20:00" },
+      { day: "Saturday", opens: "07:00", closes: "20:00" },
+      { day: "Sunday", opens: "09:00", closes: "20:00" },
     ],
+    onlineOrderingPaused: false,
+    onlineOrderingPausedAt: null,
+    onlineOrderingPausedByEmail: null,
     active: true,
   },
 ];
+
+const TEST_DATABASE_NAME = "wildcoffeebean_TEST";
+
+function mongoUriDebug(uri) {
+  const user = uri.match(/mongodb\+srv:\/\/([^:]+):/)?.[1];
+  const db =
+    uri.match(/\.mongodb\.net\/([^/?]+)/)?.[1] ||
+    uri.match(/mongodb:\/\/[^/]+\/([^/?]+)/)?.[1];
+  return { user: user ?? "(unknown)", db: db ?? null };
+}
 
 async function seed() {
   if (!mongoUri) {
     const envVar = isTestSeed ? "MONGODB_TEST_URI" : "MONGODB_URI";
     throw new Error(`${envVar} not set`);
   }
+
+  const { user, db } = mongoUriDebug(mongoUri);
+  if (isTestSeed && !db) {
+    throw new Error(
+      `MONGODB_TEST_URI must include /${TEST_DATABASE_NAME} in the path. ` +
+        "Without it, MongoDB defaults to the \"test\" database and your Atlas role cannot delete there.",
+    );
+  }
+  console.log(`[seed] Connecting as ${user} → ${db ?? "(defaults to test)"}`);
 
   await mongoose.connect(mongoUri);
   const dbName = mongoose.connection.db.databaseName;

@@ -1,76 +1,154 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ordersApi } from "@/lib/api";
+import { clearPostCheckoutClientState } from "@/lib/checkoutClientState";
+import { PICKUP_COFFEE_FRESHNESS_NOTE } from "@/lib/pickupCoffeeFreshnessNote";
+import PickupArrivalNotice from "@/components/PickupArrivalNotice";
+
+/** Clover may leave this literal in successUrl if redirect template is not substituted. */
+const UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
+
+const SHOP_CONTACT_EMAIL = "info@wildbeancoffeeshop.com";
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function withRetries(fn, { tries = 3, baseMs = 700 } = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await sleep(baseMs * (i + 1));
+    }
+  }
+  throw lastErr;
+}
 
 function OrderSuccessContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutId = searchParams.get("checkoutId");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderId, setOrderId] = useState(null);
+  const [sessionRefForDisplay, setSessionRefForDisplay] = useState(null);
+  const [showPickupCoffeeFreshnessNote, setShowPickupCoffeeFreshnessNote] =
+    useState(false);
 
   useEffect(() => {
+    const completeOrder = async () => {
+      const pendingRaw = sessionStorage.getItem("pendingOrder");
 
-    // Get pending order data from sessionStorage
-    const pendingOrderData = sessionStorage.getItem("pendingOrder");
-    
-    if (!pendingOrderData) {
-      setError("No order data found. Your payment was successful, but we couldn't create your order. Please contact support.");
-      setLoading(false);
-      return;
-    }
-
-    const orderData = JSON.parse(pendingOrderData);
-
-    // Create order with payment status
-    const createOrder = async () => {
-      try {
-        const orderPayload = {
-          ...orderData,
-          paymentStatus: "paid",
-          paymentRef: checkoutId || "hosted-checkout",
-        };
-
-        const result = await ordersApi.create(orderPayload);
-        setOrderId(result._id);
-
-        // Clear sessionStorage
-        sessionStorage.removeItem("pendingOrder");
-
-        // Attempt to print receipt (non-blocking)
+      if (pendingRaw) {
+        let orderData;
         try {
-          await fetch("/api/payments/print-receipt", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              orderId: result._id,
-            }),
-          });
-        } catch (printError) {
-          console.error("Receipt printing failed:", printError);
+          orderData = JSON.parse(pendingRaw);
+        } catch {
+          setError(
+            "We could not read your saved order in this browser. If you completed payment, please email the shop so we can locate your order.",
+          );
+          setLoading(false);
+          return;
         }
 
-        // Clear cart
-        localStorage.removeItem("cart");
-      } catch (err) {
-        console.error("Error creating order:", err);
-        setError(
-          err.message ||
-            "Payment was successful, but we couldn't create your order. Please contact support with your payment reference."
+        setShowPickupCoffeeFreshnessNote(
+          Boolean(orderData.pickupUiHints?.showCoffeeFreshnessNote),
         );
-      } finally {
-        setLoading(false);
+
+        const urlCheckoutRaw = (checkoutId || "").trim();
+        const urlCheckout =
+          urlCheckoutRaw &&
+          urlCheckoutRaw !== UNRESOLVED_CHECKOUT_SESSION_PLACEHOLDER
+            ? urlCheckoutRaw
+            : "";
+        const storedCheckout =
+          orderData.checkoutId != null
+            ? String(orderData.checkoutId).trim()
+            : "";
+        const resolvedCheckoutId = urlCheckout || storedCheckout;
+
+        if (!resolvedCheckoutId) {
+          setError(
+            "We could not link this page to your checkout. If you were charged, please call or email the shop with the time of payment and the cardholder name so we can find your order.",
+          );
+          setLoading(false);
+          return;
+        }
+
+        setSessionRefForDisplay(resolvedCheckoutId);
+
+        try {
+          // Use server draft + recover only: avoids rolling minimum-lead pickup checks
+          // against wall-clock after the customer spends time on Clover, and matches webhook data.
+          const result = await withRetries(() =>
+            ordersApi.recoverHostedCheckout(resolvedCheckoutId),
+          );
+
+          setOrderId(result._id);
+          clearPostCheckoutClientState();
+
+          try {
+            await fetch("/api/payments/print-receipt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: result._id }),
+            });
+          } catch (printError) {
+            console.error("Receipt printing failed:", printError);
+          }
+        } catch (err) {
+          console.error("Error creating / recovering order:", err);
+          setError(
+            err.message ||
+              "We could not finalize your order in our system after payment. Please call or email the shop right away; do not place the same order again until someone has helped you.",
+          );
+        } finally {
+          setLoading(false);
+        }
+        return;
       }
+
+      if (checkoutId) {
+        const ref = checkoutId.trim();
+        setSessionRefForDisplay(ref);
+        try {
+          const result = await withRetries(() =>
+            ordersApi.recoverHostedCheckout(ref),
+          );
+          setOrderId(result._id);
+          clearPostCheckoutClientState();
+          try {
+            await fetch("/api/payments/print-receipt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: result._id }),
+            });
+          } catch (printError) {
+            console.error("Receipt printing failed:", printError);
+          }
+        } catch (err) {
+          console.error("Recover hosted checkout failed:", err);
+          setError(
+            err.message ||
+              "We could not load your order in this browser after payment. Please call or email the shop so we can confirm your order.",
+          );
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      setError(
+        "No order information was found in this browser. If you already paid, please call or email the shop with your name and payment time so we can locate your order.",
+      );
+      setLoading(false);
     };
 
-    createOrder();
+    completeOrder();
   }, [checkoutId]);
 
   if (loading) {
@@ -110,27 +188,38 @@ function OrderSuccessContent() {
                 </svg>
               </div>
               <h1 className="mb-2 text-2xl font-bold text-[var(--coffee-brown)]">
-                Order Processing Error
+                We Need to Help You Finish This
               </h1>
               <p className="text-gray-600">{error}</p>
-              {checkoutId && (
+              {(sessionRefForDisplay || checkoutId) && (
                 <p className="mt-4 text-sm text-gray-500">
-                  Payment Reference: {checkoutId}
+                  Reference for the shop (if you were sent here after paying):{" "}
+                  {sessionRefForDisplay || checkoutId}
                 </p>
               )}
+              <p className="mt-4 text-sm text-gray-600">
+                Email us at{" "}
+                <a
+                  className="font-medium text-[var(--coffee-brown)] underline"
+                  href={`mailto:${SHOP_CONTACT_EMAIL}`}
+                >
+                  {SHOP_CONTACT_EMAIL}
+                </a>
+                .
+              </p>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href="/order"
-                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
+              <a
+                href={`mailto:${SHOP_CONTACT_EMAIL}?subject=Online order help`}
+                className="rounded-full bg-[var(--lime-green)] px-6 py-3 text-center text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)]"
               >
-                Try Again
-              </Link>
+                Email the shop
+              </a>
               <Link
                 href="/shop"
-                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
+                className="rounded-full border-2 border-[var(--coffee-brown)] px-6 py-3 text-center text-[var(--coffee-brown)] font-semibold transition-colors hover:bg-gray-50"
               >
-                Continue Shopping
+                Continue shopping
               </Link>
             </div>
           </motion.div>
@@ -169,8 +258,14 @@ function OrderSuccessContent() {
               Order Placed Successfully!
             </h1>
             <p className="mb-4 text-gray-600">
-              Thank you for your order. We'll have it ready for pickup soon.
+              Thank you for your order. We&apos;ll have it ready for pickup soon.
             </p>
+            <PickupArrivalNotice className="mx-auto mb-4 max-w-md text-left" />
+            {showPickupCoffeeFreshnessNote && (
+              <p className="mx-auto mb-4 max-w-md text-left text-sm leading-snug text-stone-600">
+                {PICKUP_COFFEE_FRESHNESS_NOTE}
+              </p>
+            )}
             {orderId && (
               <p className="text-sm text-gray-500">
                 Order ID: {orderId.slice(-8)}
@@ -213,4 +308,3 @@ export default function OrderSuccessPage() {
     </Suspense>
   );
 }
-
