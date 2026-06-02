@@ -11,14 +11,14 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync } from "fs";
 import { MenuItem, ModifierGroup } from "../models/index.js";
+import { resolveMongoUri } from "../config/mongoUri.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables
 dotenv.config({ path: join(__dirname, "../.env") });
 
-const mongoUri = process.env.MONGODB_URI;
+const mongoUri = resolveMongoUri();
 
 // Section mapping from CSV categories to our sections
 const sectionMapping = {

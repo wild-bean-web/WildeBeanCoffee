@@ -37,6 +37,11 @@ import authRoutes from "./routes/auth.js";
 import paymentRoutes from "./routes/payments.js";
 import emailVerificationRoutes from "./routes/emailVerification.js";
 import loyaltyRoutes from "./routes/loyalty.js";
+import {
+  resolveMongoUri,
+  getDatabaseNameFromUri,
+  getUserFromUri,
+} from "./config/mongoUri.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -46,9 +51,17 @@ const corsOrigin =
   rawOrigin && rawOrigin.length > 0
     ? rawOrigin.split(",").map((o) => o.trim())
     : ["http://localhost:3000"];
-const mongoUri = process.env.MONGODB_URI;
+let mongoUri;
+try {
+  mongoUri = resolveMongoUri();
+} catch (err) {
+  console.error("[SERVER]", err.message);
+  process.exit(1);
+}
+
 const dbState = {
   status: "disconnected",
+  database: mongoUri ? getDatabaseNameFromUri(mongoUri) : null,
   lastError: null,
   lastConnectedAt: null,
 };
@@ -58,9 +71,16 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function connectWithRetry(attempt = 1) {
   if (!mongoUri) {
     dbState.status = "not_configured";
-    console.warn("MONGODB_URI not set; skipping DB connection");
+    console.warn(
+      "Mongo URI not set (local: MONGODB_TEST_URI; production: MONGODB_URI); skipping DB connection",
+    );
     return;
   }
+
+  const dbUser = getUserFromUri(mongoUri);
+  console.log(
+    `[SERVER] MongoDB → ${dbState.database ?? "(unknown)"}${dbUser ? ` (user: ${dbUser})` : ""}`,
+  );
 
   const maxAttempts = Number(process.env.MONGO_MAX_RETRIES ?? 5);
   const baseDelay = Number(process.env.MONGO_RETRY_DELAY_MS ?? 1000);
@@ -72,7 +92,8 @@ async function connectWithRetry(attempt = 1) {
     dbState.status = "connected";
     dbState.lastError = null;
     dbState.lastConnectedAt = new Date().toISOString();
-    console.log("Connected to MongoDB");
+    dbState.database = mongoose.connection.db.databaseName;
+    console.log(`Connected to MongoDB (database: ${dbState.database})`);
   } catch (err) {
     dbState.status = "error";
     dbState.lastError = err.message;
@@ -152,6 +173,7 @@ app.get("/health", (_req, res) => {
     uptime: process.uptime(),
     db: {
       status: dbState.status,
+      database: dbState.database,
       lastConnectedAt: dbState.lastConnectedAt,
       lastError: dbState.lastError,
     },
