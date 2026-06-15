@@ -377,7 +377,7 @@ const locations = [
       { day: "Thursday", opens: "07:00", closes: "20:00" },
       { day: "Friday", opens: "07:00", closes: "20:00" },
       { day: "Saturday", opens: "07:00", closes: "20:00" },
-      { day: "Sunday", opens: "09:00", closes: "20:00" },
+      { day: "Sunday", opens: "08:00", closes: "20:00" },
     ],
     onlineOrderingPaused: false,
     onlineOrderingPausedAt: null,
