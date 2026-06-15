@@ -374,6 +374,92 @@ export default function LocationPage() {
                 </div>
               </motion.div>
 
+              {/* Location Button Card */}
+              <div className="rounded-xl border-2 border-gray-200 bg-white p-6 shadow-md">
+                <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-[var(--coffee-brown)]">
+                  <svg
+                    className="h-6 w-6 text-[var(--lime-green)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                    />
+                  </svg>
+                  Your Location
+                </h2>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={handleUseMyLocation}
+                    className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:bg-[var(--lime-green-dark)] hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2"
+                  >
+                    {distanceLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg
+                          className="h-5 w-5 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Calculating...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        Use my location
+                      </span>
+                    )}
+                  </button>
+                  {geoError && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                      <p className="text-sm text-red-600">{geoError}</p>
+                    </div>
+                  )}
+                  {userCoords && !distanceLoading && !distance && (
+                    <p className="text-sm text-gray-600 text-center">
+                      Location captured. Distance calculation pending store
+                      coords.
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Location exterior image */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -539,92 +625,6 @@ export default function LocationPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              {/* Location Button Card */}
-              <div className="rounded-xl border-2 border-gray-200 bg-white p-6 shadow-md">
-                <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-[var(--coffee-brown)]">
-                  <svg
-                    className="h-6 w-6 text-[var(--lime-green)]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                    />
-                  </svg>
-                  Your Location
-                </h2>
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={handleUseMyLocation}
-                    className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:bg-[var(--lime-green-dark)] hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2"
-                  >
-                    {distanceLoading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg
-                          className="h-5 w-5 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Calculating...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        Use my location
-                      </span>
-                    )}
-                  </button>
-                  {geoError && (
-                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                      <p className="text-sm text-red-600">{geoError}</p>
-                    </div>
-                  )}
-                  {userCoords && !distanceLoading && !distance && (
-                    <p className="text-sm text-gray-600 text-center">
-                      Location captured. Distance calculation pending store
-                      coords.
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* Google Review */}
