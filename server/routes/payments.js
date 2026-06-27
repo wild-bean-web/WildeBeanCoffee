@@ -8,6 +8,7 @@ import {
 import { optionalAuth } from "../middleware/auth.js";
 import { HostedCheckoutDraft, Location } from "../models/index.js";
 import { validateOrderPayload } from "../services/onlineOrderPlacement.js";
+import { validateTipCents, validateTipForItems, foodSubtotalCentsFromItems } from "../services/tipValidation.js";
 import { orderEventEmitter } from "../services/orderEvents.js";
 import {
   verifyCloverWebhookSignature,
@@ -179,11 +180,11 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
 
     const tipAmountCents = Math.max(0, Math.round(Number(tipAmountCentsRaw) || 0));
     const tr = Number(taxRate) || 0;
-    const foodSubtotalCents = items.reduce((sum, item) => {
-      const unit = Math.round((Number(item.price) || 0) * 100);
-      const qty = Math.max(1, Number(item.quantity) || 1);
-      return sum + unit * qty;
-    }, 0);
+    const foodSubtotalCents = foodSubtotalCentsFromItems(items);
+    const tipCheck = validateTipCents(tipAmountCents, foodSubtotalCents);
+    if (!tipCheck.ok) {
+      return errorResponse(res, 400, tipCheck.error, ["tipAmountCents"]);
+    }
     const taxCents = Math.round(foodSubtotalCents * tr);
     const expectedCents = foodSubtotalCents + taxCents + tipAmountCents;
     if (Math.abs(Math.round(amount) - expectedCents) > 1) {
@@ -215,6 +216,13 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
     });
     if (draftErrors.length) {
       return errorResponse(res, 400, "Invalid order draft", draftErrors);
+    }
+
+    if (draft.tip != null && draft.tip !== "") {
+      const draftTipCheck = validateTipForItems(draft.tip, draft.items);
+      if (!draftTipCheck.ok) {
+        return errorResponse(res, 400, draftTipCheck.error, ["orderDraft.tip"]);
+      }
     }
 
     // Create checkout session

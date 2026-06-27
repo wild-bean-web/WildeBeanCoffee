@@ -1,6 +1,14 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 
+// lottie-web requires canvas; mock before components import lottie-react
+jest.mock('lottie-react', () => ({
+  __esModule: true,
+  default: function MockLottie() {
+    return null
+  },
+}))
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
@@ -56,4 +64,14 @@ const localStorageMock = {
   clear: jest.fn(),
 }
 global.localStorage = localStorageMock
+
+// Components load Lottie JSON via fetch in useEffect
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    text: () => Promise.resolve('not-valid-json'),
+    json: () => Promise.resolve({}),
+  }),
+)
 

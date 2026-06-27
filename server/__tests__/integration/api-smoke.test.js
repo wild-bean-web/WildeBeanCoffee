@@ -5,7 +5,7 @@
 import request from 'supertest'
 import { createTestApp } from '../app.js'
 import { setupTestDB, teardownTestDB, clearDatabase } from '../setup.js'
-import { createTestProduct, createTestMenuItem, createTestLocation } from '../helpers.js'
+import { createTestProduct, createTestMenuItem, createTestLocation, buildPaidOrderFields, futurePickupWithinStoreHours, createTestKitchenAdmin } from '../helpers.js'
 
 const app = createTestApp()
 
@@ -147,6 +147,8 @@ describe('API Integration Smoke Tests', () => {
   describe('Order Creation Flow', () => {
     it('should allow user to create an order with products and menu items', async () => {
       // Create test data
+      await createTestLocation()
+      const { authHeader } = await createTestKitchenAdmin()
       const product = await createTestProduct({
         name: 'Test Coffee',
         price: 15.99,
@@ -182,8 +184,9 @@ describe('API Integration Smoke Tests', () => {
           },
         ],
         taxRate: 0.0875,
-        pickupTime: new Date(Date.now() + 3600000).toISOString(),
+        pickupTime: futurePickupWithinStoreHours(),
         notes: 'Extra hot latte',
+        ...buildPaidOrderFields('integration-test-order-1'),
       }
 
       // 1. Create order
@@ -196,7 +199,7 @@ describe('API Integration Smoke Tests', () => {
       expect(createRes.body.data.items).toHaveLength(2)
       expect(createRes.body.data.customer.name).toBe('John Doe')
       expect(createRes.body.data.status).toBe('placed')
-      expect(createRes.body.data.paymentStatus).toBe('pending')
+      expect(createRes.body.data.paymentStatus).toBe('paid')
 
       // Verify totals are calculated correctly
       const expectedSubtotal = product.price * 2 + menuItem.price * 1
@@ -218,6 +221,7 @@ describe('API Integration Smoke Tests', () => {
       // 3. Update order status
       const updateRes = await request(app)
         .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', authHeader)
         .send({ status: 'preparing' })
 
       expect(updateRes.status).toBe(200)
@@ -303,6 +307,7 @@ describe('API Integration Smoke Tests', () => {
         active: true,
         coordinates: { lat: 39.0834, lng: -77.1533 },
       })
+      const { authHeader } = await createTestKitchenAdmin()
 
       // Step 1: Browse products
       const productsRes = await request(app).get('/api/products')
@@ -345,6 +350,8 @@ describe('API Integration Smoke Tests', () => {
           },
         ],
         taxRate: 0.0875,
+        pickupTime: futurePickupWithinStoreHours(),
+        ...buildPaidOrderFields('integration-e2e-order'),
       }
 
       const createRes = await request(app)
@@ -362,6 +369,7 @@ describe('API Integration Smoke Tests', () => {
       // Step 6: Update order status (simulating kitchen workflow)
       const updateRes = await request(app)
         .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', authHeader)
         .send({ status: 'preparing' })
 
       expect(updateRes.status).toBe(200)
@@ -370,6 +378,7 @@ describe('API Integration Smoke Tests', () => {
       // Step 7: Complete order
       const completeRes = await request(app)
         .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', authHeader)
         .send({ status: 'completed', paymentStatus: 'paid' })
 
       expect(completeRes.status).toBe(200)
