@@ -7,6 +7,7 @@ import {
 } from "./loyalty.js";
 import { isBeanStampsEnabled, isAdminOrderCompEnabled } from "../config/featureFlags.js";
 import { isKitchenAdminEmail } from "../config/kitchenAdmins.js";
+import { validateTipForItems } from "./tipValidation.js";
 
 const allowedPaymentStatuses = [
   "pending",
@@ -376,15 +377,11 @@ export async function placeOnlineOrder(body, user, options = {}) {
   if (!isAdminOrder) {
     const tipRaw = body.tip;
     if (tipRaw !== undefined && tipRaw !== null && tipRaw !== "") {
-      const t = Number(tipRaw);
-      if (!Number.isFinite(t) || t < 0) {
-        return { ok: false, status: 400, errors: ["tip must be a non-negative number"] };
+      const tipCheck = validateTipForItems(tipRaw, items);
+      if (!tipCheck.ok) {
+        return { ok: false, status: 400, errors: [tipCheck.error] };
       }
-      const maxTip = Number((totals.subtotal * 0.5).toFixed(2));
-      if (t > maxTip + 0.001) {
-        return { ok: false, status: 400, errors: ["tip exceeds maximum for this order"] };
-      }
-      tip = Number(t.toFixed(2));
+      tip = tipCheck.tipDollars;
     }
     totals = {
       ...totals,

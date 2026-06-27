@@ -60,8 +60,8 @@ describe('Nav', () => {
     // There should be 2 Home links now (desktop + mobile)
     expect(mobileMenuLinks.length).toBeGreaterThanOrEqual(2)
     
-    // The mobile menu container should have md:hidden class
-    const mobileMenuContainer = screen.getAllByText('Home')[1].closest('.md\\:hidden')
+    // The mobile menu container uses lg:hidden (not md:hidden)
+    const mobileMenuContainer = screen.getAllByText('Home')[1].closest('.lg\\:hidden')
     expect(mobileMenuContainer).toBeInTheDocument()
   })
 
@@ -74,7 +74,7 @@ describe('Nav', () => {
     await user.click(menuButton)
 
     // Verify mobile menu is open
-    const mobileMenuContainer = container.querySelector('.md\\:hidden')
+    const mobileMenuContainer = container.querySelector('.lg\\:hidden')
     expect(mobileMenuContainer).toBeInTheDocument()
 
     // Get all Shop links (desktop and mobile)

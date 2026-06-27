@@ -32,6 +32,14 @@ const allowedStatuses = [
   "cancelled",
 ];
 
+const allowedPaymentStatuses = [
+  "pending",
+  "authorized",
+  "paid",
+  "failed",
+  "refunded",
+];
+
 // POST /api/orders
 // Use optionalAuth to support both authenticated and guest orders
 // Admin comped orders (ADMIN_DISCOUNT) allowed only for authenticated admin users

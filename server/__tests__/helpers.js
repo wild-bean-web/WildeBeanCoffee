@@ -2,7 +2,9 @@
  * Test helper functions
  */
 import mongoose from "mongoose";
-import { Product, MenuItem, Order, Location } from "../models/index.js";
+import bcrypt from "bcryptjs";
+import { Product, MenuItem, Order, Location, User } from "../models/index.js";
+import { generateToken } from "../middleware/auth.js";
 
 /**
  * Create a test product
@@ -79,6 +81,46 @@ export async function createTestOrder(overrides = {}) {
 /**
  * Create a test location
  */
+const ALL_STORE_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+export function buildPaidOrderFields(paymentRef = `test-payment-${Date.now()}`) {
+  return {
+    paymentStatus: "paid",
+    paymentRef,
+  };
+}
+
+/** Pickup ~24h ahead at 2 PM local — stays inside test store hours (6 AM–11 PM). */
+export function futurePickupWithinStoreHours() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(14, 0, 0, 0);
+  return d.toISOString();
+}
+
+/** Kitchen admin user + Bearer token for protected order routes. */
+export async function createTestKitchenAdmin(overrides = {}) {
+  const email = overrides.email || "danielwoldehana@yahoo.com";
+  const user = await User.create({
+    firstName: "Test",
+    lastName: "Admin",
+    email,
+    phone: "555-000-0000",
+    password: await bcrypt.hash("testpassword", 10),
+    ...overrides,
+  });
+  const token = generateToken(user._id.toString());
+  return { user, authHeader: `Bearer ${token}` };
+}
+
 export async function createTestLocation(overrides = {}) {
   return await Location.create({
     name: "Test Location",
@@ -93,15 +135,14 @@ export async function createTestLocation(overrides = {}) {
     },
     phone: "555-123-4567",
     email: "test@wildbeancoffee.com",
-    hours: [
-      {
-        day: "Monday",
-        opens: "06:00",
-        closes: "19:00",
-        closed: false,
-      },
-    ],
+    hours: ALL_STORE_DAYS.map((day) => ({
+      day,
+      opens: "06:00",
+      closes: "23:00",
+      closed: false,
+    })),
     active: true,
+    onlineOrderingPaused: false,
     ...overrides,
   });
 }
