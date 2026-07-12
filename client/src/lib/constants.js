@@ -21,6 +21,10 @@ export const PASTRIES_SECTION_NAME = "Bakery & Pastries";
 /** Google review link — used for "Leave a review" button (mobile) and can be encoded in QR. */
 export const GOOGLE_REVIEW_URL = "https://g.page/r/CZTCnS4aNEW1EBM/review";
 
+/** Job application Google Form — linked from the site footer Careers link. */
+export const CAREERS_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeDF_Lrgj8BYqCHlBJNC9a9pabawQSi71-v5ypDfry_kePOKw/viewform";
+
 /**
  * Minimum minutes between "now" and scheduled pickup (client + server should align).
  * Override via NEXT_PUBLIC_PICKUP_MIN_LEAD_MINUTES (must match server PICKUP_MIN_LEAD_MINUTES in production).

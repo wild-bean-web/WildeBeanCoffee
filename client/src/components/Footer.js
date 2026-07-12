@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { SOCIAL_MEDIA_LINKS } from "@/lib/socialMediaLinks";
+import { CAREERS_FORM_URL } from "@/lib/constants";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -108,6 +109,16 @@ export default function Footer() {
                 >
                   Order Online
                 </Link>
+              </li>
+              <li>
+                <a
+                  href={CAREERS_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 transition-colors hover:text-[var(--lime-green)]"
+                >
+                  Careers
+                </a>
               </li>
             </ul>
           </div>
