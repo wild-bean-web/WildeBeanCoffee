@@ -369,10 +369,10 @@ export default function PrivacyPolicyPage() {
                 <p className="mb-2">
                   Phone:{" "}
                   <a
-                    href="tel:+12406456203"
+                    href="tel:+12272807062"
                     className="text-[var(--lime-green)] hover:underline"
                   >
-                    +1 240-645-6203
+                    +1 227-280-7062
                   </a>
                 </p>
                 <p className="mb-2">
