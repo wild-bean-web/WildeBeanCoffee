@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import Footer from '@/components/Footer'
 import { SOCIAL_MEDIA_LINKS } from '@/lib/socialMediaLinks'
+import { CAREERS_FORM_URL } from '@/lib/constants'
 
 describe('Footer', () => {
   it('renders footer with company name', () => {
@@ -20,6 +21,7 @@ describe('Footer', () => {
     expect(screen.getByText('Menu')).toBeInTheDocument()
     expect(screen.getByText('Location & Hours')).toBeInTheDocument()
     expect(screen.getByText('Order Online')).toBeInTheDocument()
+    expect(screen.getByText('Careers')).toBeInTheDocument()
   })
 
   it('renders contact section', () => {
@@ -33,6 +35,10 @@ describe('Footer', () => {
     expect(screen.getByText('Menu').closest('a')).toHaveAttribute('href', '/menu')
     expect(screen.getByText('Location & Hours').closest('a')).toHaveAttribute('href', '/location')
     expect(screen.getByText('Order Online').closest('a')).toHaveAttribute('href', '/order')
+    const careersLink = screen.getByText('Careers').closest('a')
+    expect(careersLink).toHaveAttribute('href', CAREERS_FORM_URL)
+    expect(careersLink).toHaveAttribute('target', '_blank')
+    expect(careersLink).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
   it('renders social media links', () => {
