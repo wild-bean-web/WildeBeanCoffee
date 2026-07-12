@@ -158,10 +158,10 @@ export default function TermsOfUsePage() {
                 </a>{" "}
                 or call{" "}
                 <a
-                  href="tel:+12406456203"
+                  href="tel:+12272807062"
                   className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                 >
-                  240-645-6203
+                  227-280-7062
                 </a>
                 . We aim to respond to accessibility feedback in a timely manner.
               </p>
@@ -292,10 +292,10 @@ export default function TermsOfUsePage() {
                 <li>
                   Phone:{" "}
                   <a
-                    href="tel:+12406456203"
+                    href="tel:+12272807062"
                     className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]"
                   >
-                    +1 240-645-6203
+                    +1 227-280-7062
                   </a>
                 </li>
                 <li>Visit our <Link href="/location" className="text-[var(--lime-green)] underline hover:text-[var(--lime-green-dark)]">Location</Link> page for address, hours, and more contact information</li>

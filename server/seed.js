@@ -367,7 +367,7 @@ const locations = [
     postalCode: "20852",
     country: "US",
     coordinates: { lat: 39.0629, lng: -77.1291 },
-    phone: "+1 240-645-6203",
+    phone: "+1 227-280-7062",
     email: "info@wildbeancoffeeshop.com",
     mapsUrl: "",
     hours: [
