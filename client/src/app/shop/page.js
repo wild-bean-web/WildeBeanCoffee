@@ -9,7 +9,10 @@ import AddToCartButton from "@/components/AddToCartButton";
 import Modal from "@/components/Modal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import RetailBeansShowcase from "@/components/RetailBeansShowcase";
+import ImageComingSoon from "@/components/ImageComingSoon";
 import { useProducts } from "@/hooks/useProducts";
+import { applyRetailBeanOverrides } from "@/lib/retailBeans";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -21,7 +24,11 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = useState("name");
 
   // Fetch products using custom hook (fetch all, filter client-side for complex search)
-  const { products, loading, error } = useProducts();
+  const { products: rawProducts, loading, error } = useProducts();
+  const products = useMemo(
+    () => applyRetailBeanOverrides(rawProducts),
+    [rawProducts]
+  );
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,8 +50,9 @@ export default function ShopPage() {
   );
 
   // Apply filters and sorting (client-side for complex search)
+  // Featured retail beans (e.g. Yirgacheffe) stay in the top showcase only.
   const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+    let filtered = products.filter((p) => p.comingSoon);
 
     // Search filter
     if (searchQuery) {
@@ -209,17 +217,20 @@ export default function ShopPage() {
               Shop Coffee Beans
             </h1>
             <p className="text-lg text-gray-600">
-              Discover our selection of premium coffee beans
+              Fresh roasted whole beans — available now in store
             </p>
           </div>
         </div>
       </div>
 
-      {/* Notice: Beans not yet available for purchase */}
-      <div className="border-b border-amber-200 bg-amber-50 px-4 py-4 sm:px-6 lg:px-8">
+      <RetailBeansShowcase variant="shop" />
+
+      {/* In-store retail notice */}
+      <div className="border-b border-[var(--lime-green)]/25 bg-[var(--lime-green)]/10 px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <p className="text-center text-sm font-medium text-amber-900 sm:text-base">
-            <span className="font-semibold">Coffee beans are not yet available for purchase online or in store.</span> Stay tuned for bag sales!
+          <p className="text-center text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
+            <span className="font-semibold">Whole-bean bags are sold in store only</span>
+            {" "}— pick up Ethiopian Yirgacheffe (12 oz whole beans) at our Rockville cafe. Online bag ordering is not available.
           </p>
         </div>
       </div>
@@ -310,13 +321,22 @@ export default function ShopPage() {
           </>
         )}
 
+        {/* Unavailable / coming-soon beans only — featured retail is above */}
+        {filteredProducts.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-[var(--coffee-brown)] sm:text-2xl">
+              More beans
+            </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Additional single-origin options — not yet available for bag sale
+            </p>
+          </div>
+        )}
+
         {/* Product Grid */}
         {filteredProducts.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow-md">
-            <p className="text-lg text-gray-600">No products found.</p>
-            <p className="mt-2 text-sm text-gray-500">
-              Try adjusting your filters.
-            </p>
+            <p className="text-lg text-gray-600">No other beans to show right now.</p>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -332,42 +352,30 @@ export default function ShopPage() {
                 >
                   {/* Product Image */}
                   <div className="relative h-48 w-full bg-gray-200">
-                    {product.images && product.images.length > 0 && !imageErrors.has(product._id) ? (
+                    {product.imageComingSoon ||
+                    !product.images?.length ||
+                    imageErrors.has(product._id) ? (
+                      <ImageComingSoon compact />
+                    ) : (
                       <Image
                         src={product.images[0]}
                         alt={product.name}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        className="object-contain bg-white p-2 transition-transform duration-300 group-hover:scale-105"
                         unoptimized
                         onError={() => setImageErrors(prev => new Set(prev).add(product._id))}
                       />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-gray-400">
-                        <svg
-                          className="h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                          />
-                        </svg>
-                      </div>
                     )}
                     {product.comingSoon && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 p-3">
                         <span className="text-center text-sm font-bold uppercase tracking-wide text-white">
                           Not yet for sale
                         </span>
-                        {product.priceUnknown && (
-                          <span className="mt-1 text-center text-xs text-white/90">
-                            Enjoy in your drinks at the cafe
-                          </span>
-                        )}
+                      </div>
+                    )}
+                    {!product.comingSoon && product.inStoreOnly && (
+                      <div className="absolute left-3 top-3 rounded-full bg-[var(--coffee-brown)]/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                        In store only
                       </div>
                     )}
                     {!product.comingSoon && !product.inStock && (
@@ -389,12 +397,19 @@ export default function ShopPage() {
                         {product.origin}
                       </p>
                     )}
-                    {product.roastLevel && (
-                      <span className="mb-2 inline-block rounded-full bg-[var(--coffee-brown-light)] px-2 py-1 text-xs text-white">
-                        {product.roastLevel}
-                      </span>
-                    )}
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {product.roastLevel && (
+                        <span className="inline-block rounded-full bg-[var(--coffee-brown-light)] px-2 py-1 text-xs text-white">
+                          {product.roastLevel}
+                        </span>
+                      )}
+                      {product.bagSize && (
+                        <span className="inline-block rounded-full bg-[var(--lime-green)]/15 px-2 py-1 text-xs font-medium text-[var(--lime-green-dark)]">
+                          {product.bagSize}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2">
                       <span className="text-xl font-bold text-[var(--coffee-brown)] tabular-nums">
                         {formatProductPrice(product)}
                       </span>
@@ -402,6 +417,14 @@ export default function ShopPage() {
                         <span className="rounded-full bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600">
                           Coming Soon
                         </span>
+                      ) : product.inStoreOnly ? (
+                        <Link
+                          href="/location"
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--lime-green-dark)]"
+                        >
+                          Visit store
+                        </Link>
                       ) : product.inStock ? (
                         <AddToCartButton
                           item={product}
@@ -424,15 +447,17 @@ export default function ShopPage() {
         {isModalOpen && selectedProduct && (
           <Modal isOpen={isModalOpen} onClose={closeProductModal}>
             <div className="relative h-64 w-full bg-gray-200 sm:h-80">
-                  {selectedProduct.images &&
-                  selectedProduct.images.length > 0 &&
-                  !imageErrors.has(selectedProduct._id) ? (
+                  {selectedProduct.imageComingSoon ||
+                  !selectedProduct.images?.length ||
+                  imageErrors.has(selectedProduct._id) ? (
+                    <ImageComingSoon />
+                  ) : (
                     <>
                       <Image
                         src={selectedProduct.images[0]}
                         alt={selectedProduct.name}
                         fill
-                        className="object-cover"
+                        className="object-contain bg-white p-4"
                         unoptimized
                         onError={() => setImageErrors(prev => new Set(prev).add(selectedProduct._id))}
                       />
@@ -441,29 +466,13 @@ export default function ShopPage() {
                           <span className="text-center text-lg font-bold uppercase tracking-wide text-white">
                             Not yet available for purchase
                           </span>
-                          <span className="mt-2 text-center text-sm text-white/95">
-                            {selectedProduct.priceUnknown
-                              ? "Enjoy this coffee in your drinks at the cafe. Bag sales coming soon!"
-                              : "Bag sales coming soon!"}
-                          </span>
                         </div>
                       )}
                     </>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-gray-400">
-                      <svg
-                        className="h-24 w-24"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
+                  )}
+                  {!selectedProduct.comingSoon && selectedProduct.inStoreOnly && (
+                    <div className="absolute left-4 top-4 rounded-full bg-[var(--coffee-brown)]/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                      In store only
                     </div>
                   )}
                   <button
@@ -495,11 +504,18 @@ export default function ShopPage() {
                       Origin: {selectedProduct.origin}
                     </p>
                   )}
-                  {selectedProduct.roastLevel && (
-                    <span className="mb-4 inline-block rounded-full bg-[var(--coffee-brown-light)] px-3 py-1 text-sm text-white">
-                      {selectedProduct.roastLevel} Roast
-                    </span>
-                  )}
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {selectedProduct.roastLevel && (
+                      <span className="inline-block rounded-full bg-[var(--coffee-brown-light)] px-3 py-1 text-sm text-white">
+                        {selectedProduct.roastLevel} Roast
+                      </span>
+                    )}
+                    {selectedProduct.bagSize && (
+                      <span className="inline-block rounded-full bg-[var(--lime-green)]/15 px-3 py-1 text-sm font-medium text-[var(--lime-green-dark)]">
+                        {selectedProduct.bagSize}
+                      </span>
+                    )}
+                  </div>
                   {selectedProduct.description && (
                     <p className="mb-4 text-gray-700">
                       {selectedProduct.description}
@@ -549,9 +565,11 @@ export default function ShopPage() {
                       </p>
                       {selectedProduct.comingSoon ? (
                         <p className="mt-1 text-sm font-medium text-gray-600">
-                          {selectedProduct.priceUnknown
-                            ? "Enjoy in your drinks at the cafe. Bag sales coming soon."
-                            : "Coming soon."}
+                          Not yet for sale
+                        </p>
+                      ) : selectedProduct.inStoreOnly ? (
+                        <p className="mt-1 text-sm font-medium text-[var(--lime-green-dark)]">
+                          Available in store · not sold online
                         </p>
                       ) : selectedProduct.inStock ? (
                         <p className="mt-1 text-sm text-[var(--lime-green)]">
@@ -567,6 +585,13 @@ export default function ShopPage() {
                       <span className="rounded-full bg-gray-300 px-8 py-3 text-lg font-semibold text-gray-600">
                         Coming Soon
                       </span>
+                    ) : selectedProduct.inStoreOnly ? (
+                      <Link
+                        href="/location"
+                        className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition hover:bg-[var(--lime-green-dark)]"
+                      >
+                        Visit store
+                      </Link>
                     ) : selectedProduct.inStock ? (
                       <AddToCartButton
                         item={selectedProduct}
@@ -579,7 +604,9 @@ export default function ShopPage() {
                     ) : null}
                   </div>
                   <p className="mt-4 text-center text-sm text-gray-500">
-                    Available for in-store pickup
+                    {selectedProduct.inStoreOnly
+                      ? "Pick up at 1532 Rockville Pike"
+                      : "Available for in-store pickup"}
                   </p>
                 </div>
           </Modal>

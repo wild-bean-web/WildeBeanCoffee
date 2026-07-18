@@ -40,19 +40,22 @@ const products = [
   {
     name: "Ethiopian Yirgacheffe",
     description:
-      "Floral, citrus, and tea-like with bright acidity. A classic Ethiopian coffee with delicate notes.",
-    price: 0,
-    priceUnknown: true,
+      "Single origin Arabica — freshly roasted whole beans. Floral jasmine, citrus and bergamot acidity, with fruit notes of blueberry and peach. Available in store only.",
+    price: 17.53,
+    priceUnknown: false,
     currency: "USD",
     roastLevel: "Medium",
-    origin: "Ethiopia",
-    flavorNotes: ["Bergamot", "Jasmine", "Lemon", "Tea-like"],
+    origin: "Yirgacheffe, Ethiopia",
+    flavorNotes: ["Jasmine", "Bergamot", "Citrus", "Blueberry", "Peach"],
     inStock: true,
     inventory: 40,
     images: ["/images/products/single-origin/ethiopia-yirgacheffe.jpeg"],
-    categories: ["single-origin", "medium-roast"],
+    categories: ["single-origin", "medium-roast", "whole-bean"],
     active: true,
-    comingSoon: true,
+    comingSoon: false,
+    inStoreOnly: true,
+    bagSize: "12 oz",
+    imageComingSoon: false,
   },
   {
     name: "Ethiopian Sidamo",
@@ -70,6 +73,8 @@ const products = [
     categories: ["single-origin", "medium-roast"],
     active: true,
     comingSoon: true,
+    inStoreOnly: false,
+    imageComingSoon: false,
   },
 ];
 
