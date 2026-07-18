@@ -5,23 +5,24 @@
 export const RETAIL_YIRGACHEFFE = {
   id: "ethiopian-yirgacheffe-retail",
   name: "Ethiopian Yirgacheffe",
-  tagline: "Single Origin Arabica · Fresh Roasted",
+  tagline: "Fresh Roasted Whole Beans · Single Origin",
   fullTitle:
-    "Ethiopian Yirgacheffe Coffee Beans — Single Origin Arabica, Fresh Roasted Premium Coffee",
+    "Ethiopian Yirgacheffe Whole Coffee Beans — Single Origin Arabica, Fresh Roasted Premium Coffee",
   description:
-    "Specialty Arabica from high-altitude farms in southern Ethiopia. Bright and fragrant with floral jasmine, citrus and bergamot acidity, and fruit notes of blueberry and peach. Freshly roasted and bagged for you to brew at home.",
+    "Specialty Arabica from high-altitude farms in southern Ethiopia. Bright and fragrant with floral jasmine, citrus and bergamot acidity, and fruit notes of blueberry and peach. Sold as freshly roasted whole beans — grind at home for the freshest cup.",
   shortDescription:
-    "Bright, fragrant single-origin Arabica — floral jasmine, citrus, bergamot, and soft fruit notes.",
+    "Freshly roasted whole beans — bright single-origin Arabica with floral jasmine, citrus, bergamot, and soft fruit notes.",
   origin: "Yirgacheffe, Ethiopia",
   roastLevel: "Medium",
   bagSize: "12 oz",
+  form: "Whole bean",
   price: 17.53,
   currency: "USD",
   inStoreOnly: true,
   image: "/images/products/single-origin/ethiopia-yirgacheffe.jpeg",
   flavorNotes: ["Jasmine", "Bergamot", "Citrus", "Blueberry", "Peach"],
   highlights: [
-    { label: "Origin", value: "Ethiopia" },
+    { label: "Form", value: "Whole bean" },
     { label: "Size", value: "12 oz" },
     { label: "Roast", value: "Medium" },
     { label: "Price", value: "$17.53" },

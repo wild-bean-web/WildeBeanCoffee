@@ -40,7 +40,7 @@ const products = [
   {
     name: "Ethiopian Yirgacheffe",
     description:
-      "Single origin Arabica — freshly roasted premium coffee beans. Floral jasmine, citrus and bergamot acidity, with fruit notes of blueberry and peach. Available in store only.",
+      "Single origin Arabica — freshly roasted whole beans. Floral jasmine, citrus and bergamot acidity, with fruit notes of blueberry and peach. Available in store only.",
     price: 17.53,
     priceUnknown: false,
     currency: "USD",

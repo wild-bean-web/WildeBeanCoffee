@@ -217,7 +217,7 @@ export default function ShopPage() {
               Shop Coffee Beans
             </h1>
             <p className="text-lg text-gray-600">
-              Freshly roasted whole beans — available now in store
+              Fresh roasted whole beans — available now in store
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function ShopPage() {
         <div className="mx-auto max-w-7xl">
           <p className="text-center text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
             <span className="font-semibold">Whole-bean bags are sold in store only</span>
-            {" "}— pick up Ethiopian Yirgacheffe (12 oz) at our Rockville cafe. Online bag ordering is not available.
+            {" "}— pick up Ethiopian Yirgacheffe (12 oz whole beans) at our Rockville cafe. Online bag ordering is not available.
           </p>
         </div>
       </div>

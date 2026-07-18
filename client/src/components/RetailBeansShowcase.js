@@ -71,7 +71,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
               transition={{ duration: 0.55, delay: 0.08 }}
             >
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-[var(--lime-green-dark)]">
-                Freshly roasted whole beans
+                Fresh roasted whole beans
               </p>
               <h2
                 id="retail-beans-shop-heading"
@@ -85,7 +85,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
               <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--coffee-brown)]/85 sm:text-lg">
                 {bean.shortDescription} Available now at our Rockville cafe —{" "}
                 <span className="font-semibold text-[var(--coffee-brown)]">
-                  {bean.bagSize} bags for {formatRetailPrice(bean.price)}
+                  {bean.bagSize} whole-bean bags for {formatRetailPrice(bean.price)}
                 </span>
                 . Not sold online.
               </p>
@@ -104,7 +104,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
               <div className="mt-6 flex flex-wrap items-end gap-6">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-[var(--coffee-brown)]/55">
-                    Bag · {bean.bagSize}
+                    Whole bean · {bean.bagSize}
                   </p>
                   <p className="text-3xl font-bold tabular-nums text-[var(--coffee-brown)]">
                     {formatRetailPrice(bean.price)}
@@ -165,7 +165,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
               {productImage}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--coffee-brown-dark)]/90 via-[var(--coffee-brown-dark)]/40 to-transparent p-5 pt-16">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--lime-green-light)]">
-                  Whole bean · {bean.bagSize}
+                  Fresh whole beans · {bean.bagSize}
                 </p>
                 <p className="mt-1 text-2xl font-bold text-white">
                   {formatRetailPrice(bean.price)}
@@ -197,7 +197,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
               transition={{ duration: 0.45 }}
               className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-[var(--lime-green)]"
             >
-              Take home · Freshly roasted
+              Take home · Fresh roasted whole beans
             </motion.p>
             <motion.h2
               id="retail-beans-home-heading"
@@ -209,7 +209,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
             >
               {bean.name}
               <span className="mt-2 block text-xl font-medium text-white/70 sm:text-2xl">
-                Coffee Beans for your kitchen
+                Whole beans for your kitchen
               </span>
             </motion.h2>
             <motion.p
@@ -301,7 +301,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
             </motion.div>
 
             <p className="mt-5 text-sm text-white/50">
-              Sold exclusively in store at 1532 Rockville Pike — not available for online order.
+              Fresh roasted whole beans. Sold exclusively in store at 1532 Rockville Pike.
             </p>
           </div>
         </div>

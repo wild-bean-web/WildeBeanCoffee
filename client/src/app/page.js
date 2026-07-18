@@ -111,9 +111,9 @@ export default function Home() {
     {
       id: 2,
       title: "Premium Coffee Beans",
-      subtitle: "Ethiopian Yirgacheffe · Fresh Roasted",
+      subtitle: "Ethiopian Yirgacheffe · Fresh Roasted Whole Beans",
       description:
-        "Take home our single-origin Arabica — 12 oz bags available in store for $17.53.",
+        "Take home our single-origin Arabica as whole beans — 12 oz bags in store for $17.53.",
       cta: "Browse Shop",
       ctaLink: "/shop",
       cta2: "Visit Us",
@@ -446,6 +446,8 @@ export default function Home() {
         </motion.div>
       </section>
 
+      <RetailBeansShowcase variant="home" />
+
       <BeanStampsPromo variant="home" />
 
       {/* Now at the cafe — coffee, bowls, gelato */}
@@ -481,7 +483,7 @@ export default function Home() {
                 Yirgacheffe
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
-                Specialty Arabica from high-altitude farms (1,700–2,200+ m) in southern Ethiopia — bright, fragrant, and light-bodied. Look for floral jasmine, citrus and bergamot acidity, and fruit notes like blueberry and peach. We use it as our house coffee for every drink at the cafe — and 12 oz whole-bean bags are available in store for $17.53.
+                Specialty Arabica from high-altitude farms (1,700–2,200+ m) in southern Ethiopia — bright, fragrant, and light-bodied. Look for floral jasmine, citrus and bergamot acidity, and fruit notes like blueberry and peach. We use it as our house coffee for every drink at the cafe — and 12 oz bags of freshly roasted whole beans are available in store for $17.53.
               </p>
             </motion.div>
             <motion.div
@@ -538,8 +540,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
-      <RetailBeansShowcase variant="home" />
 
       {/* Features Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
