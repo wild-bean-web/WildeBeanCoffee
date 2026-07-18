@@ -17,6 +17,11 @@ const ProductSchema = new mongoose.Schema(
     comingSoon: { type: Boolean, default: false },
     /** When true, shop UI shows a placeholder instead of numeric price (price may be 0). */
     priceUnknown: { type: Boolean, default: false },
+    /** Retail bags sold at the cafe only — hide online add-to-cart. */
+    inStoreOnly: { type: Boolean, default: false },
+    bagSize: { type: String, trim: true },
+    /** When true, product cards show an Image Coming Soon placeholder. */
+    imageComingSoon: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

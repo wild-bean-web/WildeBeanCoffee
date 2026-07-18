@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import SocialMediaGallery from "@/components/SocialMediaGallery";
 import BeanStampsPromo from "@/components/BeanStampsPromo";
+import RetailBeansShowcase from "@/components/RetailBeansShowcase";
 import { GRAND_OPENING_DATE, getGrandOpeningLabel, GOOGLE_REVIEW_URL } from "@/lib/constants";
 
 function getTimeLeft(now) {
@@ -110,13 +111,13 @@ export default function Home() {
     {
       id: 2,
       title: "Premium Coffee Beans",
-      subtitle: "Ethically Sourced & Locally Roasted",
+      subtitle: "Ethiopian Yirgacheffe · Fresh Roasted",
       description:
-        "Discover our Ethiopian single-origin coffee, locally roasted for maximum flavor and freshness.",
+        "Take home our single-origin Arabica — 12 oz bags available in store for $17.53.",
       cta: "Browse Shop",
       ctaLink: "/shop",
-      cta2: "View Menu",
-      cta2Link: "/menu",
+      cta2: "Visit Us",
+      cta2Link: "/location",
       bgImage: "/images/webDesignImages/HomePage/HomePage2.png",
     },
     {
@@ -480,7 +481,7 @@ export default function Home() {
                 Yirgacheffe
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/90 sm:text-base">
-                Specialty Arabica from high-altitude farms (1,700–2,200+ m) in southern Ethiopia — bright, fragrant, and light-bodied. Look for floral jasmine, citrus and bergamot acidity, and fruit notes like blueberry and peach. We use it as our house coffee for every drink at the cafe.
+                Specialty Arabica from high-altitude farms (1,700–2,200+ m) in southern Ethiopia — bright, fragrant, and light-bodied. Look for floral jasmine, citrus and bergamot acidity, and fruit notes like blueberry and peach. We use it as our house coffee for every drink at the cafe — and 12 oz whole-bean bags are available in store for $17.53.
               </p>
             </motion.div>
             <motion.div
@@ -537,6 +538,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      <RetailBeansShowcase variant="home" />
 
       {/* Features Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8">
@@ -753,8 +756,8 @@ export default function Home() {
               Ready to Experience Great Coffee?
             </h2>
             <p className="mb-8 text-xl text-white/90">
-              Browse our selection of premium beans or order your favorite
-              beverage online.
+              Pick up freshly roasted whole beans in store, or order your
+              favorite beverage online.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
