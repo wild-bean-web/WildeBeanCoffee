@@ -296,6 +296,35 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.6 }}
                   >
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.5 }}
+                      className="mb-6 flex justify-center sm:mb-8"
+                    >
+                      <Link
+                        href="/shop"
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border-2 border-[var(--lime-green)] bg-[var(--lime-green)] px-5 py-2.5 text-center shadow-lg shadow-black/25 transition hover:bg-[var(--lime-green-light)] hover:border-[var(--lime-green-light)] hover:scale-[1.02] sm:gap-3 sm:px-7 sm:py-3"
+                      >
+                        <span className="text-sm font-extrabold uppercase tracking-wide text-[var(--coffee-brown-dark)] sm:text-base md:text-lg">
+                          Now serving fresh roasted whole beans to take home
+                        </span>
+                        <svg
+                          className="hidden h-5 w-5 shrink-0 text-[var(--coffee-brown-dark)] sm:block"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                          />
+                        </svg>
+                      </Link>
+                    </motion.div>
                     <motion.h1
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
