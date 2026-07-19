@@ -39,6 +39,11 @@ const HostedCheckoutDraftSchema = new mongoose.Schema(
     /** Set when order placement fails after payment (webhook or recover); cleared on success. */
     lastPlacementError: { type: String, default: null },
     lastPlacementErrorAt: { type: Date, default: null },
+    /**
+     * Set while placeOnlineOrder is creating the Order for this checkout.
+     * Prevents webhook + success-page recover from creating duplicate kitchen tickets.
+     */
+    placementClaimedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
