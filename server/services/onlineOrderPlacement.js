@@ -9,6 +9,110 @@ import { isBeanStampsEnabled, isAdminOrderCompEnabled } from "../config/featureF
 import { isKitchenAdminEmail } from "../config/kitchenAdmins.js";
 import { validateTipForItems } from "./tipValidation.js";
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isDuplicateKeyError(err) {
+  return err?.code === 11000 || err?.code === 11001;
+}
+
+/**
+ * Atomically claim the right to create an Order for a hosted checkout paymentRef.
+ * Prevents webhook + /order/success recover from both creating kitchen tickets.
+ */
+async function claimOrLoadExistingPaidOrder(paymentRefVal) {
+  const existing = await Order.findOne({ paymentRef: paymentRefVal }).lean();
+  if (existing) {
+    await HostedCheckoutDraft.findOneAndUpdate(
+      { checkoutSessionId: paymentRefVal, status: "pending" },
+      {
+        $set: {
+          status: "fulfilled",
+          fulfilledOrderId: existing._id,
+        },
+        $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1, placementClaimedAt: 1 },
+      },
+    ).catch(() => {});
+    return { kind: "existing", order: existing };
+  }
+
+  const draft = await HostedCheckoutDraft.findOne({
+    checkoutSessionId: paymentRefVal,
+  }).lean();
+
+  if (draft?.fulfilledOrderId) {
+    const byFulfilled = await Order.findById(draft.fulfilledOrderId).lean();
+    if (byFulfilled) return { kind: "existing", order: byFulfilled };
+  }
+
+  // No draft (legacy path) — caller proceeds with create; best-effort only.
+  if (!draft) {
+    return { kind: "proceed" };
+  }
+
+  const claimed = await HostedCheckoutDraft.findOneAndUpdate(
+    {
+      checkoutSessionId: paymentRefVal,
+      status: "pending",
+      $or: [
+        { placementClaimedAt: null },
+        { placementClaimedAt: { $exists: false } },
+      ],
+    },
+    { $set: { placementClaimedAt: new Date() } },
+    { new: true },
+  );
+
+  if (claimed) return { kind: "claimed" };
+
+  // Another worker claimed — wait for their Order to appear.
+  for (let i = 0; i < 20; i++) {
+    await sleep(150);
+    const waited = await Order.findOne({ paymentRef: paymentRefVal }).lean();
+    if (waited) return { kind: "existing", order: waited };
+
+    const d = await HostedCheckoutDraft.findOne({
+      checkoutSessionId: paymentRefVal,
+    }).lean();
+    if (d?.fulfilledOrderId) {
+      const o = await Order.findById(d.fulfilledOrderId).lean();
+      if (o) return { kind: "existing", order: o };
+    }
+
+    // Stale claim (crash mid-placement) — reclaim after 45s.
+    if (
+      d?.status === "pending" &&
+      d.placementClaimedAt &&
+      Date.now() - new Date(d.placementClaimedAt).getTime() > 45000
+    ) {
+      const reclaimed = await HostedCheckoutDraft.findOneAndUpdate(
+        {
+          checkoutSessionId: paymentRefVal,
+          status: "pending",
+          placementClaimedAt: d.placementClaimedAt,
+        },
+        { $set: { placementClaimedAt: new Date() } },
+        { new: true },
+      );
+      if (reclaimed) return { kind: "claimed" };
+    }
+  }
+
+  // Last chance: if peer finished, return it; otherwise allow create (rare).
+  const finalExisting = await Order.findOne({ paymentRef: paymentRefVal }).lean();
+  if (finalExisting) return { kind: "existing", order: finalExisting };
+  return { kind: "proceed" };
+}
+
+async function clearPlacementClaim(paymentRefVal) {
+  if (!paymentRefVal || paymentRefVal === "ADMIN_DISCOUNT") return;
+  await HostedCheckoutDraft.findOneAndUpdate(
+    { checkoutSessionId: paymentRefVal, status: "pending" },
+    { $unset: { placementClaimedAt: 1 } },
+  ).catch(() => {});
+}
+
 const allowedPaymentStatuses = [
   "pending",
   "authorized",
@@ -259,19 +363,9 @@ export async function placeOnlineOrder(body, user, options = {}) {
     paymentRefVal &&
     paymentRefVal !== "ADMIN_DISCOUNT"
   ) {
-    const existing = await Order.findOne({ paymentRef: paymentRefVal }).lean();
-    if (existing) {
-      await HostedCheckoutDraft.findOneAndUpdate(
-        { checkoutSessionId: paymentRefVal, status: "pending" },
-        {
-          $set: {
-            status: "fulfilled",
-            fulfilledOrderId: existing._id,
-          },
-          $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1 },
-        },
-      ).catch(() => {});
-      return { ok: true, order: existing, idempotent: true };
+    const claim = await claimOrLoadExistingPaidOrder(paymentRefVal);
+    if (claim.kind === "existing") {
+      return { ok: true, order: claim.order, idempotent: true };
     }
   }
 
@@ -443,7 +537,28 @@ export async function placeOnlineOrder(body, user, options = {}) {
       txnErr?.message?.includes("reward") ||
       txnErr?.message?.includes("Collect 20")
     ) {
+      await clearPlacementClaim(paymentRefVal);
       return { ok: false, status: 400, message: txnErr.message };
+    }
+    if (isDuplicateKeyError(txnErr)) {
+      const existing = await Order.findOne({ paymentRef: paymentRefVal }).lean();
+      if (existing) {
+        await HostedCheckoutDraft.findOneAndUpdate(
+          { checkoutSessionId: paymentRefVal },
+          {
+            $set: {
+              status: "fulfilled",
+              fulfilledOrderId: existing._id,
+            },
+            $unset: {
+              lastPlacementError: 1,
+              lastPlacementErrorAt: 1,
+              placementClaimedAt: 1,
+            },
+          },
+        ).catch(() => {});
+        return { ok: true, order: existing, idempotent: true };
+      }
     }
     const msg = String(txnErr?.message || "");
     const noReplica =
@@ -451,20 +566,48 @@ export async function placeOnlineOrder(body, user, options = {}) {
       msg.includes("mongos") ||
       txnErr?.code === 20;
     if (noReplica) {
-      if (beanStampsRedeemCartKey) {
-        await assertUserHasFullStampCard(user._id, null);
+      try {
+        if (beanStampsRedeemCartKey) {
+          await assertUserHasFullStampCard(user._id, null);
+        }
+        order = await Order.create(orderPayload);
+        await processLoyaltyAfterPaidOrder({
+          session: null,
+          userId,
+          orderId: order._id,
+          totals: order.totals,
+          paymentStatus: order.paymentStatus,
+          paymentRef: order.paymentRef,
+          loyaltyRedeemApplied,
+        });
+      } catch (createErr) {
+        if (isDuplicateKeyError(createErr)) {
+          const existing = await Order.findOne({
+            paymentRef: paymentRefVal,
+          }).lean();
+          if (existing) {
+            await HostedCheckoutDraft.findOneAndUpdate(
+              { checkoutSessionId: paymentRefVal },
+              {
+                $set: {
+                  status: "fulfilled",
+                  fulfilledOrderId: existing._id,
+                },
+                $unset: {
+                  lastPlacementError: 1,
+                  lastPlacementErrorAt: 1,
+                  placementClaimedAt: 1,
+                },
+              },
+            ).catch(() => {});
+            return { ok: true, order: existing, idempotent: true };
+          }
+        }
+        await clearPlacementClaim(paymentRefVal);
+        throw createErr;
       }
-      order = await Order.create(orderPayload);
-      await processLoyaltyAfterPaidOrder({
-        session: null,
-        userId,
-        orderId: order._id,
-        totals: order.totals,
-        paymentStatus: order.paymentStatus,
-        paymentRef: order.paymentRef,
-        loyaltyRedeemApplied,
-      });
     } else {
+      await clearPlacementClaim(paymentRefVal);
       throw txnErr;
     }
   } finally {
@@ -479,13 +622,17 @@ export async function placeOnlineOrder(body, user, options = {}) {
     paymentRefVal !== "ADMIN_DISCOUNT"
   ) {
     await HostedCheckoutDraft.findOneAndUpdate(
-      { checkoutSessionId: paymentRefVal, status: "pending" },
+      { checkoutSessionId: paymentRefVal },
       {
         $set: {
           status: "fulfilled",
           fulfilledOrderId: order._id,
         },
-        $unset: { lastPlacementError: 1, lastPlacementErrorAt: 1 },
+        $unset: {
+          lastPlacementError: 1,
+          lastPlacementErrorAt: 1,
+          placementClaimedAt: 1,
+        },
       },
     ).catch(() => {});
   }

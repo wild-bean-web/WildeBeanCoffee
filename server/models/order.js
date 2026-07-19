@@ -85,6 +85,9 @@ const OrderSchema = new mongoose.Schema(
 
 OrderSchema.index({ status: 1, paymentStatus: 1, createdAt: -1 });
 OrderSchema.index({ userId: 1, createdAt: -1 }); // Index for user orders queries
+// Non-unique helper for lookups; uniqueness is enforced in placeOnlineOrder via draft claim
+// (+ optional Atlas unique partial index after historical duplicate paymentRefs are cleaned).
+OrderSchema.index({ paymentRef: 1 });
 
 const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 export default Order;
