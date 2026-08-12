@@ -40,10 +40,15 @@ router.get("/", async (req, res, next) => {
       const regex = { $regex: term, $options: "i" };
       query.$or = [
         { name: regex },
-        { recipe16oz: regex },
-        { recipe20oz: regex },
+        { searchText: regex },
         { notes: regex },
         { weekLabel: regex },
+        { base: regex },
+        { toppings: regex },
+        { method: regex },
+        { "build.item": regex },
+        { "build.oz16": regex },
+        { "build.oz20": regex },
       ];
     }
 
