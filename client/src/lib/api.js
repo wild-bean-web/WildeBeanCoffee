@@ -151,6 +151,36 @@ export const menuApi = {
 };
 
 /**
+ * Weekly specials recipes (staff lookup)
+ */
+export const specialsApi = {
+  /**
+   * Get specials with optional filters
+   * @param {Object} filters - Optional filters (category, search, active)
+   * @returns {Promise<{ data: Array, meta: Object }>}
+   */
+  getAll: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.category) params.append("category", filters.category);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.active !== undefined) params.append("active", filters.active);
+
+    const queryString = params.toString();
+    const url = `/api/specials${queryString ? `?${queryString}` : ""}`;
+    return fetchJson(url);
+  },
+
+  /**
+   * Get a single special by ID
+   * @param {string} id
+   */
+  getById: async (id) => {
+    const result = await fetchJson(`/api/specials/${id}`);
+    return result.data;
+  },
+};
+
+/**
  * Location API
  */
 export const locationApi = {

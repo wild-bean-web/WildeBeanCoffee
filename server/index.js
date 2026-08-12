@@ -37,6 +37,7 @@ import authRoutes from "./routes/auth.js";
 import paymentRoutes from "./routes/payments.js";
 import emailVerificationRoutes from "./routes/emailVerification.js";
 import loyaltyRoutes from "./routes/loyalty.js";
+import specialsRoutes from "./routes/specials.js";
 import {
   resolveMongoUri,
   getDatabaseNameFromUri,
@@ -166,6 +167,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/email-verification", emailVerificationRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/specials", specialsRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({

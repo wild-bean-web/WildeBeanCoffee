@@ -1059,7 +1059,13 @@ export default function KitchenDashboard() {
                  </button>
                )}
                
-               {/* Previous Orders + checkout health */}
+               {/* Previous Orders + specials recipes */}
+               <Link
+                 href="/specials"
+                 className="w-full rounded-lg bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 text-center"
+               >
+                 Specials Recipes
+               </Link>
                <Link
                  href="/kitchen/previous"
                  className="w-full rounded-lg bg-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30 text-center"
@@ -1165,6 +1171,12 @@ export default function KitchenDashboard() {
                       : "Pause ordering"}
                 </button>
               </div>
+               <Link
+                 href="/specials"
+                 className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"
+               >
+                 Specials Recipes
+               </Link>
                <Link
                  href="/kitchen/previous"
                  className="rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/30"
