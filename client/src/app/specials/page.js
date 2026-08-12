@@ -22,6 +22,156 @@ function formatWeek(special) {
   })}`;
 }
 
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--lime-green-dark)]">
+      {children}
+    </p>
+  );
+}
+
+function BulletList({ items }) {
+  if (!items?.length) return null;
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="flex gap-2 text-sm text-[var(--coffee-brown)]"
+        >
+          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--coffee-brown-medium-light)]" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function BuildTable({ build }) {
+  if (!build?.length) return null;
+  return (
+    <div className="mt-1 overflow-hidden rounded-md border border-[var(--coffee-brown)]/10">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-[var(--coffee-brown-very-light)] text-[11px] font-bold uppercase tracking-wider text-[var(--coffee-brown-light)]">
+          <tr>
+            <th className="px-2.5 py-1.5 font-bold">Item</th>
+            <th className="px-2.5 py-1.5 font-bold">16 oz</th>
+            <th className="px-2.5 py-1.5 font-bold">20 oz</th>
+          </tr>
+        </thead>
+        <tbody>
+          {build.map((row) => (
+            <tr
+              key={`${row.item}-${row.oz16}-${row.oz20}`}
+              className="border-t border-[var(--coffee-brown)]/8"
+            >
+              <td className="px-2.5 py-2 font-medium text-[var(--coffee-brown-dark)]">
+                {row.item}
+              </td>
+              <td className="px-2.5 py-2 tabular-nums text-[var(--coffee-brown)]">
+                {row.oz16 || "—"}
+              </td>
+              <td className="px-2.5 py-2 tabular-nums text-[var(--coffee-brown)]">
+                {row.oz20 || "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SpecialCard({ special }) {
+  const hasBuild = special.build?.length > 0;
+  const hasBase = special.base?.length > 0;
+  const hasToppings = special.toppings?.length > 0;
+  const hasMethod = special.method?.length > 0;
+  const isLegacy =
+    !hasBuild && !hasBase && !hasToppings && !hasMethod && special.recipe16oz;
+
+  return (
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className={`rounded-lg border border-[var(--coffee-brown)]/10 border-l-4 bg-white p-4 shadow-sm ${
+        CATEGORY_ACCENT[special.category] ||
+        "border-l-[var(--coffee-brown-medium-light)]"
+      }`}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-lg font-semibold text-[var(--coffee-brown-dark)]">
+          {special.name}
+        </h3>
+        <span className="text-xs font-medium uppercase tracking-wide text-[var(--coffee-brown-light)]">
+          {formatWeek(special)}
+        </span>
+      </div>
+
+      {isLegacy ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <SectionLabel>16 oz</SectionLabel>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--coffee-brown)]">
+              {special.recipe16oz}
+            </p>
+          </div>
+          {special.recipe20oz ? (
+            <div>
+              <SectionLabel>20 oz</SectionLabel>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--coffee-brown)]">
+                {special.recipe20oz}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {hasBase ? (
+            <div>
+              <SectionLabel>Base</SectionLabel>
+              <BulletList items={special.base} />
+            </div>
+          ) : null}
+
+          {hasBuild ? (
+            <div>
+              <SectionLabel>Size</SectionLabel>
+              <BuildTable build={special.build} />
+            </div>
+          ) : null}
+
+          {hasToppings ? (
+            <div>
+              <SectionLabel>Toppings</SectionLabel>
+              <BulletList items={special.toppings} />
+            </div>
+          ) : null}
+
+          {hasMethod ? (
+            <div>
+              <SectionLabel>Method</SectionLabel>
+              <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-sm text-[var(--coffee-brown)]">
+                {special.method.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {special.notes ? (
+        <p className="mt-3 text-xs italic text-[var(--coffee-brown-light)]">
+          {special.notes}
+        </p>
+      ) : null}
+    </motion.li>
+  );
+}
+
 export default function StaffSpecialsPage() {
   const [specials, setSpecials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +329,10 @@ export default function StaffSpecialsPage() {
         {!loading && !error && grouped.length > 0 && (
           <div className="space-y-8">
             {grouped.map((group) => (
-              <section key={group.category} aria-labelledby={`cat-${group.category}`}>
+              <section
+                key={group.category}
+                aria-labelledby={`cat-${group.category}`}
+              >
                 <h2
                   id={`cat-${group.category}`}
                   className="mb-3 text-lg font-bold text-[var(--coffee-brown-dark)]"
@@ -192,53 +345,7 @@ export default function StaffSpecialsPage() {
                 <ul className="space-y-3">
                   <AnimatePresence mode="popLayout">
                     {group.items.map((special) => (
-                      <motion.li
-                        key={special._id}
-                        layout
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className={`rounded-lg border border-[var(--coffee-brown)]/10 border-l-4 bg-white p-4 shadow-sm ${
-                          CATEGORY_ACCENT[special.category] ||
-                          "border-l-[var(--coffee-brown-medium-light)]"
-                        }`}
-                      >
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <h3 className="text-lg font-semibold text-[var(--coffee-brown-dark)]">
-                            {special.name}
-                          </h3>
-                          <span className="text-xs font-medium uppercase tracking-wide text-[var(--coffee-brown-light)]">
-                            {formatWeek(special)}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-wide text-[var(--lime-green-dark)]">
-                              16 oz
-                            </p>
-                            <p className="mt-1 text-sm leading-relaxed text-[var(--coffee-brown)]">
-                              {special.recipe16oz}
-                            </p>
-                          </div>
-                          {special.recipe20oz ? (
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide text-[var(--lime-green-dark)]">
-                                20 oz
-                              </p>
-                              <p className="mt-1 text-sm leading-relaxed text-[var(--coffee-brown)]">
-                                {special.recipe20oz}
-                              </p>
-                            </div>
-                          ) : null}
-                        </div>
-
-                        {special.notes ? (
-                          <p className="mt-3 text-xs italic text-[var(--coffee-brown-light)]">
-                            {special.notes}
-                          </p>
-                        ) : null}
-                      </motion.li>
+                      <SpecialCard key={special._id} special={special} />
                     ))}
                   </AnimatePresence>
                 </ul>

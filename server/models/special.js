@@ -2,6 +2,15 @@ import mongoose from "mongoose";
 
 const SPECIAL_CATEGORIES = ["Coffee", "Matcha", "Refreshers"];
 
+const BuildLineSchema = new mongoose.Schema(
+  {
+    item: { type: String, required: true, trim: true },
+    oz16: { type: String, trim: true, default: "" },
+    oz20: { type: String, trim: true, default: "" },
+  },
+  { _id: false },
+);
+
 const SpecialSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -11,19 +20,22 @@ const SpecialSchema = new mongoose.Schema(
       enum: SPECIAL_CATEGORIES,
       trim: true,
     },
-    /** Full build instructions for a 16 oz drink. */
-    recipe16oz: { type: String, required: true, trim: true },
-    /**
-     * 20 oz size notes. Often only the deltas vs 16 oz (extra pumps/oz)
-     * as written on the weekly specials sheet.
-     */
-    recipe20oz: { type: String, trim: true, default: "" },
-    /** Monday (or sheet date) this special ran / starts, for sorting & history. */
+    /** Shared base ingredients / milk / espresso / matcha. */
+    base: [{ type: String, trim: true }],
+    /** Size-specific amounts (pumps, oz, drops) — primary barista scan table. */
+    build: [BuildLineSchema],
+    /** Cold foam, drizzle, garnish, toppings. */
+    toppings: [{ type: String, trim: true }],
+    /** Short ordered steps when the build isn’t obvious. */
+    method: [{ type: String, trim: true }],
+    /** Monday (or sheet date) this special ran / starts. */
     weekOf: { type: Date, required: true },
-    /** Optional human label from the sheet, e.g. "7/27". */
+    /** Human label, e.g. "8/12" or "Archive". */
     weekLabel: { type: String, trim: true, default: "" },
     active: { type: Boolean, default: true },
     notes: { type: String, trim: true, default: "" },
+    /** Flattened text for ingredient search. */
+    searchText: { type: String, trim: true, default: "" },
   },
   { timestamps: true },
 );
@@ -32,9 +44,9 @@ SpecialSchema.index({ category: 1, weekOf: -1, name: 1 });
 SpecialSchema.index({ name: 1, weekOf: 1 }, { unique: true });
 SpecialSchema.index({
   name: "text",
-  recipe16oz: "text",
-  recipe20oz: "text",
+  searchText: "text",
   notes: "text",
+  weekLabel: "text",
 });
 
 const Special =
