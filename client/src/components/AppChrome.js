@@ -11,12 +11,20 @@ import CookieNotice from "@/components/CookieNotice";
 export default function AppChrome({ children }) {
   const pathname = usePathname();
   const isDigitalMenu = pathname?.startsWith("/digitalmenu");
+  const isStaffSpecials = pathname === "/specials" || pathname?.startsWith("/specials/");
 
   if (isDigitalMenu) {
     return (
       <div className="fixed inset-0 z-[200] flex h-screen w-screen flex-col overflow-hidden bg-black">
         {children}
       </div>
+    );
+  }
+
+  // Staff recipe lookup: no customer nav/footer so phones can bookmark a clean view.
+  if (isStaffSpecials) {
+    return (
+      <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
     );
   }
 
