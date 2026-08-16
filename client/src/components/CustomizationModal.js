@@ -212,10 +212,10 @@ export default function CustomizationModal({
     });
   }, [isOpen, menuItem]);
 
-  // Check if a modifier group supports quantities (like Syrup Pumps)
+  // Check if a modifier group supports quantities (syrups, pumps, extra shots)
   const isQuantityBased = (groupName) => {
     return (
-      groupName.includes("Syrup Pumps") ||
+      groupName.includes("Syrup") ||
       groupName.includes("Pumps") ||
       groupName.includes("Extra Single Shot")
     );

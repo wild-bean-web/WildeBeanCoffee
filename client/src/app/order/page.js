@@ -1705,7 +1705,7 @@ function OrderPageContent() {
                                   const optionTotal =
                                     (opt.price || 0) * quantity;
                                   const isQuantityBasedGroup =
-                                    (mod.modifierGroupName || "").includes("Syrup Pumps") ||
+                                    (mod.modifierGroupName || "").includes("Syrup") ||
                                     (mod.modifierGroupName || "").includes("Pumps") ||
                                     (mod.modifierGroupName || "").includes("Extra Single Shot");
                                   const isSyrupPump =

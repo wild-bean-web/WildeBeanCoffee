@@ -10,7 +10,7 @@ const HOT_LATTE_MODIFIERS = [
   "Extra Single Shots (Hot)",
   "Espresso Bean",
   "Cup Size (12-16)",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Milk Choice",
@@ -21,7 +21,7 @@ const RED_EYE_MODIFIERS = [
   "Extra Single Shots (Hot)",
   "Espresso Bean",
   "Cup Size (12-16) Red Eye",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Milk Choice",
@@ -32,13 +32,14 @@ const HOT_AMERICANO_MODIFIERS = [
   "Extra Single Shots (Hot)",
   "Espresso Bean",
   "Cup Size (12-16)",
+  "Syrups & sweeteners",
 ];
 
 const HOT_CAPPUCCINO_STYLE_MODIFIERS = [
   "Shot Preference",
   "Extra Single Shots (Hot)",
   "Espresso Bean",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Milk Choice",
@@ -48,6 +49,7 @@ const HOT_ESPRESSO_4OZ_MODIFIERS = [
   "Shot Preference",
   "Extra Single Shots (Hot)",
   "Espresso Bean",
+  "Syrups & sweeteners",
 ];
 
 const CORTADO_MODIFIERS = [...HOT_ESPRESSO_4OZ_MODIFIERS, "Milk Choice"];
@@ -57,7 +59,7 @@ const ICED_LATTE_MODIFIERS = [
   "Extra Single Shots (Iced)",
   "Espresso Bean",
   "Cup Size (16-20)",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Ice Level",
@@ -70,6 +72,7 @@ const ICED_AMERICANO_MODIFIERS = [
   "Extra Single Shots (Iced)",
   "Espresso Bean",
   "Cup Size (16-20)",
+  "Syrups & sweeteners",
   "Ice Level",
   "Cold Foam",
 ];
@@ -79,7 +82,7 @@ const ICED_FILTERED_COFFEE_MODIFIERS = [
   "Espresso Bean",
   "Extra Single Shots (Iced)",
   "Cup Size (16-20)",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Ice Level",
@@ -92,7 +95,7 @@ const ICED_RED_EYE_MODIFIERS = [
   "Extra Single Shots (Iced)",
   "Espresso Bean",
   "Cup Size (16-20)",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Coffee Toppings",
   "Whipped Cream",
   "Ice Level",
@@ -105,7 +108,7 @@ const ICED_ORANGE_AMERICANO_MODIFIERS = [
   "Extra Single Shots (Iced)",
   "Espresso Bean",
   "Cup Size (16-20)",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Ice Level",
   "Milk Choice",
   "Cold Foam",
@@ -114,7 +117,7 @@ const ICED_ORANGE_AMERICANO_MODIFIERS = [
 const ICED_STRAWBERRY_MATCHA_MODIFIERS = [
   "Cold Brew Cup Size (16-20)",
   "Extra Matcha",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Milk Choice",
   "Cold Foam",
   "Ice Level",
@@ -124,24 +127,28 @@ const HOT_MATCHA_MODIFIERS = [
   "Hot Cup Size",
   "Extra Matcha",
   "Milk Choice",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
 ];
 
 const ICED_MATCHA_LATTE_MODIFIERS = [
   "Cold Cup Size",
   "Extra Matcha",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
   "Milk Choice",
   "Cold Foam",
   "Ice Level",
 ];
 
-const HOT_CHOCOLATE_MODIFIERS = ["Cup Size (12-16)", "Milk Choice"];
+const HOT_CHOCOLATE_MODIFIERS = [
+  "Cup Size (12-16)",
+  "Milk Choice",
+  "Syrups & sweeteners",
+];
 
 const LONDON_FOG_MODIFIERS = [
   "Hot Cup Size",
   "Milk Choice",
-  "Syrup Pumps (+$0.25 each)",
+  "Syrups & sweeteners",
 ];
 
 export const menuItemsFromCSV = [
@@ -325,7 +332,7 @@ export const menuItemsFromCSV = [
     name: "Cafe Au Lait",
     description:
       "Drip coffee with steamed milk, served hot (whole milk by default).",
-    price: 4.1,
+    price: 4.2,
     currency: "USD",
     section: "Coffee & Espresso",
     tags: ["hot", "coffee", "milk"],
@@ -360,7 +367,7 @@ export const menuItemsFromCSV = [
     image: "",
     available: true,
     active: true,
-    modifierGroupNames: ["Cup Size (12-16)"],
+    modifierGroupNames: ["Cup Size (12-16)", "Syrups & sweeteners"],
   },
 
   // Cold Coffee
@@ -380,7 +387,7 @@ export const menuItemsFromCSV = [
       "Ice Level",
       "Milk Choice",
       "Cold Foam",
-      "Syrup Pumps (+$0.25 each)",
+      "Syrups & sweeteners",
     ],
   },
   {
@@ -501,6 +508,20 @@ export const menuItemsFromCSV = [
     tags: ["iced", "espresso", "cold", "shaken", "caramel"],
     allergens: ["Dairy"],
     image: "", // UI shows "Photo coming soon"
+    available: true,
+    active: true,
+    modifierGroupNames: ICED_LATTE_MODIFIERS,
+  },
+  {
+    name: "Tiramisu Cacao Shaken Espresso",
+    description:
+      "Double espresso shaken with ice, tiramisu, and cacao, finished with oat milk by default (oat).",
+    price: 8.5,
+    currency: "USD",
+    section: "Coffee & Espresso",
+    tags: ["iced", "espresso", "cold", "shaken", "specialty", "oat", "tiramisu", "cacao"],
+    allergens: [],
+    image: "",
     available: true,
     active: true,
     modifierGroupNames: ICED_LATTE_MODIFIERS,
@@ -1068,7 +1089,7 @@ export const menuItemsFromCSV = [
     modifierGroupNames: [
       "Cold Cup Size",
       "Ice Level",
-      "Syrup Pumps (+$0.25 each)",
+      "Syrups & sweeteners",
     ],
   },
   {
@@ -1083,7 +1104,7 @@ export const menuItemsFromCSV = [
     available: true,
     active: true,
     modifierGroupNames: [
-      "Syrup Pumps (+$0.25 each)",
+      "Syrups & sweeteners",
       "Cup Size (12-16)",
       "Milk Choice",
     ],
@@ -1128,7 +1149,7 @@ export const menuItemsFromCSV = [
     active: true,
     modifierGroupNames: [
       "Cup Size (16-20)",
-      "Syrup Pumps (+$0.25 each)",
+      "Syrups & sweeteners",
       "Ice Level",
       "Milk Choice",
     ],
