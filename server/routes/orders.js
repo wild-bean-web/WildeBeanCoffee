@@ -19,6 +19,7 @@ import {
 import { tryMarkHostedCheckoutPaidFromCloverPaymentLookup } from "../services/clover.js";
 import { notifyOrderOpsAlert } from "../services/orderOpsAlerts.js";
 import { resolveKitchenDateRangeFromQuery } from "../utils/kitchenQueryDateRange.js";
+import { canUnmarkPickedUp } from "../utils/orderPickupDay.js";
 
 const router = express.Router();
 
@@ -560,6 +561,30 @@ router.patch(
       const previous = await Order.findById(id).lean();
       if (!previous) {
         return errorResponse(res, 404, "Order not found");
+      }
+
+      // Undo "picked up": completed → ready, only on the scheduled pickup day.
+      if (
+        update.status &&
+        update.status !== "completed" &&
+        previous.status === "completed"
+      ) {
+        if (update.status !== "ready") {
+          return errorResponse(
+            res,
+            400,
+            "Picked-up orders can only be restored to ready (not picked up).",
+            ["status"],
+          );
+        }
+        if (!canUnmarkPickedUp({ ...previous, status: "completed" })) {
+          return errorResponse(
+            res,
+            400,
+            "This order can only be marked not picked up on the same day as its scheduled pickup.",
+            ["status"],
+          );
+        }
       }
 
       const order = await Order.findByIdAndUpdate(

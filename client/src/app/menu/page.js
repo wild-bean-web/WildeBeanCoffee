@@ -35,7 +35,12 @@ function buildMenuSectionRenderEntries(section, items) {
   }
   const entries = [];
   if (hot.length > 0) {
-    entries.push({ kind: "divider", key: "coffee-hot-divider", label: "Hot Drinks" });
+    entries.push({
+      kind: "divider",
+      key: "coffee-hot-divider",
+      label: "Hot Drinks",
+      variant: "hot",
+    });
     hot.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
   }
   if (cold.length > 0) {
@@ -43,25 +48,396 @@ function buildMenuSectionRenderEntries(section, items) {
       kind: "divider",
       key: "coffee-cold-divider",
       label: "Iced & Cold Drinks",
+      variant: "cold",
     });
     cold.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
   }
   return entries;
 }
 
-function CoffeeSubsectionDivider({ label }) {
+function HotDrinksIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        d="M8 3c-.6.8-.6 1.7 0 2.5s.6 1.7 0 2.5M12 3c-.6.8-.6 1.7 0 2.5s.6 1.7 0 2.5M16 3c-.6.8-.6 1.7 0 2.5s.6 1.7 0 2.5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 11h14v4a5 5 0 01-5 5H9a5 5 0 01-5-5v-4zM18 12h1.5a2.5 2.5 0 010 5H18"
+      />
+    </svg>
+  );
+}
+
+function ColdDrinksIcon() {
+  return (
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 2v20M4.2 7l15.6 10M19.8 7L4.2 17M12 6l2.5-2.5M12 6L9.5 3.5M12 18l2.5 2.5M12 18l-2.5 2.5"
+      />
+    </svg>
+  );
+}
+
+function CoffeeSubsectionDivider({ label, variant }) {
   return (
     <div
-      className="col-span-full flex items-center gap-4 py-2"
+      className="col-span-full mb-3 mt-10 first:mt-0"
       role="separator"
       aria-label={label}
     >
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
-      <span className="shrink-0 text-sm font-bold uppercase tracking-wider text-[var(--coffee-brown)]">
-        {label}
-      </span>
-      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-[var(--lime-green)]/60 to-[var(--lime-green)]" />
+      <div className="flex items-center gap-3 rounded-xl bg-[var(--coffee-brown)] px-4 py-3 shadow-md sm:px-5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white">
+          {variant === "cold" ? <ColdDrinksIcon /> : <HotDrinksIcon />}
+        </span>
+        <h3 className="text-base font-extrabold uppercase tracking-[0.16em] text-white sm:text-lg">
+          {label}
+        </h3>
+      </div>
     </div>
+  );
+}
+
+/** Hot/Iced is already stated by the subsection header, so it is not repeated here. */
+function getCoffeeRowBadges(item) {
+  const name = (item.name || "").toLowerCase();
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  const badges = [];
+  if (name.includes("shaken") || tags.includes("shaken")) badges.push("Shaken");
+  if (name.includes("sugar free") || name.includes("sugar-free")) {
+    badges.push("Sugar-Free");
+  }
+  if (name.includes("(oat)") || name.includes("oat milk")) badges.push("Oat");
+  if (name.includes("almond milk")) badges.push("Almond");
+  if (name.includes("decaf")) badges.push("Decaf");
+  if (tags.includes("specialty")) badges.push("Specialty");
+  return badges;
+}
+
+function AddToCartControl({
+  item,
+  cartQuantity,
+  onAddToCart,
+  onUpdateQuantity,
+  variant = "card",
+}) {
+  const isRow = variant === "row";
+
+  if (!item.available) {
+    return (
+      <p className={`font-medium text-red-600 ${isRow ? "text-xs" : "text-xs"}`}>
+        Currently Unavailable
+      </p>
+    );
+  }
+
+  if (item.onlineOrderable === false) {
+    return isRow ? (
+      <span className="text-xs font-medium text-gray-500">In store only</span>
+    ) : (
+      <div className="min-h-[42px]" aria-hidden="true" />
+    );
+  }
+
+  const hasModifiers = item.modifierGroups && item.modifierGroups.length > 0;
+  // Items with modifiers always re-open the customizer so each build is separate.
+  const showStepper = !hasModifiers && cartQuantity > 0;
+
+  if (!showStepper) {
+    const cardLabel =
+      item.name === "Build Your Own Bowl" && hasModifiers
+        ? "Customize"
+        : "Add to Cart";
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddToCart(item);
+        }}
+        className={
+          isRow
+            ? "rounded-full border border-[var(--lime-green)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--lime-green)] transition-colors hover:bg-[var(--lime-green)] hover:text-white"
+            : "w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
+        }
+      >
+        {isRow ? "Add" : cardLabel}
+      </button>
+    );
+  }
+
+  const buttonSize = isRow ? "h-8 w-8" : "h-10 w-10";
+  const iconSize = isRow ? "h-4 w-4" : "h-5 w-5";
+
+  return (
+    <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onUpdateQuantity(item, -1);
+        }}
+        className={`flex ${buttonSize} items-center justify-center rounded-l-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white`}
+        aria-label="Decrease quantity"
+      >
+        <svg
+          className={iconSize}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20 12H4"
+          />
+        </svg>
+      </button>
+      <span className="flex flex-1 items-center justify-center gap-1.5 px-2 text-sm font-semibold text-[var(--coffee-brown)]">
+        <span>{cartQuantity}</span>
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      </span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onUpdateQuantity(item, 1);
+        }}
+        className={`flex ${buttonSize} items-center justify-center rounded-r-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white`}
+        aria-label="Increase quantity"
+      >
+        <svg
+          className={iconSize}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+/** Text-first row used where we do not have real photography (Coffee & Espresso). */
+function CoffeeMenuRow({
+  item,
+  formatPrice,
+  onOpen,
+  onAddToCart,
+  cartQuantity,
+  onUpdateQuantity,
+}) {
+  const badges = getCoffeeRowBadges(item);
+
+  return (
+    <div className="group border-b border-gray-100 py-3.5">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpen(item)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpen(item);
+            }
+          }}
+          className="min-w-0 flex-1 cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lime-green)]"
+        >
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-[15px] font-semibold leading-snug text-[var(--coffee-brown)] transition-colors group-hover:text-[var(--lime-green)] sm:text-base">
+              {item.name}
+            </h3>
+            {/* Baseline-aligned so the dots sit on the text baseline like a printed menu. */}
+            <span
+              aria-hidden="true"
+              className="hidden flex-1 border-b-2 border-dotted border-gray-300 sm:block"
+            />
+            <span className="ml-auto shrink-0 text-[15px] font-bold tabular-nums text-[var(--coffee-brown)] sm:ml-0 sm:text-base">
+              {formatPrice(item.price, item.currency)}
+            </span>
+          </div>
+
+          {badges.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {badges.map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-full bg-[var(--lime-green)]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--coffee-brown)]"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {item.description && (
+            <p className="mt-1 text-[13px] leading-snug text-gray-500">
+              {item.description}
+            </p>
+          )}
+
+          {item.allergens && item.allergens.length > 0 && (
+            <p className="mt-1 text-[11px] font-medium text-amber-700">
+              Contains: {item.allergens.join(", ")}
+            </p>
+          )}
+        </div>
+
+        <div className="shrink-0 pt-0.5">
+          <AddToCartControl
+            item={item}
+            cartQuantity={cartQuantity}
+            onAddToCart={onAddToCart}
+            onUpdateQuantity={onUpdateQuantity}
+            variant="row"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Photo card used for sections where we have real photography. */
+function MenuItemCard({
+  item,
+  formatPrice,
+  onOpen,
+  onAddToCart,
+  cartQuantity,
+  onUpdateQuantity,
+}) {
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg"
+      onClick={() => onOpen(item)}
+    >
+      {item.image ? (
+        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div className="flex h-48 w-full items-center justify-center border-b border-gray-100 bg-gradient-to-b from-gray-50 to-gray-100">
+          <div className="px-4 text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="mt-2 text-xs font-medium text-gray-400">
+              Photo coming soon
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-1 flex-col p-4">
+        <div className="mb-3 flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="mb-1 text-lg font-semibold text-[var(--lime-green)]">
+              {item.name}
+            </h3>
+            <p className="text-sm text-gray-600">{item.description}</p>
+          </div>
+          <div className="ml-4 text-right">
+            <p className="text-xl font-bold text-[var(--coffee-brown)]">
+              {formatPrice(item.price, item.currency)}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-2 min-h-[60px]">
+          {item.allergens && item.allergens.length > 0 ? (
+            <div className="border-t border-gray-100 pt-2">
+              <p className="mb-1 text-xs font-semibold text-amber-700">
+                Contains:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {item.allergens.map((allergen, idx) => (
+                  <span
+                    key={idx}
+                    className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+                  >
+                    {allergen}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : item.name === "Build Your Own Bowl" ? (
+            <div className="border-t border-gray-100 pt-2">
+              <p className="text-xs text-gray-500">
+                Allergen info for add-ons varies. Cross-contamination may occur.
+              </p>
+            </div>
+          ) : (
+            <div className="border-t border-gray-100 pt-2" />
+          )}
+        </div>
+
+        <div className="mt-auto">
+          <AddToCartControl
+            item={item}
+            cartQuantity={cartQuantity}
+            onAddToCart={onAddToCart}
+            onUpdateQuantity={onUpdateQuantity}
+            variant="card"
+          />
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -460,182 +836,42 @@ function MenuPageContent() {
                   </div>
                 </div>
               )}
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {section === COFFEE_ESPRESSO_SECTION && (
+                <p className="mb-5 text-sm leading-snug text-gray-600">
+                  Every drink is made to order — tap any item to choose size,
+                  milk, syrups and extra shots.
+                </p>
+              )}
+              <div
+                className={
+                  section === COFFEE_ESPRESSO_SECTION
+                    ? "grid gap-x-10 lg:grid-cols-2"
+                    : "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                }
+              >
                 {buildMenuSectionRenderEntries(section, items).map((entry) => {
                   if (entry.kind === "divider") {
                     return (
                       <CoffeeSubsectionDivider
                         key={entry.key}
                         label={entry.label}
+                        variant={entry.variant}
                       />
                     );
                   }
                   const item = entry.item;
-                  return (
-                  <motion.div
-                    key={entry.key}
-                    whileHover={{ y: -4 }}
-                    className="group cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-[var(--lime-green)] hover:shadow-lg flex flex-col h-full"
-                    onClick={() => openMenuItemModal(item)}
-                  >
-                    {/* Image Section */}
-                    {item.image ? (
-                      <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          unoptimized
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 border-b border-gray-100">
-                        <div className="text-center px-4">
-                          <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="mt-2 text-xs font-medium text-gray-400">Photo coming soon</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Content Section */}
-                    <div className="p-4 flex flex-col flex-1">
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-lg font-semibold text-[var(--lime-green)]">
-                            {item.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {item.description}
-                          </p>
-                        </div>
-                        <div className="ml-4 text-right">
-                          <p className="text-xl font-bold text-[var(--coffee-brown)]">
-                            {formatPrice(item.price, item.currency)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-2 min-h-[60px]">
-                        {item.allergens && item.allergens.length > 0 ? (
-                          <div className="border-t border-gray-100 pt-2">
-                            <p className="mb-1 text-xs font-semibold text-amber-700">
-                              Contains:
-                            </p>
-                            <div className="flex flex-wrap gap-1">
-                              {item.allergens.map((allergen, idx) => (
-                                <span
-                                  key={idx}
-                                  className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 border border-amber-200"
-                                >
-                                  {allergen}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : item.name === "Build Your Own Bowl" ? (
-                          <div className="border-t border-gray-100 pt-2">
-                            <p className="text-xs text-gray-500">
-                              Allergen info for add-ons varies. Cross-contamination may occur.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="border-t border-gray-100 pt-2">
-                            {/* Empty space to maintain consistent height */}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="mt-auto">
-                        {item.available ? (
-                          item.onlineOrderable === false ? (
-                            <div className="min-h-[42px]" aria-hidden="true" />
-                          ) : // For items with modifiers, always show "Add to Cart" to allow different customizations
-                          // For items without modifiers, show quantity controls if already in cart
-                          (item.modifierGroups && item.modifierGroups.length > 0) || getCartQuantity(item._id) === 0 ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddToCartClick(item);
-                              }}
-                              className="w-full rounded-full bg-[var(--lime-green)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
-                            >
-                              {item.name === "Build Your Own Bowl" && item.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
-                            </button>
-                          ) : (
-                            <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateCartQuantity(item, -1);
-                                }}
-                                className="flex h-10 w-10 items-center justify-center rounded-l-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
-                                aria-label="Decrease quantity"
-                              >
-                                <svg
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M20 12H4"
-                                  />
-                                </svg>
-                              </button>
-                              <span className="flex flex-1 items-center justify-center gap-1.5 text-sm font-semibold text-[var(--coffee-brown)]">
-                                <span>{getCartQuantity(item._id)}</span>
-                                <svg
-                                  className="h-4 w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                                  />
-                                </svg>
-                              </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateCartQuantity(item, 1);
-                                }}
-                                className="flex h-10 w-10 items-center justify-center rounded-r-full text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown-light)] hover:text-white"
-                                aria-label="Increase quantity"
-                              >
-                                <svg
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 4v16m8-8H4"
-                                  />
-                                </svg>
-                              </button>
-                            </div>
-                          )
-                        ) : (
-                          <p className="text-xs text-red-600">
-                            Currently Unavailable
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
+                  const itemProps = {
+                    item,
+                    formatPrice,
+                    onOpen: openMenuItemModal,
+                    onAddToCart: handleAddToCartClick,
+                    cartQuantity: getCartQuantity(item._id),
+                    onUpdateQuantity: updateCartQuantity,
+                  };
+                  return section === COFFEE_ESPRESSO_SECTION ? (
+                    <CoffeeMenuRow key={entry.key} {...itemProps} />
+                  ) : (
+                    <MenuItemCard key={entry.key} {...itemProps} />
                   );
                 })}
               </div>
@@ -722,8 +958,30 @@ function MenuPageContent() {
                 onClick={(e) => e.stopPropagation()}
                 className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-2xl"
               >
-                {/* Image Section */}
-                {selectedMenuItem.image ? (
+                {/* Image Section — coffee is a text-only section, so it gets no image area at all. */}
+                {selectedMenuItem.section === COFFEE_ESPRESSO_SECTION ? (
+                  <div className="flex justify-end px-4 pt-4">
+                    <button
+                      onClick={closeMenuItemModal}
+                      className="rounded-full bg-gray-100 p-2 transition-colors hover:bg-gray-200"
+                      aria-label="Close"
+                    >
+                      <svg
+                        className="h-6 w-6 text-[var(--coffee-brown)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ) : selectedMenuItem.image ? (
                   <div className="relative h-80 w-full bg-gray-200 sm:h-96">
                     <Image
                       src={selectedMenuItem.image}

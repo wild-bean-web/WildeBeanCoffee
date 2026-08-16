@@ -9,6 +9,7 @@ import {
   parseLocalDate,
   getRangeForPreset,
 } from "@/lib/kitchenDateRange";
+import { canUnmarkOrderPickedUp } from "@/lib/dateTime";
 
 export default function PreviousKitchenOrders() {
   const todayStr = toLocalDateString(new Date());
@@ -18,6 +19,7 @@ export default function PreviousKitchenOrders() {
   const [filterPreset, setFilterPreset] = useState("today");
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
+  const [unmarkBusyId, setUnmarkBusyId] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -36,6 +38,36 @@ export default function PreviousKitchenOrders() {
       console.error("Failed to load previous orders:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMarkNotPickedUp = async (order) => {
+    if (!canUnmarkOrderPickedUp(order)) {
+      alert(
+        "This order can only be marked not picked up on the same day as its scheduled pickup.",
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        `Move order #${String(order._id).slice(-8).toUpperCase()} back to the kitchen board as not picked up?`,
+      )
+    ) {
+      return;
+    }
+
+    setUnmarkBusyId(order._id);
+    try {
+      await ordersApi.updateStatus(order._id, "ready");
+      setOrders((prev) => prev.filter((o) => o._id !== order._id));
+    } catch (error) {
+      console.error("Failed to mark order not picked up:", error);
+      alert(
+        error.message ||
+          "Failed to mark order not picked up. Please try again.",
+      );
+    } finally {
+      setUnmarkBusyId(null);
     }
   };
 
@@ -244,6 +276,9 @@ export default function PreviousKitchenOrders() {
                   order={order}
                   formatTime={formatTime}
                   formatDate={formatDate}
+                  canUnmark={canUnmarkOrderPickedUp(order)}
+                  unmarkBusy={unmarkBusyId === order._id}
+                  onMarkNotPickedUp={() => handleMarkNotPickedUp(order)}
                 />
               ))}
             </div>
@@ -254,7 +289,14 @@ export default function PreviousKitchenOrders() {
   );
 }
 
-function OrderCard({ order, formatTime, formatDate }) {
+function OrderCard({
+  order,
+  formatTime,
+  formatDate,
+  canUnmark,
+  unmarkBusy,
+  onMarkNotPickedUp,
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -274,10 +316,21 @@ function OrderCard({ order, formatTime, formatDate }) {
               {formatTime(order.updatedAt || order.createdAt)}
             </p>
           </div>
-          <div className="text-right">
+          <div className="flex flex-col items-end gap-1.5 text-right">
             <div className="inline-block rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-600">
               PICKED UP
             </div>
+            {order.loyaltyRedeemApplied && (
+              <div
+                className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900"
+                title="Customer redeemed Bean Stamps rewards on this order"
+              >
+                REWARDS USED
+                {Number(order.loyaltyDiscountSubtotal) > 0
+                  ? ` (−$${Number(order.loyaltyDiscountSubtotal).toFixed(2)})`
+                  : ""}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -365,6 +418,12 @@ function OrderCard({ order, formatTime, formatDate }) {
 
       {/* Total */}
       <div className="border-t border-gray-200 pt-3">
+        {order.loyaltyRedeemApplied && Number(order.loyaltyDiscountSubtotal) > 0 && (
+          <div className="mb-1 flex justify-between text-sm text-amber-800">
+            <span className="font-medium">Rewards discount:</span>
+            <span>−${Number(order.loyaltyDiscountSubtotal).toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="font-semibold text-[var(--coffee-brown)]">Total:</span>
           <span className="text-lg font-bold text-[var(--coffee-brown)]">
@@ -372,6 +431,17 @@ function OrderCard({ order, formatTime, formatDate }) {
           </span>
         </div>
       </div>
+
+      {canUnmark && (
+        <button
+          type="button"
+          onClick={onMarkNotPickedUp}
+          disabled={unmarkBusy}
+          className="mt-4 w-full rounded-lg border-2 border-[var(--coffee-brown)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--coffee-brown)] transition hover:bg-[var(--coffee-brown)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {unmarkBusy ? "Updating…" : "Mark Order Not Picked Up"}
+        </button>
+      )}
     </motion.div>
   );
 }
