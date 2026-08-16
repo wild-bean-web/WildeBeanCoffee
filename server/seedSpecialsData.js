@@ -93,6 +93,19 @@ export const specialsSeed = [
     method: ["Lavender + puree + milk, mix", "Add ice + more milk", "Top with double shot espresso"],
   },
   {
+    name: "Blueberry Chai",
+    category: "Coffee",
+    weekOf: "2026-08-17",
+    weekLabel: "8/17",
+    base: ["Milk"],
+    build: [
+      b("Blueberry puree", "1 oz", "1.2 oz"),
+      b("Chai concentrate", "6 pumps", "8 pumps"),
+    ],
+    toppings: [],
+    method: ["Blueberry + chai + milk, mix", "Add ice"],
+  },
+  {
     name: "Caramel Butter Cloud",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -101,6 +114,24 @@ export const specialsSeed = [
     build: [b("Butter pecan", "2 pumps", "3 pumps")],
     toppings: ["Caramel cold foam", "Caramel drizzle"],
     method: ["Syrup + milk, mix", "Add ice + espresso", "Top with foam + drizzle"],
+  },
+  {
+    name: "Caramel Cookie Cloud",
+    category: "Coffee",
+    weekOf: "2026-08-17",
+    weekLabel: "8/17",
+    base: ["Milk", "Ice", "Double shot espresso"],
+    build: [b("Caramel", "2 pumps", "3 pumps")],
+    toppings: [
+      "Cookie butter cold foam",
+      "Spiral caramel drizzle (small bottle)",
+    ],
+    method: [
+      "Caramel + milk + ice",
+      "Double shot espresso",
+      "Top with cookie butter cold foam",
+      "Garnish with spiral caramel drizzle",
+    ],
   },
   {
     name: "Caramel Praline Macchiato",
@@ -198,6 +229,23 @@ export const specialsSeed = [
     method: ["Syrups + espresso in shaker with ice", "Shake", "Top with strawberry puree cold foam"],
   },
   {
+    name: "Pistachio Choco Shaken — Oat",
+    category: "Coffee",
+    weekOf: "2026-08-17",
+    weekLabel: "8/17",
+    base: ["Double shot espresso", "Splash of oat milk"],
+    build: [
+      b("Pistachio", "1 pump", "2 pumps"),
+      b("Chocolate", "1 pump", "1 pump"),
+    ],
+    toppings: [],
+    method: [
+      "Syrups + double shot espresso",
+      "Shake with ice",
+      "Finish with a splash of oat milk",
+    ],
+  },
+  {
     name: "Pistachio Oatmilk Shaken Espresso",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -251,6 +299,16 @@ export const specialsSeed = [
   },
 
   // ─── Matcha ───────────────────────────────────────────────
+  {
+    name: "BB Lavender Matcha",
+    category: "Matcha",
+    weekOf: "2026-08-17",
+    weekLabel: "8/17",
+    base: ["Milk", "Matcha"],
+    build: [b("Lavender", "2 pumps", "3 pumps")],
+    toppings: ["Blueberry cold foam"],
+    method: ["Lavender + milk, mix", "Add ice + matcha", "Top with blueberry cold foam"],
+  },
   {
     name: "Blooming Blue Matcha",
     category: "Matcha",
