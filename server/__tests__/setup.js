@@ -35,7 +35,10 @@ function deriveTestDatabaseUri(uri) {
   return null;
 }
 
-// Get test database URI with fallbacks
+// Get test database URI with fallbacks.
+// NOTE: This is the same URI as local `npm run seed:test` / the Express server
+// (wildcoffeebean_TEST). Jest clearDatabase() wipes that DB — re-run seed:test
+// after npm test if you need the menu again locally.
 const TEST_DB_URI =
   process.env.MONGODB_TEST_URI ||
   process.env.MONGODB_URI_TEST ||
@@ -70,6 +73,14 @@ export async function connectTestDB() {
  * Clear all collections in test database
  */
 export async function clearDatabase() {
+  const dbName = mongoose.connection.db?.databaseName;
+  if (dbName === "wildcoffeebean_TEST" && !clearDatabase._warned) {
+    console.warn(
+      `[jest] Clearing local seed database "${dbName}". ` +
+        `Run \`npm run seed:test\` afterward to restore the menu.`,
+    );
+    clearDatabase._warned = true;
+  }
   const collections = mongoose.connection.collections;
   for (const key in collections) {
     await collections[key].deleteMany({});
@@ -98,4 +109,3 @@ export async function teardownTestDB() {
   await clearDatabase();
   await closeTestDB();
 }
-

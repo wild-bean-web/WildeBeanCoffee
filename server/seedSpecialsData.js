@@ -229,20 +229,21 @@ export const specialsSeed = [
     method: ["Syrups + espresso in shaker with ice", "Shake", "Top with strawberry puree cold foam"],
   },
   {
-    name: "Pistachio Choco Shaken — Oat",
+    name: "Pistachio Coco Shaken",
     category: "Coffee",
     weekOf: "2026-08-17",
     weekLabel: "8/17",
     base: ["Double shot espresso", "Splash of oat milk"],
     build: [
-      b("Pistachio", "1 pump", "2 pumps"),
-      b("Chocolate", "1 pump", "1 pump"),
+      b("Pistachio", "2 pumps", "3 pumps"),
+      b("Chocolate fudge", "1 pump", "1 pump"),
     ],
-    toppings: [],
+    toppings: ["Cocoa powder"],
     method: [
       "Syrups + double shot espresso",
       "Shake with ice",
       "Finish with a splash of oat milk",
+      "Garnish with cocoa powder",
     ],
   },
   {

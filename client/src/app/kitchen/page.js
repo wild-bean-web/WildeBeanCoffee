@@ -1531,7 +1531,7 @@ function OrderCard({
             </h3>
             <p className="mt-1 text-sm text-gray-600">{getTimeAgo(order.createdAt)}</p>
           </div>
-          <div className="text-right">
+          <div className="flex flex-col items-end gap-1.5 text-right">
             <div
               className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
                 isReady
@@ -1543,6 +1543,17 @@ function OrderCard({
             >
               {order.status.toUpperCase()}
             </div>
+            {order.loyaltyRedeemApplied && (
+              <div
+                className="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900"
+                title="Customer redeemed Bean Stamps rewards on this order"
+              >
+                REWARDS USED
+                {Number(order.loyaltyDiscountSubtotal) > 0
+                  ? ` (−$${Number(order.loyaltyDiscountSubtotal).toFixed(2)})`
+                  : ""}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1630,6 +1641,12 @@ function OrderCard({
 
       {/* Total */}
       <div className="mb-4 border-t border-gray-200 pt-3">
+        {order.loyaltyRedeemApplied && Number(order.loyaltyDiscountSubtotal) > 0 && (
+          <div className="mb-1 flex justify-between text-sm text-amber-800">
+            <span className="font-medium">Rewards discount:</span>
+            <span>−${Number(order.loyaltyDiscountSubtotal).toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span className="font-semibold text-[var(--coffee-brown)]">Total:</span>
           <span className="text-lg font-bold text-[var(--coffee-brown)]">

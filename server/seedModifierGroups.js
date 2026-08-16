@@ -203,6 +203,18 @@ export const modifierGroups = [
     ],
   },
   {
+    name: "Extra Matcha",
+    displayName: "Extra Matcha",
+    description: "Add extra matcha (+$1.30)",
+    type: "multiple",
+    required: false,
+    minSelections: 0,
+    maxSelections: 1,
+    options: [
+      { name: "Extra Matcha", price: 1.3, available: true },
+    ],
+  },
+  {
     name: "Milk Choice",
     description:
       "Whole, 2%, skim, or half & half at no charge. Heavy cream +$0.60. Almond, oat, or soy +$0.80.",
