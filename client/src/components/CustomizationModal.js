@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -21,30 +21,464 @@ const PREDETERMINED_BOWL_DEFAULTS = {
   "Wild Vegan": {
     "Wild Vegan Base": ["Chia Seeds Pudding"],
     "Bowl Size": ["Small (12oz)"],
-    "Toppings": [
+    Toppings: [
       "Granola",
       "Coconut flakes",
       "Sliced almonds",
       "Dried cranberries",
     ],
-    "Drizzels": ["Peanut Butter", "Honey"],
+    Drizzels: ["Peanut Butter", "Honey"],
     "Fruit Toppings": ["Strawberries", "Bananas"],
     "Extra Add-Ons": [],
   },
   "Signature Bowl": {
-    "Base": ["Chia Seeds Pudding & Yogurt"],
+    Base: ["Chia Seeds Pudding & Yogurt"],
     "Bowl Size": ["Small (12oz)"],
-    "Toppings": [
+    Toppings: [
       "Granola",
       "Chopped pecans",
       "Sunflower Seeds",
       "Coconut flakes",
     ],
-    "Drizzels": ["Peanut Butter", "Honey"],
+    Drizzels: ["Peanut Butter", "Honey"],
     "Fruit Toppings": ["Strawberries", "Blueberries"],
     "Extra Add-Ons": [],
   },
 };
+
+const MILK_CHOICE_GROUPS = ["Milk Choice", "Milk Choice (Smoothies)"];
+const SYRUP_GROUP_NAME = "Syrups & sweeteners";
+
+function formatColdFoamFlavorLabel(optionName) {
+  return optionName.replace(/\s*Cold Foam\s*$/i, "").trim() || optionName;
+}
+
+function formatOptionName(optionName) {
+  return optionName.replace(/\(Disabled\)/g, "").trim();
+}
+
+// Open/close state for a dropdown, closing on outside click, tap, or Escape
+function useDropdown() {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) setOpen(false);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return { open, setOpen, containerRef };
+}
+
+function DropdownChevron({ open }) {
+  return (
+    <svg
+      className={`h-5 w-5 shrink-0 text-gray-500 transition-transform ${
+        open ? "rotate-180" : ""
+      }`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  );
+}
+
+function DropdownTrigger({
+  open,
+  onToggle,
+  title,
+  subtitle,
+  highlighted,
+  onClear,
+  ariaLabel,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      aria-label={ariaLabel}
+      className={`flex w-full items-center justify-between rounded-lg border-2 p-3 text-left transition-all ${
+        highlighted
+          ? "border-[var(--lime-green)] bg-[var(--lime-green)]/5"
+          : open
+            ? "border-[var(--lime-green)] bg-white"
+            : "border-gray-200 bg-white hover:border-gray-300"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-gray-900">{title}</p>
+        <p className="mt-0.5 truncate text-xs text-gray-500">{subtitle}</p>
+      </div>
+      <div className="ml-3 flex shrink-0 items-center gap-2">
+        {onClear && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                onClear();
+              }
+            }}
+            className="rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          >
+            Clear
+          </span>
+        )}
+        <DropdownChevron open={open} />
+      </div>
+    </button>
+  );
+}
+
+function DropdownPanel({ ariaLabel, multiSelectable, children }) {
+  return (
+    <motion.ul
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.15 }}
+      role="listbox"
+      aria-label={ariaLabel}
+      aria-multiselectable={multiSelectable || undefined}
+      className="absolute z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-lg border-2 border-gray-200 bg-white shadow-lg"
+    >
+      {children}
+    </motion.ul>
+  );
+}
+
+function DropdownOption({
+  isSelected,
+  isDisabled,
+  onClick,
+  label,
+  priceLabel,
+  showCheck,
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        role="option"
+        aria-selected={isSelected}
+        disabled={isDisabled}
+        onClick={onClick}
+        className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors ${
+          isSelected
+            ? "bg-[var(--lime-green)]/10 font-semibold text-[var(--coffee-brown)]"
+            : "text-gray-800 hover:bg-gray-50"
+        } ${isDisabled ? "cursor-not-allowed opacity-40" : ""}`}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          {showCheck && (
+            <span
+              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
+                isSelected
+                  ? "border-[var(--lime-green)] bg-[var(--lime-green)]"
+                  : "border-gray-300"
+              }`}
+              aria-hidden="true"
+            >
+              {isSelected && (
+                <svg
+                  className="h-3 w-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </span>
+          )}
+          <span className="truncate">{label}</span>
+        </span>
+        <span className="ml-3 shrink-0 font-semibold text-gray-700">
+          {priceLabel}
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function SingleSelectDropdown({
+  options,
+  selectedName,
+  onSelect,
+  onClear,
+  placeholderTitle,
+  placeholderSubtitle,
+  formatLabel = formatOptionName,
+  ariaLabel,
+}) {
+  const { open, setOpen, containerRef } = useDropdown();
+  const selectedOption = options.find((opt) => opt.name === selectedName);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <DropdownTrigger
+        open={open}
+        onToggle={() => setOpen((prev) => !prev)}
+        highlighted={Boolean(selectedOption)}
+        ariaLabel={ariaLabel}
+        title={
+          selectedOption ? formatLabel(selectedOption.name) : placeholderTitle
+        }
+        subtitle={
+          selectedOption
+            ? (selectedOption.price || 0) > 0
+              ? `+${formatPrice(selectedOption.price)}`
+              : "No extra charge"
+            : placeholderSubtitle
+        }
+        onClear={
+          selectedOption && onClear
+            ? () => {
+                onClear();
+                setOpen(false);
+              }
+            : null
+        }
+      />
+
+      <AnimatePresence>
+        {open && (
+          <DropdownPanel ariaLabel={ariaLabel}>
+            {options.map((option) => (
+              <DropdownOption
+                key={option._id || option.name}
+                isSelected={option.name === selectedName}
+                label={formatLabel(option.name)}
+                priceLabel={
+                  (option.price || 0) > 0
+                    ? `+${formatPrice(option.price)}`
+                    : "Free"
+                }
+                onClick={() => {
+                  onSelect(option.name);
+                  setOpen(false);
+                }}
+              />
+            ))}
+          </DropdownPanel>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function QuantityStepper({ quantity, unitLabel, onDecrease, onIncrease }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={onDecrease}
+        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 transition-colors hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10"
+        aria-label={`Decrease ${unitLabel}s`}
+      >
+        <svg
+          className="h-4 w-4 text-gray-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20 12H4"
+          />
+        </svg>
+      </button>
+      <span className="min-w-[5rem] text-center text-sm font-semibold text-gray-900">
+        {quantity === 1 ? `1 ${unitLabel}` : `${quantity} ${unitLabel}s`}
+      </span>
+      <button
+        type="button"
+        onClick={onIncrease}
+        className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 transition-colors hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10"
+        aria-label={`Increase ${unitLabel}s`}
+      >
+        <svg
+          className="h-4 w-4 text-gray-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function MultiSelectQuantityDropdown({
+  options,
+  selectedNames,
+  getQuantity,
+  onToggle,
+  onQuantityChange,
+  maxSelections,
+  placeholderTitle,
+  placeholderSubtitle,
+  unitLabel = "pump",
+  ariaLabel,
+}) {
+  const { open, setOpen, containerRef } = useDropdown();
+
+  const selectedOptions = selectedNames
+    .map((name) => options.find((opt) => opt.name === name))
+    .filter(Boolean);
+  const selectionTotal = selectedOptions.reduce(
+    (sum, option) => sum + (option.price || 0) * getQuantity(option.name),
+    0,
+  );
+  const atMaxSelections = maxSelections
+    ? selectedNames.length >= maxSelections
+    : false;
+
+  return (
+    <div className="space-y-2">
+      <div className="relative" ref={containerRef}>
+        <DropdownTrigger
+          open={open}
+          onToggle={() => setOpen((prev) => !prev)}
+          highlighted={selectedOptions.length > 0}
+          ariaLabel={ariaLabel}
+          title={
+            selectedOptions.length > 0
+              ? `${selectedOptions.length} selected`
+              : placeholderTitle
+          }
+          subtitle={
+            selectedOptions.length > 0
+              ? `+${formatPrice(selectionTotal)} · tap to add or remove`
+              : placeholderSubtitle
+          }
+        />
+
+        <AnimatePresence>
+          {open && (
+            <DropdownPanel ariaLabel={ariaLabel} multiSelectable>
+              {options.map((option) => {
+                const isSelected = selectedNames.includes(option.name);
+                return (
+                  <DropdownOption
+                    key={option._id || option.name}
+                    isSelected={isSelected}
+                    isDisabled={!isSelected && atMaxSelections}
+                    showCheck
+                    label={formatOptionName(option.name)}
+                    priceLabel={
+                      (option.price || 0) > 0
+                        ? `+${formatPrice(option.price)}`
+                        : "Free"
+                    }
+                    onClick={() => onToggle(option.name)}
+                  />
+                );
+              })}
+            </DropdownPanel>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {selectedOptions.map((option) => {
+        const quantity = getQuantity(option.name);
+        return (
+          <div
+            key={option._id || option.name}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border-2 border-[var(--lime-green)] bg-[var(--lime-green)]/5 p-3"
+          >
+            <span className="text-sm font-medium text-gray-900">
+              {formatOptionName(option.name)}
+            </span>
+            <div className="flex items-center gap-3">
+              <QuantityStepper
+                quantity={quantity}
+                unitLabel={unitLabel}
+                onDecrease={() => onQuantityChange(option.name, -1)}
+                onIncrease={() => onQuantityChange(option.name, 1)}
+              />
+              <span className="text-sm font-semibold text-gray-700">
+                {(option.price || 0) > 0
+                  ? `+${formatPrice((option.price || 0) * quantity)}`
+                  : "Free"}
+              </span>
+              <button
+                type="button"
+                onClick={() => onToggle(option.name)}
+                className="rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-800"
+                aria-label={`Remove ${formatOptionName(option.name)}`}
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {maxSelections && atMaxSelections && (
+        <p className="text-xs text-gray-500">
+          Maximum of {maxSelections} selected. Remove one to add another.
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default function CustomizationModal({
   isOpen,
@@ -365,6 +799,27 @@ export default function CustomizationModal({
     }
   };
 
+  // Dropdown selection for single-choice groups (always selects, never toggles off)
+  const selectSingleModifier = (groupName, optionName) => {
+    setSelectedModifiers((prev) => ({ ...prev, [groupName]: [optionName] }));
+    setValidationErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[groupName];
+      return updated;
+    });
+  };
+
+  const clearModifierGroup = (groupName) => {
+    setSelectedModifiers((prev) => ({ ...prev, [groupName]: [] }));
+    setModifierQuantities((prev) => {
+      const updated = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        if (!key.startsWith(`${groupName}_`)) updated[key] = value;
+      });
+      return updated;
+    });
+  };
+
   // Handle quantity change for quantity-based modifiers
   const handleQuantityChange = (groupName, optionName, change) => {
     const quantityKey = `${groupName}_${optionName}`;
@@ -542,6 +997,11 @@ export default function CustomizationModal({
                       (opt) => opt.available,
                     );
                     const isWildVeganBase = group.name === "Wild Vegan Base";
+                    const isColdFoamGroup = group.name === "Cold Foam";
+                    const isMilkChoiceGroup = MILK_CHOICE_GROUPS.includes(
+                      group.name,
+                    );
+                    const isSyrupGroup = group.name === SYRUP_GROUP_NAME;
 
                     return (
                       <div key={group._id || group.name} className="space-y-3">
@@ -576,192 +1036,255 @@ export default function CustomizationModal({
                             )}
 
                             <div className="space-y-2">
-                              {availableOptions.map((option) => {
-                                const isSelected = selected.includes(
-                                  option.name,
-                                );
-                                const isDisabled = !option.available;
-                                const optionPrice = option.price || 0;
-                                const quantityKey = `${group.name}_${option.name}`;
-                                const quantity =
-                                  isQuantityBased(group.name) && isSelected
-                                    ? modifierQuantities[quantityKey] || 1
-                                    : 1;
-                                const totalOptionPrice = optionPrice * quantity;
+                              {isColdFoamGroup ? (
+                                <SingleSelectDropdown
+                                  ariaLabel="Cold Foam options"
+                                  options={availableOptions}
+                                  selectedName={selected[0] || null}
+                                  formatLabel={formatColdFoamFlavorLabel}
+                                  placeholderTitle="Select cold foam"
+                                  placeholderSubtitle="Tap to choose plain, matcha, or a flavor"
+                                  onSelect={(optionName) =>
+                                    selectSingleModifier(group.name, optionName)
+                                  }
+                                  onClear={() => clearModifierGroup(group.name)}
+                                />
+                              ) : isMilkChoiceGroup ? (
+                                <SingleSelectDropdown
+                                  ariaLabel="Milk options"
+                                  options={availableOptions}
+                                  selectedName={selected[0] || null}
+                                  placeholderTitle="Select milk"
+                                  placeholderSubtitle="Tap to choose your milk"
+                                  onSelect={(optionName) =>
+                                    selectSingleModifier(group.name, optionName)
+                                  }
+                                  onClear={
+                                    group.required
+                                      ? null
+                                      : () => clearModifierGroup(group.name)
+                                  }
+                                />
+                              ) : isSyrupGroup ? (
+                                <MultiSelectQuantityDropdown
+                                  ariaLabel="Syrup and sweetener options"
+                                  options={availableOptions}
+                                  selectedNames={selected}
+                                  maxSelections={group.maxSelections}
+                                  placeholderTitle="Add syrup or sweetener"
+                                  placeholderSubtitle="Tap to choose, then set the pumps"
+                                  getQuantity={(optionName) =>
+                                    modifierQuantities[
+                                      `${group.name}_${optionName}`
+                                    ] || 1
+                                  }
+                                  onToggle={(optionName) =>
+                                    handleModifierChange(
+                                      group.name,
+                                      optionName,
+                                      group.type,
+                                      group.maxSelections,
+                                      group.required,
+                                    )
+                                  }
+                                  onQuantityChange={(optionName, change) =>
+                                    handleQuantityChange(
+                                      group.name,
+                                      optionName,
+                                      change,
+                                    )
+                                  }
+                                />
+                              ) : (
+                                availableOptions.map((option) => {
+                                  const isSelected = selected.includes(
+                                    option.name,
+                                  );
+                                  const isDisabled = !option.available;
+                                  const optionPrice = option.price || 0;
+                                  const quantityKey = `${group.name}_${option.name}`;
+                                  const quantity =
+                                    isQuantityBased(group.name) && isSelected
+                                      ? modifierQuantities[quantityKey] || 1
+                                      : 1;
+                                  const totalOptionPrice =
+                                    optionPrice * quantity;
 
-                                return (
-                                  <motion.div
-                                    key={option._id || option.name}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => {
-                                      if (
-                                        !isDisabled &&
-                                        group.type === "single"
-                                      ) {
-                                        // For radio buttons, clicking the row selects/deselects it (if optional)
-                                        handleModifierChange(
-                                          group.name,
-                                          option.name,
-                                          group.type,
-                                          group.maxSelections,
-                                          group.required,
-                                        );
-                                      } else if (
-                                        !isDisabled &&
-                                        group.type === "multiple"
-                                      ) {
-                                        // For checkboxes, clicking the row toggles it
-                                        handleModifierChange(
-                                          group.name,
-                                          option.name,
-                                          group.type,
-                                          group.maxSelections,
-                                          group.required,
-                                        );
-                                      }
-                                    }}
-                                    className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                                      isSelected
-                                        ? "border-[var(--lime-green)] bg-[var(--lime-green)]/5"
-                                        : "border-gray-200 hover:border-gray-300"
-                                    } ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                                  >
-                                    <div className="flex items-center flex-1">
-                                      {group.type === "single" ? (
-                                        <input
-                                          type="radio"
-                                          name={group.name}
-                                          value={option.name}
-                                          checked={isSelected}
-                                          onChange={() =>
-                                            !isDisabled &&
-                                            handleModifierChange(
-                                              group.name,
-                                              option.name,
-                                              group.type,
-                                              group.maxSelections,
-                                              group.required,
-                                            )
-                                          }
-                                          onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly
-                                          disabled={isDisabled}
-                                          className="w-5 h-5 text-[var(--lime-green)] focus:ring-[var(--lime-green)] cursor-pointer pointer-events-auto"
-                                        />
-                                      ) : (
-                                        <input
-                                          type="checkbox"
-                                          checked={isSelected}
-                                          onChange={() =>
-                                            !isDisabled &&
-                                            handleModifierChange(
-                                              group.name,
-                                              option.name,
-                                              group.type,
-                                              group.maxSelections,
-                                              group.required,
-                                            )
-                                          }
-                                          onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly
-                                          disabled={isDisabled}
-                                          className="w-5 h-5 text-[var(--lime-green)] rounded focus:ring-[var(--lime-green)] cursor-pointer pointer-events-auto"
-                                        />
-                                      )}
-                                      <span className="ml-3 text-sm font-medium text-gray-900">
-                                        {option.name
-                                          .replace(/\(Disabled\)/g, "")
-                                          .trim()}
-                                      </span>
-                                    </div>
-
-                                    {/* Quantity Selector for quantity-based modifiers */}
-                                    {isQuantityBased(group.name) &&
-                                      isSelected && (
-                                        <div className="flex items-center gap-2 mx-3">
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleQuantityChange(
+                                  return (
+                                    <motion.div
+                                      key={option._id || option.name}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={() => {
+                                        if (
+                                          !isDisabled &&
+                                          group.type === "single"
+                                        ) {
+                                          // For radio buttons, clicking the row selects/deselects it (if optional)
+                                          handleModifierChange(
+                                            group.name,
+                                            option.name,
+                                            group.type,
+                                            group.maxSelections,
+                                            group.required,
+                                          );
+                                        } else if (
+                                          !isDisabled &&
+                                          group.type === "multiple"
+                                        ) {
+                                          // For checkboxes, clicking the row toggles it
+                                          handleModifierChange(
+                                            group.name,
+                                            option.name,
+                                            group.type,
+                                            group.maxSelections,
+                                            group.required,
+                                          );
+                                        }
+                                      }}
+                                      className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                                        isSelected
+                                          ? "border-[var(--lime-green)] bg-[var(--lime-green)]/5"
+                                          : "border-gray-200 hover:border-gray-300"
+                                      } ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                    >
+                                      <div className="flex items-center flex-1">
+                                        {group.type === "single" ? (
+                                          <input
+                                            type="radio"
+                                            name={group.name}
+                                            value={option.name}
+                                            checked={isSelected}
+                                            onChange={() =>
+                                              !isDisabled &&
+                                              handleModifierChange(
                                                 group.name,
                                                 option.name,
-                                                -1,
-                                              );
-                                            }}
-                                            className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors"
-                                            aria-label="Decrease quantity"
-                                          >
-                                            <svg
-                                              className="w-4 h-4 text-gray-600"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M20 12H4"
-                                              />
-                                            </svg>
-                                          </button>
-                                          <span className="min-w-[5rem] text-center text-sm font-semibold text-gray-900">
-                                            {quantity === 1
-                                              ? "1 pump"
-                                              : `${quantity} pumps`}
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleQuantityChange(
+                                                group.type,
+                                                group.maxSelections,
+                                                group.required,
+                                              )
+                                            }
+                                            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly
+                                            disabled={isDisabled}
+                                            className="w-5 h-5 text-[var(--lime-green)] focus:ring-[var(--lime-green)] cursor-pointer pointer-events-auto"
+                                          />
+                                        ) : (
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() =>
+                                              !isDisabled &&
+                                              handleModifierChange(
                                                 group.name,
                                                 option.name,
-                                                1,
-                                              );
-                                            }}
-                                            className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors"
-                                            aria-label="Increase quantity"
-                                          >
-                                            <svg
-                                              className="w-4 h-4 text-gray-600"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M12 4v16m8-8H4"
-                                              />
-                                            </svg>
-                                          </button>
-                                        </div>
-                                      )}
-
-                                    {/* Price Display */}
-                                    <div className="text-right">
-                                      {optionPrice > 0 ? (
-                                        <div className="flex flex-col items-end">
-                                          <span className="text-sm font-semibold text-gray-700">
-                                            {isQuantityBased(group.name) &&
-                                            isSelected
-                                              ? `+${formatPrice(totalOptionPrice)}`
-                                              : `+${formatPrice(optionPrice)}`}
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <span className="text-sm text-gray-500">
-                                          Free
+                                                group.type,
+                                                group.maxSelections,
+                                                group.required,
+                                              )
+                                            }
+                                            onClick={(e) => e.stopPropagation()} // Prevent row click when clicking input directly
+                                            disabled={isDisabled}
+                                            className="w-5 h-5 text-[var(--lime-green)] rounded focus:ring-[var(--lime-green)] cursor-pointer pointer-events-auto"
+                                          />
+                                        )}
+                                        <span className="ml-3 text-sm font-medium text-gray-900">
+                                          {option.name
+                                            .replace(/\(Disabled\)/g, "")
+                                            .trim()}
                                         </span>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                );
-                              })}
+                                      </div>
+
+                                      {/* Quantity Selector for quantity-based modifiers */}
+                                      {isQuantityBased(group.name) &&
+                                        isSelected && (
+                                          <div className="flex items-center gap-2 mx-3">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleQuantityChange(
+                                                  group.name,
+                                                  option.name,
+                                                  -1,
+                                                );
+                                              }}
+                                              className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors"
+                                              aria-label="Decrease quantity"
+                                            >
+                                              <svg
+                                                className="w-4 h-4 text-gray-600"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M20 12H4"
+                                                />
+                                              </svg>
+                                            </button>
+                                            <span className="min-w-[5rem] text-center text-sm font-semibold text-gray-900">
+                                              {quantity === 1
+                                                ? "1 pump"
+                                                : `${quantity} pumps`}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleQuantityChange(
+                                                  group.name,
+                                                  option.name,
+                                                  1,
+                                                );
+                                              }}
+                                              className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-[var(--lime-green)] hover:bg-[var(--lime-green)]/10 transition-colors"
+                                              aria-label="Increase quantity"
+                                            >
+                                              <svg
+                                                className="w-4 h-4 text-gray-600"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 4v16m8-8H4"
+                                                />
+                                              </svg>
+                                            </button>
+                                          </div>
+                                        )}
+
+                                      {/* Price Display */}
+                                      <div className="text-right">
+                                        {optionPrice > 0 ? (
+                                          <div className="flex flex-col items-end">
+                                            <span className="text-sm font-semibold text-gray-700">
+                                              {isQuantityBased(group.name) &&
+                                              isSelected
+                                                ? `+${formatPrice(totalOptionPrice)}`
+                                                : `+${formatPrice(optionPrice)}`}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-sm text-gray-500">
+                                            Free
+                                          </span>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  );
+                                })
+                              )}
                             </div>
 
                             {group.type === "multiple" &&
+                              !isSyrupGroup &&
                               group.maxSelections &&
                               availableOptions.length >= 2 && (
                                 <p className="text-xs text-gray-500">
@@ -846,7 +1369,8 @@ export default function CustomizationModal({
               </button>
               {!canOrderOnline && (
                 <p className="mt-2 text-center text-sm text-gray-600">
-                  This item is only available in-store. Availability varies daily.
+                  This item is only available in-store. Availability varies
+                  daily.
                 </p>
               )}
               {canOrderOnline &&
