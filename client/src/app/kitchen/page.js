@@ -1582,7 +1582,7 @@ function OrderCard({
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">
                       {item.modifiers.map((modifier, modIdx) => {
                         const isQuantityBasedGroup =
-                          (modifier.modifierGroupName || "").includes("Syrup Pumps") ||
+                          (modifier.modifierGroupName || "").includes("Syrup") ||
                           (modifier.modifierGroupName || "").includes("Pumps") ||
                           (modifier.modifierGroupName || "").includes("Extra Single Shot");
                         const isSyrupPump = (modifier.modifierGroupName || "").includes("Syrup");

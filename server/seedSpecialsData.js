@@ -93,7 +93,7 @@ export const specialsSeed = [
     method: ["Lavender + puree + milk, mix", "Add ice + more milk", "Top with double shot espresso"],
   },
   {
-    name: "Blueberry Chai",
+    name: "Blueberry Chai Pie",
     category: "Coffee",
     weekOf: "2026-08-17",
     weekLabel: "8/17",
@@ -102,8 +102,13 @@ export const specialsSeed = [
       b("Blueberry puree", "1 oz", "1.2 oz"),
       b("Chai concentrate", "6 pumps", "8 pumps"),
     ],
-    toppings: [],
-    method: ["Blueberry + chai + milk, mix", "Add ice"],
+    toppings: ["Vanilla cold foam", "Dust of cinnamon powder"],
+    method: [
+      "Blueberry + chai + milk, mix",
+      "Add ice",
+      "Top with vanilla cold foam",
+      "Garnish with a dust of cinnamon powder",
+    ],
   },
   {
     name: "Caramel Butter Cloud",
@@ -307,8 +312,13 @@ export const specialsSeed = [
     weekLabel: "8/17",
     base: ["Milk", "Matcha"],
     build: [b("Lavender", "2 pumps", "3 pumps")],
-    toppings: ["Blueberry cold foam"],
-    method: ["Lavender + milk, mix", "Add ice + matcha", "Top with blueberry cold foam"],
+    toppings: ["Blueberry cold foam", "Dust of matcha powder"],
+    method: [
+      "Lavender + milk, mix",
+      "Add ice + matcha",
+      "Top with blueberry cold foam",
+      "Garnish with a dust of matcha powder",
+    ],
   },
   {
     name: "Blooming Blue Matcha",

@@ -23,15 +23,28 @@ function isCoffeeEspressoColdItem(item) {
   return name.startsWith("iced") || name.startsWith("cold") || hasColdTag;
 }
 
+/** Shaken espresso drinks — listed first under Iced & Cold. */
+function isCoffeeEspressoShakenItem(item) {
+  const tags = Array.isArray(item.tags) ? item.tags : [];
+  if (tags.includes("shaken")) return true;
+  const name = (item.name || "").toLowerCase();
+  return /\bshaken\b/.test(name);
+}
+
 function buildMenuSectionRenderEntries(section, items) {
   if (section !== COFFEE_ESPRESSO_SECTION) {
     return items.map((item) => ({ kind: "item", key: item._id, item }));
   }
   const hot = [];
-  const cold = [];
+  const shaken = [];
+  const icedOther = [];
   for (const item of items) {
-    if (isCoffeeEspressoColdItem(item)) cold.push(item);
-    else hot.push(item);
+    if (!isCoffeeEspressoColdItem(item)) {
+      hot.push(item);
+      continue;
+    }
+    if (isCoffeeEspressoShakenItem(item)) shaken.push(item);
+    else icedOther.push(item);
   }
   const entries = [];
   if (hot.length > 0) {
@@ -43,14 +56,35 @@ function buildMenuSectionRenderEntries(section, items) {
     });
     hot.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
   }
-  if (cold.length > 0) {
+  if (shaken.length > 0 || icedOther.length > 0) {
     entries.push({
       kind: "divider",
       key: "coffee-cold-divider",
       label: "Iced & Cold Drinks",
       variant: "cold",
     });
-    cold.forEach((item) => entries.push({ kind: "item", key: item._id, item }));
+    if (shaken.length > 0) {
+      entries.push({
+        kind: "divider",
+        key: "coffee-shaken-divider",
+        label: "Shaken Espresso",
+        variant: "shaken",
+      });
+      shaken.forEach((item) =>
+        entries.push({ kind: "item", key: item._id, item }),
+      );
+    }
+    if (icedOther.length > 0) {
+      entries.push({
+        kind: "divider",
+        key: "coffee-iced-other-divider",
+        label: "More Iced & Cold",
+        variant: "iced-other",
+      });
+      icedOther.forEach((item) =>
+        entries.push({ kind: "item", key: item._id, item }),
+      );
+    }
   }
   return entries;
 }
@@ -97,7 +131,66 @@ function ColdDrinksIcon() {
   );
 }
 
+function ShakenEspressoIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 4h8l1 6H7L8 4zM7 10h10v2a5 5 0 01-5 5h0a5 5 0 01-5-5v-2zM9 3c0 1 .5 2 0 3M12 2c0 1.2.5 2.2 0 3.2M15 3c0 1 .5 2 0 3"
+      />
+    </svg>
+  );
+}
+
 function CoffeeSubsectionDivider({ label, variant }) {
+  const isNested = variant === "shaken" || variant === "iced-other";
+
+  if (isNested) {
+    const isShaken = variant === "shaken";
+    return (
+      <div
+        className={`col-span-full ${isShaken ? "mt-5 mb-2" : "mt-8 mb-2"}`}
+        role="separator"
+        aria-label={label}
+      >
+        <div
+          className={`flex items-center gap-2.5 border-l-4 pl-3 sm:pl-4 ${
+            isShaken
+              ? "border-[var(--lime-green)]"
+              : "border-[var(--coffee-brown)]/40"
+          }`}
+        >
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+              isShaken
+                ? "bg-[var(--lime-green)]/15 text-[var(--lime-green)]"
+                : "bg-[var(--coffee-brown)]/10 text-[var(--coffee-brown)]"
+            }`}
+          >
+            {isShaken ? <ShakenEspressoIcon /> : <ColdDrinksIcon />}
+          </span>
+          <h4
+            className={`text-sm font-extrabold uppercase tracking-[0.14em] sm:text-[15px] ${
+              isShaken
+                ? "text-[var(--lime-green)]"
+                : "text-[var(--coffee-brown)]"
+            }`}
+          >
+            {label}
+          </h4>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="col-span-full mb-3 mt-10 first:mt-0"
@@ -125,7 +218,9 @@ function getCoffeeRowBadges(item) {
   if (name.includes("sugar free") || name.includes("sugar-free")) {
     badges.push("Sugar-Free");
   }
-  if (name.includes("(oat)") || name.includes("oat milk")) badges.push("Oat");
+  if (name.includes("(oat)") || name.includes("oat milk") || tags.includes("oat")) {
+    badges.push("Oat");
+  }
   if (name.includes("almond milk")) badges.push("Almond");
   if (name.includes("decaf")) badges.push("Decaf");
   if (tags.includes("specialty")) badges.push("Specialty");
