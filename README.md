@@ -28,7 +28,62 @@ Full-screen menu pages for café displays—no USB sticks required. Update the S
 
 ---
 
+## Kitchen menu availability (86 tool)
+
+Kitchen admins can mark menu items out of stock when an ingredient runs out or when a specific item should be 86'd.
+
+| URL | Who |
+|-----|-----|
+| `/kitchen/availability` | Kitchen admins (same accounts as Kitchen Dashboard) |
+
+**Search**
+
+- By **menu item name** (e.g. Green Glow) — toggle that item directly
+- By **recipe ingredient** (e.g. Spinach) — see all dependent items and bulk-toggle them
+
+**Behavior**
+
+- Sets `available: false` on menu items (customers cannot order them online)
+- Recipe profiles live in `server/data/recipeIngredientsByMenuItem.js` (built-in ingredients only, not optional add-ons)
+- After updating recipe data, sync to a database: `node server/scripts/syncRecipeIngredients.js` (see script for flags)
+
+**Implementation**
+
+- `client/src/app/kitchen/availability/page.js` — admin UI
+- `server/routes/menuAdmin.js` — kitchen-admin API (`/api/menu/admin/*`)
+- `server/services/menuAvailabilityService.js` — search, dependents, availability toggles
+
+---
+
+## App version
+
+Semver is stored in `version.json` at the repo root. The version appears in the site footer and on `GET /health`.
+
+**Before each production release**, bump from the repo root:
+
+```bash
+npm run release:patch   # typical release (0.1.0 → 0.1.1)
+npm run release:minor
+npm run release:major
+```
+
+Then commit, tag, and push (see `docs/deployment-checklist.md`).
+
+---
+
 ## Scripts
+
+### Release (version bump)
+
+```bash
+npm run release:patch
+```
+
+### Sync recipe ingredients to database
+
+```bash
+node server/scripts/syncRecipeIngredients.js
+```
 
 ### Parse inventory xlsx to JSON
 

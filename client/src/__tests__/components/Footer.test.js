@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import Footer from '@/components/Footer'
 import { SOCIAL_MEDIA_LINKS } from '@/lib/socialMediaLinks'
 import { CAREERS_FORM_URL } from '@/lib/constants'
+import { APP_VERSION } from '@/lib/appVersion'
 
 describe('Footer', () => {
   it('renders footer with company name', () => {
@@ -13,6 +14,11 @@ describe('Footer', () => {
     render(<Footer />)
     const currentYear = new Date().getFullYear()
     expect(screen.getByText(new RegExp(currentYear.toString()))).toBeInTheDocument()
+  })
+
+  it('renders app version', () => {
+    render(<Footer />)
+    expect(screen.getByText(`v${APP_VERSION}`)).toBeInTheDocument()
   })
 
   it('renders all quick links', () => {

@@ -151,6 +151,55 @@ export const menuApi = {
 };
 
 /**
+ * Kitchen admin: menu availability / 86 tool (recipe ingredient profiles)
+ */
+export const menuAdminApi = {
+  search: async (search = "") => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.append("search", search.trim());
+    const query = params.toString();
+    const result = await fetchJson(
+      `/api/menu/admin/search${query ? `?${query}` : ""}`,
+    );
+    return result.data || { ingredients: [], menuItems: [] };
+  },
+
+  listIngredients: async (search = "") => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.append("search", search.trim());
+    const query = params.toString();
+    const result = await fetchJson(
+      `/api/menu/admin/ingredients${query ? `?${query}` : ""}`,
+    );
+    return result.data || [];
+  },
+
+  getDependents: async (ingredient) => {
+    const params = new URLSearchParams({ ingredient });
+    const result = await fetchJson(
+      `/api/menu/admin/dependents?${params.toString()}`,
+    );
+    return result.data;
+  },
+
+  setItemAvailable: async (itemId, available) => {
+    const result = await fetchJson(`/api/menu/admin/items/${itemId}/available`, {
+      method: "PATCH",
+      body: JSON.stringify({ available }),
+    });
+    return result.data;
+  },
+
+  bulkSetItemsAvailable: async (itemIds, available) => {
+    const result = await fetchJson("/api/menu/admin/items/bulk-available", {
+      method: "PATCH",
+      body: JSON.stringify({ itemIds, available }),
+    });
+    return result.data;
+  },
+};
+
+/**
  * Weekly specials recipes (staff lookup)
  */
 export const specialsApi = {

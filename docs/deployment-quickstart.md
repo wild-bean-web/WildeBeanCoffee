@@ -1,6 +1,20 @@
 # Deployment Quick Start
 
-**TL;DR**: Deploy backend to Railway, frontend to Vercel, configure environment variables.
+**TL;DR**: Bump version, deploy backend to Railway, frontend to Vercel, configure environment variables.
+
+## Before you deploy to production
+
+From the repo root, bump the app version and commit:
+
+```bash
+npm run release:patch
+git add version.json package.json client/package.json server/package.json
+git commit -m "Release v0.1.1"
+git tag v0.1.1
+git push && git push origin v0.1.1
+```
+
+See [deployment-checklist.md](./deployment-checklist.md) for details.
 
 ## 5-Minute Deployment
 

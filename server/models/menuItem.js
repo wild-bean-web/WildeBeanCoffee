@@ -21,6 +21,8 @@ const MenuItemSchema = new mongoose.Schema(
       },
     ], // References to modifier groups that can be applied to this item
     cloverId: { type: String, trim: true }, // Clover item ID for integration
+    /** Built-in ingredients required to make this item (not optional add-ons). */
+    recipeIngredients: [{ type: String, trim: true }],
   },
   { timestamps: true }
 );

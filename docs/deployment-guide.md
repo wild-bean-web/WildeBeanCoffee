@@ -77,6 +77,18 @@ Your `package.json` files already have the correct scripts:
 - **Client**: `build` and `start` scripts are present ✅
 - **Server**: `start` script is present ✅
 
+### 1.4 Bump App Version (production releases)
+
+Before each production deploy, bump semver from the **repo root**:
+
+```bash
+npm run release:patch   # 0.1.0 → 0.1.1 (typical)
+npm run release:minor
+npm run release:major
+```
+
+Commit the updated `version.json` and package files, tag (`git tag v0.1.1`), and push. The version appears in the site footer and on `GET /health`. See [deployment-checklist.md](./deployment-checklist.md) for the full release checklist.
+
 ---
 
 ## Step 2: Deploy Backend (Railway)

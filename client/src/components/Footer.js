@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { SOCIAL_MEDIA_LINKS } from "@/lib/socialMediaLinks";
 import { CAREERS_FORM_URL } from "@/lib/constants";
+import { APP_VERSION } from "@/lib/appVersion";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -234,7 +235,10 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-gray-700 pt-8 pb-[60px] text-center text-sm text-gray-400">
-          <p className="mb-1">&copy; {currentYear} Wild Bean Coffee. All rights reserved.</p>
+          <p className="mb-1">
+            &copy; {currentYear} Wild Bean Coffee. All rights reserved.
+            <span className="ml-2 text-xs text-gray-500">v{APP_VERSION}</span>
+          </p>
           <p className="text-xs text-gray-500">
             Menu and product images are illustrative only. They may be digitally created, generated, or stock imagery and do not represent actual items.             See{" "}
             <Link href="/terms" className="text-gray-400 underline hover:text-[var(--lime-green)]">

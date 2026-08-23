@@ -1,4 +1,13 @@
 {
+  "name": "wilde-coffee-bean",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major"
+  },
   "dependencies": {
     "xlsx": "^0.18.5"
   }

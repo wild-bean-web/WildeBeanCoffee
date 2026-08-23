@@ -304,12 +304,15 @@ async function validateMenuItemsOnlineOrderable(items) {
     .filter(Boolean);
   if (objectIds.length === 0) return null;
   const docs = await MenuItem.find({ _id: { $in: objectIds } })
-    .select("name onlineOrderable")
+    .select("name onlineOrderable available")
     .lean();
   const byId = new Map(docs.map((d) => [d._id.toString(), d]));
   for (const line of items) {
     if (line.itemType !== "menu" || !line.itemId) continue;
     const doc = byId.get(String(line.itemId));
+    if (doc && doc.available === false) {
+      return `"${line.name || doc.name}" is currently out of stock. Please remove it from your cart to complete your order.`;
+    }
     if (doc && doc.onlineOrderable === false) {
       return `"${line.name || doc.name}" is only available in-store. Please remove it from your cart to complete your order.`;
     }
