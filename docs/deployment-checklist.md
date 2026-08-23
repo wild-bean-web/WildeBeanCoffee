@@ -25,6 +25,25 @@ The version appears in the site footer and on `GET /health` (`version` field).
 
 ---
 
+## Local development
+
+Local `npm run dev` uses **`wildcoffeebean_TEST`** (`MONGODB_TEST_URI` in `server/.env`).
+
+**Refresh menu without losing signed-up users:**
+
+```bash
+cd server && npm run seed:test
+```
+
+- Clears and reseeds: products, menu items, locations, modifier groups
+- Preserves: users, email verifications, password resets, orders
+
+Running `npm test` against the same database also preserves user accounts (only catalog data is cleared between tests).
+
+**Do not** run `npm run seed` locally for menu refresh — that targets production (`MONGODB_URI`).
+
+---
+
 ## Pre-Deployment
 
 - [ ] **Version bumped** (`npm run release:patch` from repo root, then commit + tag — see below)

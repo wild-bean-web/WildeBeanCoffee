@@ -5,6 +5,11 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import {
+  PRESERVED_DEV_COLLECTIONS,
+  clearCatalogData,
+} from "../config/catalogSeed.js";
+import { TEST_DATABASE_NAME } from "../config/mongoUri.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,6 +61,23 @@ export async function connectTestDB() {
 }
 
 export async function clearDatabase() {
+  const dbName = mongoose.connection.db?.databaseName;
+  const preserveAccounts = dbName === TEST_DATABASE_NAME;
+
+  if (preserveAccounts) {
+    await clearCatalogData();
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      const name = collections[key].collectionName;
+      if (PRESERVED_DEV_COLLECTIONS.has(name)) continue;
+      if (["products", "menuitems", "locations", "modifiergroups"].includes(name)) {
+        continue;
+      }
+      await collections[key].deleteMany({});
+    }
+    return;
+  }
+
   const collections = mongoose.connection.collections;
   for (const key in collections) {
     await collections[key].deleteMany({});

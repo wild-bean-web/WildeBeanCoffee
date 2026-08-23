@@ -40,6 +40,12 @@ Kitchen admins can mark menu items out of stock when an ingredient runs out or w
 
 - By **menu item name** (e.g. Green Glow) — toggle that item directly
 - By **recipe ingredient** (e.g. Spinach) — see all dependent items and bulk-toggle them
+- **Fuzzy matching** — tolerates typos and partial typing (e.g. `greem glo`, `spnach`)
+
+**Always visible**
+
+- **Currently out of stock (86'd)** panel at the top — lists every disabled item with toggles and **Mark all in stock**
+- Confirmation dialogs (`ConfirmAlert`) before any toggle or bulk action
 
 **Behavior**
 
@@ -50,8 +56,10 @@ Kitchen admins can mark menu items out of stock when an ingredient runs out or w
 **Implementation**
 
 - `client/src/app/kitchen/availability/page.js` — admin UI
+- `client/src/context/ConfirmAlertContext.js` — reusable `useConfirmAlert()` for confirm/cancel modals app-wide
 - `server/routes/menuAdmin.js` — kitchen-admin API (`/api/menu/admin/*`)
-- `server/services/menuAvailabilityService.js` — search, dependents, availability toggles
+- `server/services/menuAvailabilityService.js` — fuzzy search, dependents, availability toggles
+- `server/utils/fuzzyTextMatch.js` — typo-tolerant matching for admin search
 
 ---
 
@@ -71,6 +79,30 @@ Then commit, tag, and push (see `docs/deployment-checklist.md`).
 
 ---
 
+## Local development database
+
+Local `npm run dev` uses **`wildcoffeebean_TEST`** (via `MONGODB_TEST_URI` in `server/.env`).
+
+**Refresh menu/catalog without deleting signed-up users:**
+
+```bash
+cd server && npm run seed:test
+```
+
+This replaces products, menu items, locations, and modifier groups only. **Users, email verifications, passwords, and orders are left untouched.**
+
+| Command | Database | Users preserved? |
+|---------|----------|------------------|
+| `npm run seed:test` | `wildcoffeebean_TEST` | Yes |
+| `npm run seed` (no `--test`) | Production (`MONGODB_URI`) | N/A — prod deploy only |
+| `npm test` | `wildcoffeebean_TEST` | Yes (catalog cleared; users kept) |
+
+**Do not** use `npm run seed` for local menu refresh — use `seed:test` only.
+
+After `npm test`, catalog data is reset the same way; user accounts on `wildcoffeebean_TEST` are preserved when tests run against that database.
+
+---
+
 ## Scripts
 
 ### Release (version bump)
@@ -83,6 +115,12 @@ npm run release:patch
 
 ```bash
 node server/scripts/syncRecipeIngredients.js
+```
+
+### Refresh local menu (keeps users)
+
+```bash
+cd server && npm run seed:test
 ```
 
 ### Parse inventory xlsx to JSON

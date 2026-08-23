@@ -1,23 +1,22 @@
 import { MenuItem } from "../models/index.js";
 import { recipeIngredientsForMenuItem } from "../data/recipeIngredientsByMenuItem.js";
+import {
+  normalizeSearchText,
+  searchTokensFromQuery,
+  fuzzyTextMatchesQuery,
+} from "../utils/fuzzyTextMatch.js";
 
 function normalizeIngredient(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
+  return normalizeSearchText(value);
 }
 
 function tokensFromQuery(query) {
-  return normalizeIngredient(query).split(" ").filter(Boolean);
+  return searchTokensFromQuery(query);
 }
 
-/** Match if every search token appears in the text (case-insensitive). */
+/** Match if every search token fuzzily matches the text (typo-tolerant). */
 export function textMatchesQuery(text, query) {
-  const normalizedText = normalizeIngredient(text);
-  const tokens = tokensFromQuery(query);
-  if (!tokens.length) return false;
-  return tokens.every((token) => normalizedText.includes(token));
+  return fuzzyTextMatchesQuery(text, query);
 }
 
 export const ingredientMatchesQuery = textMatchesQuery;
@@ -108,6 +107,17 @@ export async function listMenuItems(search = "") {
     : items;
 
   return filtered.map(formatMenuItemRow);
+}
+
+/**
+ * Active menu items currently marked out of stock (86'd).
+ */
+export async function listUnavailableMenuItems() {
+  const items = await MenuItem.find({ active: true, available: false })
+    .select("name section available onlineOrderable")
+    .sort({ section: 1, name: 1 })
+    .lean();
+  return items.map(formatMenuItemRow);
 }
 
 /**

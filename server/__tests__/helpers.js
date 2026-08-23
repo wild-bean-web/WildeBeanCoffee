@@ -109,14 +109,32 @@ export function futurePickupWithinStoreHours() {
 /** Kitchen admin user + Bearer token for protected order routes. */
 export async function createTestKitchenAdmin(overrides = {}) {
   const email = overrides.email || "danielwoldehana@yahoo.com";
-  const user = await User.create({
-    firstName: "Test",
-    lastName: "Admin",
-    email,
-    phone: "555-000-0000",
-    password: await bcrypt.hash("testpassword", 10),
-    ...overrides,
-  });
+  const password = overrides.password || "testpassword";
+
+  let user = await User.findOne({ email });
+  if (user) {
+    if (overrides.firstName || overrides.lastName || overrides.phone) {
+      user = await User.findByIdAndUpdate(
+        user._id,
+        {
+          ...(overrides.firstName ? { firstName: overrides.firstName } : {}),
+          ...(overrides.lastName ? { lastName: overrides.lastName } : {}),
+          ...(overrides.phone ? { phone: overrides.phone } : {}),
+        },
+        { new: true },
+      );
+    }
+  } else {
+    user = await User.create({
+      firstName: "Test",
+      lastName: "Admin",
+      email,
+      phone: "555-000-0000",
+      password: await bcrypt.hash(password, 10),
+      ...overrides,
+    });
+  }
+
   const token = generateToken(user._id.toString());
   return { user, authHeader: `Bearer ${token}` };
 }

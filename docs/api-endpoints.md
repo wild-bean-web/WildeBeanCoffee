@@ -16,7 +16,8 @@ Keep this file updated as endpoints are added. Group by category and list method
 ## Menu Admin (kitchen admins only)
 Requires authenticated kitchen-admin session (same users as Kitchen Dashboard).
 
-- `GET /api/menu/admin/search?search=` — Search menu items by name and recipe ingredients. Returns `{ ingredients, menuItems }`.
+- `GET /api/menu/admin/search?search=` — Fuzzy search for menu items by name and recipe ingredients (typo-tolerant). Returns `{ ingredients, menuItems }`.
+- `GET /api/menu/admin/unavailable` — All active menu items currently marked out of stock (`available: false`).
 - `GET /api/menu/admin/ingredients?search=` — List recipe ingredients (optional filter).
 - `GET /api/menu/admin/dependents?ingredient=` — Menu items whose recipe includes the ingredient.
 - `PATCH /api/menu/admin/items/:id/available` — Body: `{ available: boolean }`. Toggle one item in/out of stock.
@@ -29,7 +30,8 @@ Requires authenticated kitchen-admin session (same users as Kitchen Dashboard).
 - `POST /api/orders/webhook` — Webhook stub (logs payload; add signature verification later).
 
 ## Seed & Data
-- Run `npm run seed` in `server/` to populate sample products, menu items, and a location.
+- **Local dev:** `npm run seed:test` in `server/` — refreshes products, menu items, locations, and modifier groups on `wildcoffeebean_TEST` **without** deleting users or orders.
+- **Production:** `npm run seed` in `server/` — full catalog seed to `MONGODB_URI` (production only).
 - Recipe ingredient profiles for menu availability are in `server/data/recipeIngredientsByMenuItem.js`. Sync to a database with `node server/scripts/syncRecipeIngredients.js`.
 
 ## Payments

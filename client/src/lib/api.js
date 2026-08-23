@@ -164,6 +164,11 @@ export const menuAdminApi = {
     return result.data || { ingredients: [], menuItems: [] };
   },
 
+  listUnavailable: async () => {
+    const result = await fetchJson("/api/menu/admin/unavailable");
+    return result.data || [];
+  },
+
   listIngredients: async (search = "") => {
     const params = new URLSearchParams();
     if (search.trim()) params.append("search", search.trim());

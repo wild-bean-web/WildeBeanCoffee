@@ -6,6 +6,7 @@ import { errorResponse } from "../utils/validation.js";
 import {
   listIngredients,
   searchAvailability,
+  listUnavailableMenuItems,
   findIngredientDependents,
   setMenuItemAvailable,
   bulkSetMenuItemsAvailable,
@@ -20,6 +21,16 @@ router.get("/search", async (req, res, next) => {
   try {
     const data = await searchAvailability(req.query.search || "");
     res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/menu/admin/unavailable — all active items currently 86'd
+router.get("/unavailable", async (req, res, next) => {
+  try {
+    const items = await listUnavailableMenuItems();
+    res.json({ data: items });
   } catch (err) {
     next(err);
   }
