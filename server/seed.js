@@ -5,6 +5,7 @@ import { dirname, join } from "path";
 import { Product, MenuItem, Location, ModifierGroup } from "./models/index.js";
 import { modifierGroups } from "./seedModifierGroups.js";
 import { menuItemsFromCSV } from "./seedMenuItemsFromCSV.js";
+import { applyRecipeIngredientsToSeedItem } from "./services/menuAvailabilityService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -437,11 +438,12 @@ async function seed() {
 
   // Map modifier group names to IDs for menu items (oatmeal is build-your-own only; no dynamic Remove Ingredients)
   const menuItemsWithModifierIds = menuItemsFromCSV.map((item) => {
-    const modifierGroupIds = (item.modifierGroupNames || [])
+    const withRecipe = applyRecipeIngredientsToSeedItem(item);
+    const modifierGroupIds = (withRecipe.modifierGroupNames || [])
       .map((name) => modifierGroupMap[name])
       .filter((id) => id !== undefined);
 
-    const { modifierGroupNames, ...itemData } = item;
+    const { modifierGroupNames, ...itemData } = withRecipe;
     return {
       ...itemData,
       modifierGroups: modifierGroupIds,

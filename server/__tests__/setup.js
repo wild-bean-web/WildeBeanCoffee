@@ -9,15 +9,9 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Base credentials from .env, then optional .env.test overrides (override: true).
-// Loading .env.test *first* breaks tests when .env.test has stale MONGODB_URI — dotenv does not
-// overwrite existing process.env keys, so seed (which often only loads .env) would work while Jest would not.
 dotenv.config({ path: join(__dirname, "..", ".env") });
 dotenv.config({ path: join(__dirname, "..", ".env.test"), override: true });
 
-/**
- * Same cluster/user as MONGODB_URI but DB name wildbeancoffee_test (preserves ?retryWrites=…).
- */
 function deriveTestDatabaseUri(uri) {
   if (!uri || typeof uri !== "string") return null;
   const qIndex = uri.indexOf("?");
@@ -35,10 +29,6 @@ function deriveTestDatabaseUri(uri) {
   return null;
 }
 
-// Get test database URI with fallbacks.
-// NOTE: This is the same URI as local `npm run seed:test` / the Express server
-// (wildcoffeebean_TEST). Jest clearDatabase() wipes that DB — re-run seed:test
-// after npm test if you need the menu again locally.
 const TEST_DB_URI =
   process.env.MONGODB_TEST_URI ||
   process.env.MONGODB_URI_TEST ||
@@ -47,19 +37,15 @@ const TEST_DB_URI =
 
 if (!TEST_DB_URI) {
   throw new Error(
-    "Test database URI is not configured. Please set MONGODB_TEST_URI in .env.test or .env"
+    "Test database URI is not configured. Please set MONGODB_TEST_URI in .env.test or .env",
   );
 }
 
-/**
- * Connect to test database
- */
 export async function connectTestDB() {
   if (mongoose.connection.readyState === 1) {
     return;
   }
   await mongoose.connect(TEST_DB_URI);
-  // Wait for connection to be ready
   await new Promise((resolve) => {
     if (mongoose.connection.readyState === 1) {
       resolve();
@@ -69,42 +55,22 @@ export async function connectTestDB() {
   });
 }
 
-/**
- * Clear all collections in test database
- */
 export async function clearDatabase() {
-  const dbName = mongoose.connection.db?.databaseName;
-  if (dbName === "wildcoffeebean_TEST" && !clearDatabase._warned) {
-    console.warn(
-      `[jest] Clearing local seed database "${dbName}". ` +
-        `Run \`npm run seed:test\` afterward to restore the menu.`,
-    );
-    clearDatabase._warned = true;
-  }
   const collections = mongoose.connection.collections;
   for (const key in collections) {
     await collections[key].deleteMany({});
   }
 }
 
-/**
- * Close test database connection
- */
 export async function closeTestDB() {
   await mongoose.connection.close();
 }
 
-/**
- * Setup before all tests
- */
 export async function setupTestDB() {
   await connectTestDB();
   await clearDatabase();
 }
 
-/**
- * Teardown after all tests
- */
 export async function teardownTestDB() {
   await clearDatabase();
   await closeTestDB();

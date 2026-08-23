@@ -24,6 +24,7 @@ if (existsSync(envPath)) {
 }
 
 import express from "express";
+import { APP_VERSION } from "./lib/appVersion.js";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -31,6 +32,7 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import productRoutes from "./routes/products.js";
 import menuRoutes from "./routes/menu.js";
+import menuAdminRoutes from "./routes/menuAdmin.js";
 import orderRoutes from "./routes/orders.js";
 import locationRoutes from "./routes/location.js";
 import authRoutes from "./routes/auth.js";
@@ -161,6 +163,7 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.use("/api/products", productRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/menu/admin", menuAdminRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/auth", authRoutes);
@@ -172,6 +175,7 @@ app.use("/api/specials", specialsRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
+    version: APP_VERSION,
     uptime: process.uptime(),
     db: {
       status: dbState.status,

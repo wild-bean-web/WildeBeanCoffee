@@ -2,8 +2,32 @@
 
 Quick reference checklist for deploying Wild Bean Coffee.
 
+## Production Release (version bump)
+
+Before every production deploy, bump the app version from the **repo root**:
+
+```bash
+npm run release:patch   # 0.1.0 → 0.1.1 (typical bugfix / small release)
+npm run release:minor   # 0.1.0 → 0.2.0 (new features)
+npm run release:major   # 0.1.0 → 1.0.0 (breaking changes)
+```
+
+Then commit, tag, and push so Vercel/Railway deploy the new version:
+
+```bash
+git add version.json package.json client/package.json server/package.json
+git commit -m "Release v0.1.1"
+git tag v0.1.1
+git push && git push origin v0.1.1
+```
+
+The version appears in the site footer and on `GET /health` (`version` field).
+
+---
+
 ## Pre-Deployment
 
+- [ ] **Version bumped** (`npm run release:patch` from repo root, then commit + tag — see below)
 - [ ] All tests passing (`npm test` in both client and server)
 - [ ] Environment variables documented
 - [ ] Production MongoDB Atlas database created
