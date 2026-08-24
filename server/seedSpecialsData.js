@@ -61,6 +61,24 @@ export const specialsSeed = [
     method: ["Syrup + milk, add ice", "Espresso", "Top with foam + plantain chip"],
   },
   {
+    name: "Banana Bread Chai Cloud",
+    category: "Coffee",
+    weekOf: "2026-08-24",
+    weekLabel: "8/24",
+    base: ["Milk"],
+    build: [
+      b("Banana bread", "1 pump", "2 pumps"),
+      b("Chai concentrate", "6 pumps", "8 pumps"),
+    ],
+    toppings: ["Brown sugar cold foam", "Brown sugar cinnamon dust"],
+    method: [
+      "Banana bread + chai + milk, mix",
+      "Add ice",
+      "Top with brown sugar cold foam",
+      "Garnish with brown sugar cinnamon dust",
+    ],
+  },
+  {
     name: "Berry Blue Latte",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -108,6 +126,24 @@ export const specialsSeed = [
       "Add ice",
       "Top with vanilla cold foam",
       "Garnish with a dust of cinnamon powder",
+    ],
+  },
+  {
+    name: "Caramel Bun Shaken Espresso",
+    category: "Coffee",
+    weekOf: "2026-08-24",
+    weekLabel: "8/24",
+    base: ["Double shot espresso", "Splash of milk"],
+    build: [
+      b("Caramel", "2 pumps", "2 pumps"),
+      b("Cinnamon bun", "1 pump", "2 pumps"),
+    ],
+    toppings: ["Caramel drizzle"],
+    method: [
+      "Syrups + double shot espresso",
+      "Shake with ice",
+      "Finish with a splash of milk",
+      "Garnish with caramel drizzle",
     ],
   },
   {
@@ -249,6 +285,23 @@ export const specialsSeed = [
       "Shake with ice",
       "Finish with a splash of oat milk",
       "Garnish with cocoa powder",
+    ],
+  },
+  {
+    name: "Pistachio Toffee Crunch Latte",
+    category: "Coffee",
+    weekOf: "2026-08-24",
+    weekLabel: "8/24",
+    base: ["Milk", "Ice", "Double shot espresso"],
+    build: [
+      b("Pistachio", "2 pumps", "2 pumps"),
+      b("Toffee", "1 pump", "2 pumps"),
+    ],
+    toppings: ["Caramel drizzle", "Pistachio crunch"],
+    method: [
+      "Syrups + milk + ice",
+      "Double shot espresso",
+      "Garnish with caramel drizzle + pistachio crunch",
     ],
   },
   {
@@ -485,6 +538,21 @@ export const specialsSeed = [
     ],
     toppings: ["Passion fruit puree cold foam", "2 dried orange slices"],
     method: ["Mango puree + milk + ice", "Add matcha", "Top with foam + orange slices"],
+  },
+  {
+    name: "Mango Passion Matcha Cloud",
+    category: "Matcha",
+    weekOf: "2026-08-24",
+    weekLabel: "8/24",
+    base: ["Milk", "Matcha"],
+    build: [b("Passion fruit puree", "1 oz", "1.2 oz")],
+    toppings: ["Mango cold foam", "Matcha powder"],
+    method: [
+      "Passion fruit puree + milk + ice",
+      "Add matcha",
+      "Top with mango cold foam",
+      "Garnish with matcha powder",
+    ],
   },
   {
     name: "Muz Matcha Latte",

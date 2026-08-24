@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { menuAdminApi } from "@/lib/api";
+import { useConfirmAlert } from "@/context/ConfirmAlertContext";
 
 function ToggleSwitch({ checked, onChange, disabled, label }) {
   return (
@@ -52,6 +53,7 @@ function ItemRow({ item, savingKey, onToggle }) {
 }
 
 export default function KitchenAvailabilityPage() {
+  const confirmAlert = useConfirmAlert();
   const [search, setSearch] = useState("");
   const [ingredients, setIngredients] = useState([]);
   const [menuItemMatches, setMenuItemMatches] = useState([]);
@@ -59,7 +61,9 @@ export default function KitchenAvailabilityPage() {
   const [selectedIngredient, setSelectedIngredient] = useState("");
   const [selectedMenuItem, setSelectedMenuItem] = useState(null);
   const [dependents, setDependents] = useState(null);
+  const [disabledItems, setDisabledItems] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [loadingDisabled, setLoadingDisabled] = useState(false);
   const [loadingDependents, setLoadingDependents] = useState(false);
   const [savingKey, setSavingKey] = useState("");
   const [error, setError] = useState("");
@@ -75,6 +79,18 @@ export default function KitchenAvailabilityPage() {
       setError(err.message || "Failed to load search results");
     } finally {
       setLoadingSearch(false);
+    }
+  }, []);
+
+  const loadDisabledItems = useCallback(async () => {
+    setLoadingDisabled(true);
+    try {
+      const data = await menuAdminApi.listUnavailable();
+      setDisabledItems(data);
+    } catch (err) {
+      setError(err.message || "Failed to load out-of-stock items");
+    } finally {
+      setLoadingDisabled(false);
     }
   }, []);
 
@@ -101,6 +117,10 @@ export default function KitchenAvailabilityPage() {
     }, 250);
     return () => clearTimeout(timer);
   }, [search, loadSearchResults]);
+
+  useEffect(() => {
+    loadDisabledItems();
+  }, [loadDisabledItems]);
 
   useEffect(() => {
     if (selectionType === "ingredient" && selectedIngredient) {
@@ -142,21 +162,41 @@ export default function KitchenAvailabilityPage() {
     setSearch(item.name);
   };
 
-  const refreshDependents = () => {
+  const refreshAfterToggle = (updated) => {
+    loadDisabledItems();
+    if (search.trim()) loadSearchResults(search);
     if (selectionType === "ingredient" && selectedIngredient) {
       loadDependents(selectedIngredient);
+    }
+    if (selectionType === "menuItem" && selectedMenuItem?._id === updated._id) {
+      setSelectedMenuItem(updated);
     }
   };
 
   const handleToggleItem = async (item) => {
+    const markingOut = item.available;
+    const confirmed = await confirmAlert(
+      markingOut
+        ? {
+            title: "Mark out of stock?",
+            message: `Mark "${item.name}" out of stock (86)?\n\nCustomers will not be able to order it online until you turn it back on.`,
+            confirmLabel: "Mark out of stock",
+            variant: "warning",
+          }
+        : {
+            title: "Mark back in stock?",
+            message: `Mark "${item.name}" back in stock?\n\nCustomers will be able to order it online again.`,
+            confirmLabel: "Mark in stock",
+            variant: "success",
+          },
+    );
+    if (!confirmed) return;
+
     setSavingKey(`item-${item._id}`);
     setError("");
     try {
       const updated = await menuAdminApi.setItemAvailable(item._id, !item.available);
-      if (selectionType === "menuItem" && selectedMenuItem?._id === item._id) {
-        setSelectedMenuItem(updated);
-      }
-      refreshDependents();
+      refreshAfterToggle(updated);
     } catch (err) {
       setError(err.message || "Failed to update item availability");
     } finally {
@@ -164,8 +204,57 @@ export default function KitchenAvailabilityPage() {
     }
   };
 
+  const handleBulkEnableDisabled = async () => {
+    if (!disabledItems.length) return;
+    const confirmed = await confirmAlert({
+      title: "Mark all back in stock?",
+      message: `Mark all ${disabledItems.length} out-of-stock items back in stock?\n\nCustomers will be able to order them online again.`,
+      confirmLabel: "Mark all in stock",
+      variant: "success",
+    });
+    if (!confirmed) return;
+
+    setSavingKey("bulk-disabled");
+    setError("");
+    try {
+      await menuAdminApi.bulkSetItemsAvailable(
+        disabledItems.map((item) => item._id),
+        true,
+      );
+      loadDisabledItems();
+      if (search.trim()) loadSearchResults(search);
+      if (selectionType === "ingredient" && selectedIngredient) {
+        loadDependents(selectedIngredient);
+      }
+      if (selectionType === "menuItem" && selectedMenuItem) {
+        setSelectedMenuItem({ ...selectedMenuItem, available: true });
+      }
+    } catch (err) {
+      setError(err.message || "Failed to re-enable items");
+    } finally {
+      setSavingKey("");
+    }
+  };
+
   const handleBulkToggleItems = async (available) => {
     if (!dependentItems.length) return;
+    const confirmed = await confirmAlert(
+      available
+        ? {
+            title: "Mark all back in stock?",
+            message: `Mark all ${dependentItems.length} items back in stock?\n\nCustomers will be able to order them online again.`,
+            confirmLabel: "Mark all in stock",
+            variant: "success",
+          }
+        : {
+            title: "Mark all out of stock?",
+            message: `Mark all ${dependentItems.length} items out of stock (86)?\n\nCustomers will not be able to order them online until you turn them back on.`,
+            confirmLabel: "Mark all out of stock",
+            variant: "warning",
+          },
+    );
+    if (!confirmed) return;
+
     setSavingKey("bulk-items");
     setError("");
     try {
@@ -173,7 +262,9 @@ export default function KitchenAvailabilityPage() {
         dependentItems.map((item) => item._id),
         available,
       );
-      refreshDependents();
+      loadDisabledItems();
+      if (search.trim()) loadSearchResults(search);
+      loadDependents(selectedIngredient);
     } catch (err) {
       setError(err.message || "Failed to bulk update items");
     } finally {
@@ -220,6 +311,49 @@ export default function KitchenAvailabilityPage() {
             {error}
           </div>
         )}
+
+        <section className="rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Currently out of stock (86&apos;d)
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                These items are hidden from online ordering. Toggle them back on
+                when they are available again.
+              </p>
+            </div>
+            {disabledItems.length > 1 && (
+              <button
+                type="button"
+                disabled={savingKey === "bulk-disabled"}
+                onClick={handleBulkEnableDisabled}
+                className="rounded-lg bg-[var(--coffee-brown)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--coffee-brown-dark)] disabled:opacity-50"
+              >
+                Mark all in stock
+              </button>
+            )}
+          </div>
+
+          {loadingDisabled ? (
+            <p className="mt-4 text-sm text-gray-500">Loading...</p>
+          ) : disabledItems.length === 0 ? (
+            <p className="mt-4 text-sm text-gray-500">
+              No menu items are currently 86&apos;d.
+            </p>
+          ) : (
+            <ul className="mt-4 max-h-80 space-y-3 overflow-y-auto">
+              {disabledItems.map((item) => (
+                <ItemRow
+                  key={item._id}
+                  item={item}
+                  savingKey={savingKey}
+                  onToggle={handleToggleItem}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <label

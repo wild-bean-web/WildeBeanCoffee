@@ -93,6 +93,55 @@ describe("Menu Admin Availability API", () => {
     expect(response.body.data.ingredients).toEqual([]);
   });
 
+  it("finds menu items and ingredients with fuzzy search typos", async () => {
+    const { authHeader } = await createTestKitchenAdmin();
+    await createTestMenuItem({
+      name: "Green Glow",
+      recipeIngredients: ["Spinach", "Kale", "Banana"],
+    });
+    await createTestMenuItem({
+      name: "Iced Latte",
+      recipeIngredients: ["Espresso", "Whole Milk"],
+    });
+
+    const itemSearch = await request(app)
+      .get("/api/menu/admin/search?search=greem+glo")
+      .set("Authorization", authHeader);
+    expect(itemSearch.status).toBe(200);
+    expect(itemSearch.body.data.menuItems).toHaveLength(1);
+    expect(itemSearch.body.data.menuItems[0].name).toBe("Green Glow");
+
+    const ingredientSearch = await request(app)
+      .get("/api/menu/admin/search?search=spnach")
+      .set("Authorization", authHeader);
+    expect(ingredientSearch.status).toBe(200);
+    expect(ingredientSearch.body.data.ingredients.map((e) => e.name)).toEqual([
+      "Spinach",
+    ]);
+  });
+
+  it("lists all currently unavailable menu items", async () => {
+    const { authHeader } = await createTestKitchenAdmin();
+    const outItem = await createTestMenuItem({
+      name: "Green Glow",
+      available: false,
+    });
+    await createTestMenuItem({
+      name: "Iced Latte",
+      available: true,
+    });
+
+    const response = await request(app)
+      .get("/api/menu/admin/unavailable")
+      .set("Authorization", authHeader);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].name).toBe("Green Glow");
+    expect(response.body.data[0]._id).toBe(outItem._id.toString());
+    expect(response.body.data[0].available).toBe(false);
+  });
+
   it("finds dependents for spinach (Green Glow only)", async () => {
     const { authHeader } = await createTestKitchenAdmin();
     const greenGlow = await createTestMenuItem({

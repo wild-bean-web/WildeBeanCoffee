@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { Product, MenuItem, Location, ModifierGroup } from "./models/index.js";
+import { Product, MenuItem, Location, ModifierGroup, User } from "./models/index.js";
 import { modifierGroups } from "./seedModifierGroups.js";
 import { menuItemsFromCSV } from "./seedMenuItemsFromCSV.js";
 import { applyRecipeIngredientsToSeedItem } from "./services/menuAvailabilityService.js";
+import { clearCatalogData, CATALOG_MODELS } from "./config/catalogSeed.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -421,10 +422,17 @@ async function seed() {
   const dbName = mongoose.connection.db.databaseName;
   console.log(`Connected to MongoDB for seeding (database: ${dbName})`);
 
-  await Product.deleteMany({});
-  await MenuItem.deleteMany({});
-  await Location.deleteMany({});
-  await ModifierGroup.deleteMany({});
+  if (isTestSeed) {
+    const userCount = await User.countDocuments({});
+    console.log(
+      `[seed:test] Refreshing catalog only (${CATALOG_MODELS.map((m) => m.modelName).join(", ")}).`,
+    );
+    console.log(
+      `[seed:test] Preserving ${userCount} user(s) and all auth/order history.`,
+    );
+  }
+
+  await clearCatalogData();
 
   // Seed modifier groups first
   const createdModifierGroups = await ModifierGroup.insertMany(modifierGroups);
@@ -457,6 +465,11 @@ async function seed() {
   console.log(`Seeded ${createdProducts.length} products`);
   console.log(`Seeded ${createdMenuItems.length} menu items`);
   console.log(`Seeded ${createdLocations.length} locations`);
+
+  if (isTestSeed) {
+    const userCountAfter = await User.countDocuments({});
+    console.log(`[seed:test] Done. ${userCountAfter} user(s) still in database.`);
+  }
 
   await mongoose.connection.close();
   console.log("Seeding complete. Connection closed.");
