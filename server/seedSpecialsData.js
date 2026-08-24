@@ -294,8 +294,8 @@ export const specialsSeed = [
     weekLabel: "8/24",
     base: ["Milk", "Ice", "Double shot espresso"],
     build: [
-      b("Pistachio", "2 pumps", "2 pumps"),
-      b("Toffee", "1 pump", "2 pumps"),
+      b("Pistachio", "1 pump", "2 pumps"),
+      b("Toffee", "1 pump", "1 pump"),
     ],
     toppings: ["Pistachio cold foam", "Caramel drizzle", "Pistachio crunch"],
     method: [
