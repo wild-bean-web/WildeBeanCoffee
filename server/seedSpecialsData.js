@@ -288,7 +288,7 @@ export const specialsSeed = [
     ],
   },
   {
-    name: "Pistachio Toffee Crunch Latte",
+    name: "Pistachio Toffee Cloud",
     category: "Coffee",
     weekOf: "2026-08-24",
     weekLabel: "8/24",
@@ -297,10 +297,11 @@ export const specialsSeed = [
       b("Pistachio", "2 pumps", "2 pumps"),
       b("Toffee", "1 pump", "2 pumps"),
     ],
-    toppings: ["Caramel drizzle", "Pistachio crunch"],
+    toppings: ["Pistachio cold foam", "Caramel drizzle", "Pistachio crunch"],
     method: [
       "Syrups + milk + ice",
       "Double shot espresso",
+      "Top with pistachio cold foam",
       "Garnish with caramel drizzle + pistachio crunch",
     ],
   },

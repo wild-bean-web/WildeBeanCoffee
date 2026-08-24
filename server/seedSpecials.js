@@ -92,6 +92,16 @@ async function seedSpecials() {
     upserted += 1;
   }
 
+  // Drop renamed 8/24 special so staff don't see the old card.
+  const renamed = await Special.deleteMany({
+    name: "Pistachio Toffee Crunch Latte",
+  });
+  if (renamed.deletedCount) {
+    console.log(
+      `[seed:specials] Removed ${renamed.deletedCount} renamed special(s)`,
+    );
+  }
+
   console.log(`[seed:specials] Upserted ${upserted} special(s)`);
   await mongoose.disconnect();
 }
