@@ -142,7 +142,7 @@ export const RECIPE_INGREDIENTS_BY_MENU_ITEM = {
     "Peanut Butter",
     "Honey",
     "Strawberries",
-    "Blueberries",
+    "Bananas",
   ],
 
   // Bakery & Pastries

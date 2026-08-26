@@ -41,7 +41,7 @@ const PREDETERMINED_BOWL_DEFAULTS = {
       "Coconut flakes",
     ],
     Drizzels: ["Peanut Butter", "Honey"],
-    "Fruit Toppings": ["Strawberries", "Blueberries"],
+    "Fruit Toppings": ["Strawberries", "Bananas"],
     "Extra Add-Ons": [],
   },
 };
@@ -543,7 +543,10 @@ export default function CustomizationModal({
               const isMatchaDrink =
                 menuItem?.tags?.includes("matcha") ||
                 /matcha/i.test(menuItem?.name || "");
-              const defaultMilk = isMatchaDrink ? "2% Milk" : "Whole Milk";
+              let defaultMilk = isMatchaDrink ? "2% Milk" : "Whole Milk";
+              if (menuItem?.name === "Berry Mango Tango") {
+                defaultMilk = "Almond Milk";
+              }
               defaultOption = group.options.find(
                 (opt) => opt.name === defaultMilk && opt.available,
               );

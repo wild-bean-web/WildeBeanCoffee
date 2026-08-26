@@ -151,6 +151,23 @@ const LONDON_FOG_MODIFIERS = [
   "Syrups & sweeteners",
 ];
 
+/** Smoothies: size, optional protein, syrup pumps, peanut butter only. */
+const SMOOTHIE_MODIFIERS = [
+  "Smoothie Size",
+  "Protein Powder",
+  "Syrups & sweeteners",
+  "Smoothie Add-Ons",
+];
+
+/** Smoothies that also offer milk choice (Green Glow, Berry Mango Tango, Power Couple). */
+const SMOOTHIE_MODIFIERS_WITH_MILK = [
+  "Smoothie Size",
+  "Milk Choice (Smoothies)",
+  "Protein Powder",
+  "Syrups & sweeteners",
+  "Smoothie Add-Ons",
+];
+
 export const menuItemsFromCSV = [
   // Coffee & Espresso (Espresso Bar)
   {
@@ -773,7 +790,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GreenGlowLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS_WITH_MILK,
   },
   {
     name: "Triple B",
@@ -786,7 +803,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/BerryBoostLand.png",
     available: false,
     active: false,
-    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS,
   },
   {
     name: "Tropical Bliss",
@@ -799,7 +816,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/TropicalBlissLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS,
   },
   {
     name: "Guava Cream",
@@ -812,7 +829,7 @@ export const menuItemsFromCSV = [
     image: "/images/menu/Smoothies/GuavaCreamLand.png",
     available: true,
     active: true,
-    modifierGroupNames: ["Smoothie Size", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS,
   },
   {
     name: "Berry Mango Tango",
@@ -826,7 +843,7 @@ export const menuItemsFromCSV = [
     image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: ["Smoothie Size", "Protein Powder", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS_WITH_MILK,
   },
   {
     name: "Power Couple",
@@ -840,7 +857,7 @@ export const menuItemsFromCSV = [
     image: "", // Placeholder: no image yet; UI shows "Photo coming soon"
     available: true,
     active: true,
-    modifierGroupNames: ["Smoothie Size", "Protein Powder", "Smoothie Add-Ons"],
+    modifierGroupNames: SMOOTHIE_MODIFIERS_WITH_MILK,
   },
 
   // Wild Bowl (build-your-own and predetermined bowls)
@@ -890,7 +907,7 @@ export const menuItemsFromCSV = [
   {
     name: "Signature Bowl",
     description:
-      "½ Chia Seed Pudding, ½ Yogurt, Granola, Pecans, Sunflower Seeds, Coconut Flakes, Peanut Butter, Honey, Strawberries, Blueberries. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
+      "½ Chia Seed Pudding, ½ Yogurt, Granola, Pecans, Sunflower Seeds, Coconut Flakes, Peanut Butter, Honey, Strawberries, Bananas. You may remove or add toppings; rules: 1 base, 2 fruits, up to 8 toppings & 2 drizzles.",
     price: 10.3,
     currency: "USD",
     section: "Wild Bowl",
