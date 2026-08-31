@@ -79,6 +79,21 @@ export const specialsSeed = [
     ],
   },
   {
+    name: "Banana Nutella Dream",
+    category: "Coffee",
+    weekOf: "2026-08-31",
+    weekLabel: "8/31",
+    base: ["Milk", "Ice", "Double shot espresso"],
+    build: [b("Banana bread", "2 pumps", "3 pumps")],
+    toppings: ["Nutella cold foam", "Nutella drizzle"],
+    method: [
+      "Banana bread syrup + milk + ice",
+      "Double shot espresso",
+      "Top with Nutella cold foam",
+      "Garnish with Nutella drizzle",
+    ],
+  },
+  {
     name: "Berry Blue Latte",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -232,6 +247,21 @@ export const specialsSeed = [
     toppings: [],
   },
   {
+    name: "Cookie Chai Cloud",
+    category: "Coffee",
+    weekOf: "2026-08-31",
+    weekLabel: "8/31",
+    base: ["Milk"],
+    build: [b("Chai concentrate", "7 pumps", "10 pumps")],
+    toppings: ["Cookie butter cold foam", "Biscoff cookie crumbs"],
+    method: [
+      "Chai concentrate + milk, mix",
+      "Add ice",
+      "Top with cookie butter cold foam",
+      "Garnish with Biscoff cookie crumbs",
+    ],
+  },
+  {
     name: "Irish White Chocolate Latte",
     category: "Coffee",
     weekOf: "2026-07-27",
@@ -314,6 +344,24 @@ export const specialsSeed = [
     build: [b("Pistachio", "2 pumps", "3 pumps")],
     toppings: [],
     method: ["Syrup + espresso, shake with ice", "Top with oat milk"],
+  },
+  {
+    name: "Praline Sugar Cloud Latte",
+    category: "Coffee",
+    weekOf: "2026-08-31",
+    weekLabel: "8/31",
+    base: ["Milk", "Ice", "Double shot espresso"],
+    build: [
+      b("Praline", "3 pumps", "3 pumps"),
+      b("Brown sugar", "1 pump", "2 pumps"),
+    ],
+    toppings: ["Vanilla cold foam", "Cinnamon sugar"],
+    method: [
+      "Syrups + milk + ice",
+      "Double shot espresso",
+      "Top with vanilla cold foam",
+      "Garnish with cinnamon sugar",
+    ],
   },
   {
     name: "Salted Brown Sugar Vanilla Shaken Espresso",
@@ -438,6 +486,23 @@ export const specialsSeed = [
     ],
     toppings: ["Vanilla cold foam", "Cinnamon powder"],
     method: ["Syrup + matcha + oat milk, mix", "Add ice", "Top with foam + cinnamon"],
+  },
+  {
+    name: "Coconut Fig Matcha",
+    category: "Matcha",
+    weekOf: "2026-08-31",
+    weekLabel: "8/31",
+    base: ["Oat milk", "Ice", "Matcha"],
+    build: [
+      b("Fig puree", "1 oz", "1.2 oz"),
+      b("Coconut", "1 pump", "1 pump"),
+    ],
+    toppings: [],
+    method: [
+      "Fig puree + coconut syrup + oat milk, mix",
+      "Add ice",
+      "Top with matcha",
+    ],
   },
   {
     name: "Elderflower Oat Matcha",
