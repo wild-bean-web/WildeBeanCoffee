@@ -12,6 +12,12 @@ export const BEAN_STAMPS_ENABLED =
 export const LOYALTY_STAMPS_PER_REWARD = 20;
 export const LOYALTY_QUALIFY_MIN_TOTAL = 10;
 export const LOYALTY_FREE_ITEM_MAX_PRE_TAX = 15;
+/** paymentRef for fully reward-covered ($0) orders — no Clover checkout. */
+export const BEAN_STAMPS_REWARD_PAYMENT_REF = "BEAN_STAMPS_REWARD";
+/** Below this pre-tip total (USD), only dollar tips are offered in checkout UI. */
+export const TIP_DOLLAR_ONLY_THRESHOLD = 3;
+/** Max tip when customer enters an explicit dollar amount. */
+export const MAX_FIXED_DOLLAR_TIP = 50;
 
 /**
  * Short customer-facing description of the redemption benefit (no cart jargon).

@@ -42,6 +42,11 @@ function formatDraftItemsForKitchen(items) {
             <div className="min-w-0 flex-1">
               <span className="font-medium">
                 {item.quantity}x {item.name}
+                {item.loyaltyRewardApplied ? (
+                  <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                    Rewarded
+                  </span>
+                ) : null}
               </span>
               {(item.modifiers || []).length > 0 && (
                 <span className="text-gray-600">
@@ -719,7 +724,14 @@ export default function KitchenDashboard() {
                    <ul className="space-y-1.5 text-sm">
                      {(newOrderAlert.items || []).map((item, idx) => (
                        <li key={idx}>
-                         <span className="font-medium">{item.quantity}x {item.name}</span>
+                         <span className="font-medium">
+                           {item.quantity}x {item.name}
+                           {item.loyaltyRewardApplied ? (
+                             <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                               Rewarded
+                             </span>
+                           ) : null}
+                         </span>
                          {(item.modifiers || []).length > 0 && (
                            <span className="text-gray-600 ml-1">
                              — {(item.modifiers || []).map((m) => (m.selectedOptions || []).map((o) => o.name).join(", ")).join("; ")}
@@ -1589,6 +1601,11 @@ function OrderCard({
                 <div className="flex-1">
                   <span className="font-medium">
                     {item.quantity}x {item.name}
+                    {item.loyaltyRewardApplied ? (
+                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                        Rewarded
+                      </span>
+                    ) : null}
                   </span>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">

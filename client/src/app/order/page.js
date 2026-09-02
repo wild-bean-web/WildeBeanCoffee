@@ -9,9 +9,12 @@ import { locationApi, ordersApi, paymentsApi, menuApi, loyaltyApi } from "@/lib/
 import { applyBeanStampsToCart } from "@/lib/beanStampsPricing";
 import {
   BEAN_STAMPS_ENABLED,
+  BEAN_STAMPS_REWARD_PAYMENT_REF,
   LOYALTY_FREE_ITEM_MAX_PRE_TAX,
   LOYALTY_STAMPS_PER_REWARD,
+  MAX_FIXED_DOLLAR_TIP,
   REWARD_ASSETS,
+  TIP_DOLLAR_ONLY_THRESHOLD,
 } from "@/lib/loyaltyConstants";
 import { useAuth } from "@/hooks/useAuth";
 import Lottie from "lottie-react";
@@ -139,7 +142,7 @@ function OrderPageContent() {
   const [loyalty, setLoyalty] = useState(null);
   const [beanStampsRedeemCartKey, setBeanStampsRedeemCartKey] = useState(null);
 
-  /** Optional tip: percent of pre-tax subtotal; "none" | "10" | "15" | "18" | "custom". Tap again to clear. */
+  /** Optional tip: percent of pre-tax subtotal; "none" | "10" | "15" | "18" | "custom_pct" | "custom_dollar". */
   const [tipChip, setTipChip] = useState("none");
   const [tipCustomStr, setTipCustomStr] = useState("");
 
@@ -326,6 +329,29 @@ function OrderPageContent() {
   useEffect(() => {
     if (adminCompActive || !BEAN_STAMPS_ENABLED) setBeanStampsRedeemCartKey(null);
   }, [adminCompActive]);
+
+  useEffect(() => {
+    if (adminCompActive) return;
+    let lines = cart;
+    if (BEAN_STAMPS_ENABLED && user && beanStampsRedeemCartKey) {
+      const applied = applyBeanStampsToCart(cart, beanStampsRedeemCartKey, taxRate);
+      if (applied) lines = applied.cart;
+    }
+    const foodSubtotalCents = lines.reduce((sum, item) => {
+      const unit = Math.round(
+        ((item.price || 0) + (item.modifierTotal || 0)) * 100,
+      );
+      return sum + unit * Math.max(1, Number(item.quantity) || 1);
+    }, 0);
+    const preTipTotal = (foodSubtotalCents + Math.round(foodSubtotalCents * taxRate)) / 100;
+    if (
+      preTipTotal < TIP_DOLLAR_ONLY_THRESHOLD &&
+      ["10", "15", "18", "custom_pct", "custom"].includes(tipChip)
+    ) {
+      setTipChip("custom_dollar");
+      setTipCustomStr("");
+    }
+  }, [cart, beanStampsRedeemCartKey, adminCompActive, taxRate, tipChip, user]);
 
   // Calculate the first available time slot for today (next 10-min increment from now, but not before store open)
   const getFirstAvailableTime = () => {
@@ -719,18 +745,7 @@ function OrderPageContent() {
     return applied ? applied.cart : cart;
   };
 
-  const getTipPercent = () => {
-    if (tipChip === "none") return 0;
-    if (tipChip === "custom") {
-      const n = parseFloat(tipCustomStr);
-      if (!Number.isFinite(n) || n < 0) return 0;
-      return Math.min(50, n);
-    }
-    return Number(tipChip);
-  };
-
-  const getCheckoutTotals = () => {
-    const lines = getCheckoutCart();
+  const getFoodSubtotalCents = (lines) => {
     let foodSubtotalCents = 0;
     for (const item of lines) {
       const basePrice = item.price || 0;
@@ -740,24 +755,74 @@ function OrderPageContent() {
       const qty = Math.max(1, Number(item.quantity) || 1);
       foodSubtotalCents += unit * qty;
     }
+    return foodSubtotalCents;
+  };
+
+  const resolveTip = (foodSubtotalCents, preTipTotal) => {
+    const dollarTipOnly = preTipTotal < TIP_DOLLAR_ONLY_THRESHOLD;
+    const tipStyle =
+      dollarTipOnly || tipChip === "custom_dollar" ? "dollars" : "percent";
+
+    if (tipStyle === "dollars") {
+      const n = parseFloat(tipCustomStr);
+      if (!Number.isFinite(n) || n < 0) {
+        return { tipAmount: 0, tipPercent: 0, tipStyle };
+      }
+      return {
+        tipAmount: Math.min(MAX_FIXED_DOLLAR_TIP, n),
+        tipPercent: 0,
+        tipStyle,
+      };
+    }
+
+    if (tipChip === "none") {
+      return { tipAmount: 0, tipPercent: 0, tipStyle };
+    }
+
+    let tipPct = 0;
+    if (tipChip === "custom_pct") {
+      const n = parseFloat(tipCustomStr);
+      if (!Number.isFinite(n) || n < 0) {
+        return { tipAmount: 0, tipPercent: 0, tipStyle };
+      }
+      tipPct = Math.min(50, n);
+    } else {
+      tipPct = Number(tipChip);
+    }
+
+    const tipCents = Math.round((foodSubtotalCents * tipPct) / 100);
+    return {
+      tipAmount: tipCents / 100,
+      tipPercent: tipPct,
+      tipStyle,
+    };
+  };
+
+  const getCheckoutTotals = () => {
+    const lines = getCheckoutCart();
+    const foodSubtotalCents = getFoodSubtotalCents(lines);
     const subtotal = foodSubtotalCents / 100;
     const taxCents = Math.round(foodSubtotalCents * taxRate);
     const tax = taxCents / 100;
     const beforeDiscountCents = foodSubtotalCents + taxCents;
     const discount = adminCompActive ? beforeDiscountCents / 100 : 0;
-    const tipPct = adminCompActive ? 0 : getTipPercent();
-    const tipCents = adminCompActive
+    const preTipTotal = adminCompActive ? 0 : beforeDiscountCents / 100;
+    const { tipAmount, tipPercent, tipStyle } = adminCompActive
+      ? { tipAmount: 0, tipPercent: 0, tipStyle: "percent" }
+      : resolveTip(foodSubtotalCents, preTipTotal);
+    const tipCents = Math.round(tipAmount * 100);
+    const totalCents = adminCompActive
       ? 0
-      : Math.round((foodSubtotalCents * tipPct) / 100);
-    const tipAmount = tipCents / 100;
-    const totalCents = adminCompActive ? 0 : foodSubtotalCents + taxCents + tipCents;
+      : foodSubtotalCents + taxCents + tipCents;
     const total = totalCents / 100;
     return {
       subtotal,
       tax,
       discount,
       tipAmount,
-      tipPercent: tipPct,
+      tipPercent,
+      tipStyle,
+      preTipTotal,
       total,
       isAdmin: adminCompActive,
     };
@@ -891,6 +956,17 @@ function OrderPageContent() {
         return;
       }
 
+      const isRewardZeroCheckout =
+        BEAN_STAMPS_ENABLED &&
+        beanStampsRedeemCartKey &&
+        loyalty?.rewardReady &&
+        total === 0;
+
+      if (isRewardZeroCheckout) {
+        await handleRewardZeroOrder();
+        return;
+      }
+
       if (total <= 0) {
         throw new Error(
           "Order total must be greater than zero. Add another item or remove the reward if your cart total is covered by the reward discount.",
@@ -970,6 +1046,8 @@ function OrderPageContent() {
         email: customerData.email || undefined,
       };
 
+      const { total: checkoutTotal, tipAmount, tipStyle } = getCheckoutTotals();
+
       const orderDraft = {
         customer: orderCustomerData,
         items: mapCartToOrderItems(checkoutCart),
@@ -980,7 +1058,7 @@ function OrderPageContent() {
           showCoffeeFreshnessNote:
             cartIncludesCoffeeEspressoDrinks(checkoutCart),
         },
-        ...(tipAmount > 0 ? { tip: tipAmount } : {}),
+        ...(tipAmount > 0 ? { tip: tipAmount, tipStyle } : {}),
         ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
           ? { beanStampsRedeemCartKey }
           : {}),
@@ -991,7 +1069,7 @@ function OrderPageContent() {
       const checkoutSession = await paymentsApi.createCheckout({
         items: orderItems,
         customer: customerData,
-        amount: Math.round(total * 100), // Convert to cents
+        amount: Math.round(checkoutTotal * 100), // Convert to cents
         tipAmountCents,
         orderDraft,
         successUrl,
@@ -1016,6 +1094,61 @@ function OrderPageContent() {
     } catch (err) {
       console.error("Error creating checkout session:", err);
       setError(err.message || "Failed to initiate payment. Please try again.");
+      setPaymentProcessing(false);
+    }
+  };
+
+  const handleRewardZeroOrder = async () => {
+    setPaymentProcessing(true);
+    setError(null);
+
+    try {
+      const checkoutCart = getCheckoutCart();
+      setPickupCoffeeFreshnessOnSuccess(
+        cartIncludesCoffeeEspressoDrinks(checkoutCart),
+      );
+      const orderItems = mapCartToOrderItems(checkoutCart);
+
+      const customerData = user
+        ? {
+            name: [user.firstName, user.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
+            phone: user.phone,
+            email: user.email || undefined,
+          }
+        : {
+            name: [customerInfo.firstName, customerInfo.lastName]
+              .map((s) => (s || "").trim())
+              .filter(Boolean)
+              .join(" "),
+            phone: customerInfo.phone,
+            email: customerInfo.email || undefined,
+          };
+
+      const orderData = {
+        customer: customerData,
+        items: orderItems,
+        taxRate,
+        pickupTime: pickupTime || undefined,
+        notes: notes || undefined,
+        paymentStatus: "paid",
+        paymentRef: BEAN_STAMPS_REWARD_PAYMENT_REF,
+        beanStampsRedeemCartKey,
+      };
+
+      setLoading(true);
+      const result = await ordersApi.create(orderData);
+      setOrderId(result._id);
+      setOrderPlaced(true);
+
+      clearPostCheckoutClientState();
+      setCart([]);
+    } catch (err) {
+      setError(err.message || "Failed to create order. Please try again.");
+    } finally {
+      setLoading(false);
       setPaymentProcessing(false);
     }
   };
@@ -1114,6 +1247,7 @@ function OrderPageContent() {
             email: customerInfo.email || undefined,
           };
 
+      const { tipAmount, tipStyle } = getCheckoutTotals();
       const orderData = {
         customer: customerData,
         items: orderItems,
@@ -1122,6 +1256,7 @@ function OrderPageContent() {
         notes: notes || undefined,
         paymentStatus: "paid", // Payment already processed
         paymentRef: paymentResult.paymentRef || paymentResult.chargeId,
+        ...(tipAmount > 0 ? { tip: tipAmount, tipStyle } : {}),
         ...(BEAN_STAMPS_ENABLED && beanStampsRedeemCartKey
           ? { beanStampsRedeemCartKey }
           : {}),
@@ -1460,8 +1595,16 @@ function OrderPageContent() {
     );
   }
 
-  const { subtotal, tax, total, tipAmount, tipPercent } = getCheckoutTotals();
+  const { subtotal, tax, total, tipAmount, tipPercent, tipStyle, preTipTotal } =
+    getCheckoutTotals();
   const checkoutCartForDisplay = getCheckoutCart();
+  const dollarTipOnly = preTipTotal < TIP_DOLLAR_ONLY_THRESHOLD;
+  const isRewardZeroCheckout =
+    BEAN_STAMPS_ENABLED &&
+    Boolean(beanStampsRedeemCartKey) &&
+    Boolean(loyalty?.rewardReady) &&
+    !adminCompActive &&
+    total === 0;
   const showPickupCoffeeFreshnessNote =
     cartIncludesCoffeeEspressoDrinks(checkoutCartForDisplay);
   const beanStampsRewardLineName = beanStampsRedeemCartKey
@@ -1902,70 +2045,126 @@ function OrderPageContent() {
                       <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--coffee-brown)]/45">
                         Optional Tip
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {[
-                          { key: "10", label: "10%" },
-                          { key: "15", label: "15%" },
-                          { key: "18", label: "18%" },
-                        ].map(({ key, label }) => {
-                          const active = tipChip === key;
-                          return (
+                      {dollarTipOnly ? (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                          <span className="shrink-0">Tip amount</span>
+                          <span className="text-gray-500">$</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={MAX_FIXED_DOLLAR_TIP}
+                            step={0.5}
+                            value={tipCustomStr}
+                            onChange={(e) => {
+                              setTipChip("custom_dollar");
+                              setTipCustomStr(e.target.value);
+                            }}
+                            placeholder="0.00"
+                            className="w-24 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[var(--coffee-brown)] tabular-nums focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                          />
+                        </label>
+                      ) : (
+                        <>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {[
+                              { key: "10", label: "10%" },
+                              { key: "15", label: "15%" },
+                              { key: "18", label: "18%" },
+                            ].map(({ key, label }) => {
+                              const active = tipChip === key;
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  onClick={() => {
+                                    if (active) {
+                                      setTipChip("none");
+                                      setTipCustomStr("");
+                                    } else {
+                                      setTipChip(key);
+                                      setTipCustomStr("");
+                                    }
+                                  }}
+                                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                                    active
+                                      ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
+                                      : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
                             <button
-                              key={key}
                               type="button"
                               onClick={() => {
-                                if (active) {
+                                if (tipChip === "custom_pct") {
                                   setTipChip("none");
                                   setTipCustomStr("");
                                 } else {
-                                  setTipChip(key);
-                                  setTipCustomStr("");
+                                  setTipChip("custom_pct");
                                 }
                               }}
                               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                                active
+                                tipChip === "custom_pct"
                                   ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
                                   : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
                               }`}
                             >
-                              {label}
+                              Other %
                             </button>
-                          );
-                        })}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (tipChip === "custom") {
-                              setTipChip("none");
-                              setTipCustomStr("");
-                            } else {
-                              setTipChip("custom");
-                            }
-                          }}
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                            tipChip === "custom"
-                              ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
-                              : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
-                          }`}
-                        >
-                          Other %
-                        </button>
-                      </div>
-                      {tipChip === "custom" && (
-                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-                          <span className="shrink-0">Custom</span>
-                          <input
-                            type="number"
-                            min={0}
-                            max={50}
-                            step={0.5}
-                            value={tipCustomStr}
-                            onChange={(e) => setTipCustomStr(e.target.value)}
-                            placeholder="e.g. 12"
-                            className="w-20 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[var(--coffee-brown)] tabular-nums focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
-                          />
-                          <span className="text-gray-500">% (max 50)</span>
-                        </label>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (tipChip === "custom_dollar") {
+                                  setTipChip("none");
+                                  setTipCustomStr("");
+                                } else {
+                                  setTipChip("custom_dollar");
+                                }
+                              }}
+                              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                                tipChip === "custom_dollar"
+                                  ? "bg-[var(--coffee-brown)]/15 text-[var(--coffee-brown)] ring-1 ring-[var(--coffee-brown)]/25"
+                                  : "bg-white/80 text-gray-600 ring-1 ring-stone-200/80 hover:bg-stone-100"
+                              }`}
+                            >
+                              Custom $
+                            </button>
+                          </div>
+                          {tipChip === "custom_pct" && (
+                            <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                              <span className="shrink-0">Custom</span>
+                              <input
+                                type="number"
+                                min={0}
+                                max={50}
+                                step={0.5}
+                                value={tipCustomStr}
+                                onChange={(e) => setTipCustomStr(e.target.value)}
+                                placeholder="e.g. 12"
+                                className="w-20 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[var(--coffee-brown)] tabular-nums focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                              />
+                              <span className="text-gray-500">% (max 50)</span>
+                            </label>
+                          )}
+                          {tipChip === "custom_dollar" && (
+                            <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                              <span className="shrink-0">Tip amount</span>
+                              <span className="text-gray-500">$</span>
+                              <input
+                                type="number"
+                                min={0}
+                                max={MAX_FIXED_DOLLAR_TIP}
+                                step={0.5}
+                                value={tipCustomStr}
+                                onChange={(e) => setTipCustomStr(e.target.value)}
+                                placeholder="0.00"
+                                className="w-24 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[var(--coffee-brown)] tabular-nums focus:border-[var(--lime-green)] focus:outline-none focus:ring-1 focus:ring-[var(--lime-green)]"
+                              />
+                            </label>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -1973,7 +2172,7 @@ function OrderPageContent() {
                     <div className="flex justify-between text-sm text-stone-600">
                       <span>
                         Tip
-                        {tipPercent > 0 ? (
+                        {tipStyle === "percent" && tipPercent > 0 ? (
                           <span className="text-stone-400"> ({tipPercent}%)</span>
                         ) : null}
                       </span>
@@ -2001,6 +2200,11 @@ function OrderPageContent() {
                   {adminCompActive && (
                     <p className="text-xs text-center text-[var(--lime-green)] font-medium mt-2">
                       Admin order for QA/testing — No payment required
+                    </p>
+                  )}
+                  {isRewardZeroCheckout && (
+                    <p className="text-xs text-center text-[var(--lime-green-dark)] font-medium mt-2">
+                      Your Bean Stamps reward covers this order — no payment required.
                     </p>
                   )}
                 </div>
@@ -2385,7 +2589,11 @@ function OrderPageContent() {
                       disabled={loading || !selectedDate || !selectedTime}
                       className="w-full rounded-full bg-[var(--lime-green)] px-6 py-3 text-white font-semibold transition-colors hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {adminCompActive ? "Place Order" : "Continue to Payment"}
+                      {adminCompActive
+                        ? "Place Order"
+                        : isRewardZeroCheckout
+                          ? "Redeem & Place Order"
+                          : "Continue to Payment"}
                     </button>
                     {(!selectedDate || !selectedTime) && (
                       <p className="text-center text-xs text-gray-500 mt-2">

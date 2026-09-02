@@ -219,7 +219,11 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
     }
 
     if (draft.tip != null && draft.tip !== "") {
-      const draftTipCheck = validateTipForItems(draft.tip, draft.items);
+      const draftTipStyle =
+        draft.tipStyle === "dollars" ? "dollars" : "percent";
+      const draftTipCheck = validateTipForItems(draft.tip, draft.items, {
+        tipStyle: draftTipStyle,
+      });
       if (!draftTipCheck.ok) {
         return errorResponse(res, 400, draftTipCheck.error, ["orderDraft.tip"]);
       }
