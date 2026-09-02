@@ -947,7 +947,7 @@ function OrderPageContent() {
         }
       }
 
-      const { total, tipAmount, isAdmin: isAdminDiscount } =
+      const { total, tipAmount, tipStyle, isAdmin: isAdminDiscount } =
         getCheckoutTotals();
 
       // If admin, skip payment and create order directly
@@ -1046,8 +1046,6 @@ function OrderPageContent() {
         email: customerData.email || undefined,
       };
 
-      const { total: checkoutTotal, tipAmount, tipStyle } = getCheckoutTotals();
-
       const orderDraft = {
         customer: orderCustomerData,
         items: mapCartToOrderItems(checkoutCart),
@@ -1069,7 +1067,7 @@ function OrderPageContent() {
       const checkoutSession = await paymentsApi.createCheckout({
         items: orderItems,
         customer: customerData,
-        amount: Math.round(checkoutTotal * 100), // Convert to cents
+        amount: Math.round(total * 100), // Convert to cents
         tipAmountCents,
         orderDraft,
         successUrl,
