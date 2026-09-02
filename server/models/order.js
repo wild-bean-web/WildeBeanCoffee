@@ -27,6 +27,8 @@ const OrderItemSchema = new mongoose.Schema(
     notes: { type: String, trim: true },
     /** Client cart line id for Bean Stamps redeem matching (optional). */
     cartKey: { type: String, trim: true },
+    /** True when this line received the Bean Stamps reward discount. */
+    loyaltyRewardApplied: { type: Boolean, default: false },
   },
   { _id: false }
 );

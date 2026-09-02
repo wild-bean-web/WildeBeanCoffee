@@ -65,6 +65,7 @@ export function applyLoyaltyRedeemToItems(items, cartKey, taxRate) {
   const newLinePreTax = Math.max(0, linePreTax - discount);
   const newUnitPrice = newLinePreTax / qty;
   item.price = Number(newUnitPrice.toFixed(4));
+  item.loyaltyRewardApplied = true;
   const totals = computeTotalsFromItems(cloned, taxRate);
   return {
     items: cloned,
@@ -121,6 +122,7 @@ export async function processLoyaltyAfterPaidOrder({
 
   const subtotal = Number(totals?.subtotal);
   const tax = Number(totals?.tax);
+  /** Post-reward food + tax (pre-tip) — stamp only when this meets LOYALTY_QUALIFY_MIN_TOTAL. */
   const preTipTotal =
     (Number.isFinite(subtotal) ? subtotal : 0) +
     (Number.isFinite(tax) ? tax : 0);

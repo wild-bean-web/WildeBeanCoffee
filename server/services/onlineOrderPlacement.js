@@ -6,6 +6,7 @@ import {
   processLoyaltyAfterPaidOrder,
 } from "./loyalty.js";
 import { isBeanStampsEnabled, isAdminOrderCompEnabled } from "../config/featureFlags.js";
+import { BEAN_STAMPS_REWARD_PAYMENT_REF } from "../config/loyaltyConstants.js";
 import { isKitchenAdminEmail } from "../config/kitchenAdmins.js";
 import { validateTipForItems } from "./tipValidation.js";
 
@@ -106,7 +107,13 @@ async function claimOrLoadExistingPaidOrder(paymentRefVal) {
 }
 
 async function clearPlacementClaim(paymentRefVal) {
-  if (!paymentRefVal || paymentRefVal === "ADMIN_DISCOUNT") return;
+  if (
+    !paymentRefVal ||
+    paymentRefVal === "ADMIN_DISCOUNT" ||
+    paymentRefVal === BEAN_STAMPS_REWARD_PAYMENT_REF
+  ) {
+    return;
+  }
   await HostedCheckoutDraft.findOneAndUpdate(
     { checkoutSessionId: paymentRefVal, status: "pending" },
     { $unset: { placementClaimedAt: 1 } },
@@ -191,13 +198,19 @@ export function validateOrderPayload(body) {
   }
 
   const isAdminOrder = paymentRef === "ADMIN_DISCOUNT";
+  const isBeanStampsRewardOrder = paymentRef === BEAN_STAMPS_REWARD_PAYMENT_REF;
   if (paymentStatus !== "paid") {
     errors.push(
       "Payment must be completed before order can be created. paymentStatus must be 'paid'",
     );
   }
 
-  if (paymentStatus === "paid" && !paymentRef && !isAdminOrder) {
+  if (
+    paymentStatus === "paid" &&
+    !paymentRef &&
+    !isAdminOrder &&
+    !isBeanStampsRewardOrder
+  ) {
     errors.push("paymentRef is required when paymentStatus is 'paid'");
   }
 
@@ -364,7 +377,8 @@ export async function placeOnlineOrder(body, user, options = {}) {
   if (
     paymentStatusVal === "paid" &&
     paymentRefVal &&
-    paymentRefVal !== "ADMIN_DISCOUNT"
+    paymentRefVal !== "ADMIN_DISCOUNT" &&
+    paymentRefVal !== BEAN_STAMPS_REWARD_PAYMENT_REF
   ) {
     const claim = await claimOrLoadExistingPaidOrder(paymentRefVal);
     if (claim.kind === "existing") {
@@ -401,6 +415,33 @@ export async function placeOnlineOrder(body, user, options = {}) {
   }
 
   const isAdminOrder = paymentRefVal === "ADMIN_DISCOUNT";
+  const isBeanStampsRewardOrder =
+    paymentRefVal === BEAN_STAMPS_REWARD_PAYMENT_REF;
+
+  if (isBeanStampsRewardOrder) {
+    if (!isBeanStampsEnabled()) {
+      return {
+        ok: false,
+        status: 400,
+        errors: ["Bean Stamps is not available."],
+      };
+    }
+    if (!user) {
+      return {
+        ok: false,
+        status: 401,
+        message: "Sign in to use Bean Stamps rewards.",
+      };
+    }
+    if (!beanStampsRedeemCartKey) {
+      return {
+        ok: false,
+        status: 400,
+        message: "Bean Stamps reward checkout requires a reward to be applied.",
+      };
+    }
+  }
+
   if (!isAdminOrder && !kitchenBypassHostedCheckoutBlockers) {
     const location = await Location.findOne({ active: true })
       .select("onlineOrderingPaused")
@@ -471,10 +512,11 @@ export async function placeOnlineOrder(body, user, options = {}) {
 
   let totals = computeTotals(items, taxRate);
   let tip = 0;
+  const tipStyle = body.tipStyle === "dollars" ? "dollars" : "percent";
   if (!isAdminOrder) {
     const tipRaw = body.tip;
     if (tipRaw !== undefined && tipRaw !== null && tipRaw !== "") {
-      const tipCheck = validateTipForItems(tipRaw, items);
+      const tipCheck = validateTipForItems(tipRaw, items, { tipStyle });
       if (!tipCheck.ok) {
         return { ok: false, status: 400, errors: [tipCheck.error] };
       }
@@ -493,6 +535,32 @@ export async function placeOnlineOrder(body, user, options = {}) {
       total: 0,
       currency: totals.currency,
     };
+  }
+
+  if (isBeanStampsRewardOrder) {
+    if (!loyaltyRedeemApplied) {
+      return {
+        ok: false,
+        status: 400,
+        message: "Bean Stamps reward could not be applied to this order.",
+      };
+    }
+    if (tip > 0) {
+      return {
+        ok: false,
+        status: 400,
+        message:
+          "Tips cannot be added to a fully reward-covered order. Remove the tip or add items so the total is greater than zero.",
+      };
+    }
+    if (totals.total > 0.005) {
+      return {
+        ok: false,
+        status: 400,
+        message:
+          "Bean Stamps reward checkout is only allowed when the order total is $0.00.",
+      };
+    }
   }
 
   const isGuest = !user;
@@ -622,7 +690,8 @@ export async function placeOnlineOrder(body, user, options = {}) {
   if (
     paymentStatusVal === "paid" &&
     paymentRefVal &&
-    paymentRefVal !== "ADMIN_DISCOUNT"
+    paymentRefVal !== "ADMIN_DISCOUNT" &&
+    paymentRefVal !== BEAN_STAMPS_REWARD_PAYMENT_REF
   ) {
     await HostedCheckoutDraft.findOneAndUpdate(
       { checkoutSessionId: paymentRefVal },

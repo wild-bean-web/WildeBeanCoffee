@@ -354,6 +354,11 @@ function OrderCard({
                 <div className="flex-1">
                   <span className="font-medium">
                     {item.quantity}x {item.name}
+                    {item.loyaltyRewardApplied ? (
+                      <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                        Rewarded
+                      </span>
+                    ) : null}
                   </span>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <ul className="ml-4 mt-1 space-y-1 text-gray-600">

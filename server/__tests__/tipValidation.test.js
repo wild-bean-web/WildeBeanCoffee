@@ -52,5 +52,17 @@ describe("tipValidation", () => {
         error: "tip exceeds maximum for this order",
       });
     });
+
+    it("allows fixed dollar tips above the percent cap when tipStyle is dollars", () => {
+      expect(
+        validateTipForItems(5, [{ price: 0, quantity: 1 }], {
+          tipStyle: "dollars",
+        }),
+      ).toEqual({
+        ok: true,
+        tipCents: 500,
+        tipDollars: 5,
+      });
+    });
   });
 });

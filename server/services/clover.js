@@ -562,9 +562,10 @@ function formatReceiptContent(order) {
   // Items
   lines.push({ type: "TEXT", text: "ITEMS:", align: "LEFT", bold: true });
   order.items.forEach((item) => {
+    const rewarded = item.loyaltyRewardApplied ? " [Rewarded]" : "";
     lines.push({
       type: "TEXT",
-      text: `${item.quantity}x ${item.name}`,
+      text: `${item.quantity}x ${item.name}${rewarded}`,
       align: "LEFT",
     });
     const itemTotal = (item.price * item.quantity).toFixed(2);

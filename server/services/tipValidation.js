@@ -1,5 +1,7 @@
 /** Max tip is 50% of pre-tax food subtotal (matches client order page). */
 export const MAX_TIP_FRACTION = 0.5;
+/** Max tip when customer enters an explicit dollar amount (USD). */
+export const MAX_FIXED_DOLLAR_TIP = 50;
 
 /**
  * Sum line-item food subtotal in cents (same rounding as checkout / placeOnlineOrder).
@@ -27,14 +29,18 @@ export function maxTipCentsForFoodSubtotal(foodSubtotalCents) {
 /**
  * @param {number} tipCents
  * @param {number} foodSubtotalCents
+ * @param {{ tipStyle?: 'percent' | 'dollars' }} [options]
  * @returns {{ ok: true, tipCents: number, tipDollars: number } | { ok: false, error: string }}
  */
-export function validateTipCents(tipCents, foodSubtotalCents) {
+export function validateTipCents(tipCents, foodSubtotalCents, options = {}) {
   const cents = Math.round(Number(tipCents));
   if (!Number.isFinite(cents) || cents < 0) {
     return { ok: false, error: "tip must be a non-negative number" };
   }
-  const maxTipCents = maxTipCentsForFoodSubtotal(foodSubtotalCents);
+  const maxTipCents =
+    options.tipStyle === "dollars"
+      ? Math.round(MAX_FIXED_DOLLAR_TIP * 100)
+      : maxTipCentsForFoodSubtotal(foodSubtotalCents);
   if (cents > maxTipCents) {
     return { ok: false, error: "tip exceeds maximum for this order" };
   }
@@ -44,11 +50,16 @@ export function validateTipCents(tipCents, foodSubtotalCents) {
 /**
  * @param {number|string} tipDollars
  * @param {Array} items
+ * @param {{ tipStyle?: 'percent' | 'dollars' }} [options]
  */
-export function validateTipForItems(tipDollars, items) {
+export function validateTipForItems(tipDollars, items, options = {}) {
   const raw = Number(tipDollars);
   if (!Number.isFinite(raw) || raw < 0) {
     return { ok: false, error: "tip must be a non-negative number" };
   }
-  return validateTipCents(Math.round(raw * 100), foodSubtotalCentsFromItems(items));
+  return validateTipCents(
+    Math.round(raw * 100),
+    foodSubtotalCentsFromItems(items),
+    options,
+  );
 }
