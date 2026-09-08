@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const SPECIAL_CATEGORIES = ["Coffee", "Matcha", "Refreshers"];
+const SPECIAL_CATEGORIES = ["Coffee", "Chai", "Matcha", "Refreshers"];
 
 const BuildLineSchema = new mongoose.Schema(
   {

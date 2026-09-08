@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { specialsApi } from "@/lib/api";
 
-const CATEGORIES = ["All", "Coffee", "Matcha", "Refreshers"];
+const CATEGORIES = ["All", "Coffee", "Chai", "Matcha", "Refreshers"];
 
 const CATEGORY_ACCENT = {
   Coffee: "border-l-[var(--coffee-brown)]",
+  Chai: "border-l-amber-600",
   Matcha: "border-l-[var(--lime-green)]",
   Refreshers: "border-l-sky-500",
 };
@@ -216,8 +217,8 @@ export default function StaffSpecialsPage() {
   }, [category, debouncedSearch]);
 
   const grouped = useMemo(() => {
-    const order = ["Coffee", "Matcha", "Refreshers"];
-    const map = { Coffee: [], Matcha: [], Refreshers: [] };
+    const order = ["Coffee", "Chai", "Matcha", "Refreshers"];
+    const map = { Coffee: [], Chai: [], Matcha: [], Refreshers: [] };
     for (const item of specials) {
       if (map[item.category]) map[item.category].push(item);
       else {
@@ -241,7 +242,7 @@ export default function StaffSpecialsPage() {
             Weekly Specials
           </h1>
           <p className="mt-1 text-sm text-white/75">
-            Search any past or current special — Coffee, Matcha, or Refreshers.
+            Search any past or current special — Coffee, Chai, Matcha, or Refreshers.
           </p>
 
           <div className="mt-4">

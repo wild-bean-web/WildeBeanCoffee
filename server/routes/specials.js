@@ -5,7 +5,7 @@ import { errorResponse, validateQueryBoolean } from "../utils/validation.js";
 
 const router = express.Router();
 
-const CATEGORY_ORDER = { Coffee: 0, Matcha: 1, Refreshers: 2 };
+const CATEGORY_ORDER = { Coffee: 0, Chai: 1, Matcha: 2, Refreshers: 3 };
 
 /**
  * GET /api/specials
