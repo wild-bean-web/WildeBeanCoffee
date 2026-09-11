@@ -7,6 +7,10 @@ import Image from "next/image";
 import { locationApi, ordersApi } from "@/lib/api";
 import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 import { formatStoreDateTime } from "@/lib/dateTime";
+import {
+  getKitchenAudioEnabled,
+  setKitchenAudioEnabled,
+} from "@/lib/kitchenAudioPreference";
 
 function estimateTotalFromDraft(draft) {
   if (!draft?.items || !Array.isArray(draft.items)) return null;
@@ -123,20 +127,10 @@ export default function KitchenDashboard() {
   const checkoutAlertsInitRef = useRef(false);
   const prevCheckoutAlertIdsRef = useRef(new Set());
 
-  // New order alert modal (pops up center screen, alarm loops until dismissed)
-  const [newOrderAlert, setNewOrderAlert] = useState(null);
+  // Audio (checkout-issue alarm on this page; new-order alarm lives in KitchenOrderAlertHost)
   const alarmIntervalRef = useRef(null);
-
-  // Audio state
   const audioContextRef = useRef(null);
-  const [audioEnabled, setAudioEnabled] = useState(() => {
-    // Check localStorage for user preference
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("kitchen-audio-enabled");
-      return saved !== null ? saved === "true" : true; // Default to enabled
-    }
-    return true;
-  });
+  const [audioEnabled, setAudioEnabled] = useState(getKitchenAudioEnabled);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [audioError, setAudioError] = useState(null);
 
@@ -244,9 +238,9 @@ export default function KitchenDashboard() {
       setOrders((prev) => [newOrder, ...prev]);
       setNewOrderIds((prev) => new Set([...prev, newOrder._id]));
       setLastUpdate(new Date());
-      setNewOrderAlert(newOrder);
-      startAlarmLoop();
-      playNotificationSound();
+      window.dispatchEvent(
+        new CustomEvent("kitchen-order-created", { detail: newOrder }),
+      );
     });
 
     eventSource.addEventListener("order:updated", (event) => {
@@ -338,7 +332,7 @@ export default function KitchenDashboard() {
     const context = await initializeAudio();
     if (context) {
       setAudioEnabled(true);
-      localStorage.setItem("kitchen-audio-enabled", "true");
+      setKitchenAudioEnabled(true);
       // Play a test sound to confirm it works
       playNotificationSound();
     }
@@ -346,20 +340,21 @@ export default function KitchenDashboard() {
 
   const handleDeclineSound = () => {
     setAudioEnabled(false);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kitchen-audio-enabled", "false");
-    }
+    setKitchenAudioEnabled(false);
+    stopAlarmLoop();
   };
 
   // Toggle audio on/off
   const toggleAudio = () => {
     const newState = !audioEnabled;
     setAudioEnabled(newState);
-    localStorage.setItem("kitchen-audio-enabled", newState.toString());
+    setKitchenAudioEnabled(newState);
     
     if (newState && !audioInitialized) {
-      // Try to initialize if enabling
       handleEnableAudio();
+    }
+    if (!newState) {
+      stopAlarmLoop();
     }
   };
 
@@ -486,11 +481,6 @@ export default function KitchenDashboard() {
       clearInterval(alarmIntervalRef.current);
       alarmIntervalRef.current = null;
     }
-  };
-
-  const dismissNewOrderAlert = () => {
-    stopAlarmLoop();
-    setNewOrderAlert(null);
   };
 
   const dismissCheckoutIssueModal = () => {
@@ -686,87 +676,6 @@ export default function KitchenDashboard() {
 
   return (
     <div className="min-h-screen bg-[var(--coffee-brown-very-light)]">
-
-       {/* New order alert modal - center screen, alarm loops until dismissed */}
-       <AnimatePresence>
-         {newOrderAlert && (
-           <motion.div
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
-             onClick={(e) => e.target === e.currentTarget && dismissNewOrderAlert()}
-           >
-             <motion.div
-               initial={{ scale: 0.9, opacity: 0 }}
-               animate={{ scale: 1, opacity: 1 }}
-               exit={{ scale: 0.9, opacity: 0 }}
-               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-               onClick={(e) => e.stopPropagation()}
-               className="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-4 ring-[var(--lime-green)] overflow-hidden"
-             >
-               <div className="bg-[var(--lime-green)] px-6 py-4 text-center">
-                 <h2 className="text-xl font-bold text-white">New order</h2>
-                 <p className="text-sm text-white/90 mt-0.5">
-                   Order #{newOrderAlert._id.toString().slice(-8).toUpperCase()}
-                 </p>
-               </div>
-               <div className="max-h-[60vh] overflow-y-auto p-6">
-                 <div className="mb-4">
-                   <p className="font-semibold text-[var(--coffee-brown)]">{newOrderAlert.customer?.name}</p>
-                   <p className="text-sm text-gray-600">{newOrderAlert.customer?.phone}</p>
-                   {newOrderAlert.customer?.email && (
-                     <p className="text-sm text-gray-600">{newOrderAlert.customer.email}</p>
-                   )}
-                 </div>
-                 <div className="mb-4">
-                   <h4 className="mb-2 font-semibold text-[var(--coffee-brown)]">Items</h4>
-                   <ul className="space-y-1.5 text-sm">
-                     {(newOrderAlert.items || []).map((item, idx) => (
-                       <li key={idx}>
-                         <span className="font-medium">
-                           {item.quantity}x {item.name}
-                           {item.loyaltyRewardApplied ? (
-                             <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
-                               Rewarded
-                             </span>
-                           ) : null}
-                         </span>
-                         {(item.modifiers || []).length > 0 && (
-                           <span className="text-gray-600 ml-1">
-                             — {(item.modifiers || []).map((m) => (m.selectedOptions || []).map((o) => o.name).join(", ")).join("; ")}
-                           </span>
-                         )}
-                       </li>
-                     ))}
-                   </ul>
-                 </div>
-                 {newOrderAlert.notes && (
-                   <div className="mb-4 rounded-lg bg-amber-50 p-2">
-                     <p className="text-xs font-semibold text-amber-800">Note</p>
-                     <p className="text-sm text-amber-900">{newOrderAlert.notes}</p>
-                   </div>
-                 )}
-                 <div className="flex justify-between border-t border-gray-200 pt-3">
-                   <span className="font-semibold text-[var(--coffee-brown)]">Total</span>
-                   <span className="text-lg font-bold text-[var(--coffee-brown)]">
-                     ${newOrderAlert.totals?.total?.toFixed(2) ?? "0.00"}
-                   </span>
-                 </div>
-               </div>
-               <div className="p-6 pt-0">
-                 <button
-                   type="button"
-                   onClick={dismissNewOrderAlert}
-                   className="w-full rounded-xl bg-[var(--coffee-brown)] px-6 py-4 text-lg font-bold text-white transition-all hover:bg-[var(--coffee-brown-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--lime-green)] focus:ring-offset-2"
-                 >
-                   Got it — stop alarm
-                 </button>
-               </div>
-             </motion.div>
-           </motion.div>
-         )}
-       </AnimatePresence>
 
        {/* Checkout issue alert (paid draft missing kitchen order or placement failed) */}
        <AnimatePresence>

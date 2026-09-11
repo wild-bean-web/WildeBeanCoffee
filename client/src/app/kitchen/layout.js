@@ -3,11 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-
-const ADMIN_EMAILS = [
-  "danielwoldehana@yahoo.com",
-  "info@wildbeancoffeeshop.com",
-];
+import { isKitchenAdminEmail } from "@/lib/kitchenAdmin";
 
 export default function KitchenLayout({ children }) {
   const { user, loading: authLoading } = useAuth();
@@ -21,8 +17,7 @@ export default function KitchenLayout({ children }) {
       return;
     }
 
-    const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
-    if (!isAdmin) {
+    if (!isKitchenAdminEmail(user.email)) {
       router.replace("/");
       return;
     }
@@ -43,8 +38,7 @@ export default function KitchenLayout({ children }) {
     return null;
   }
 
-  const isAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
-  if (!isAdmin) {
+  if (!isKitchenAdminEmail(user.email)) {
     return null;
   }
 

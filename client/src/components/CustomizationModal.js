@@ -48,13 +48,23 @@ const PREDETERMINED_BOWL_DEFAULTS = {
 
 const MILK_CHOICE_GROUPS = ["Milk Choice", "Milk Choice (Smoothies)"];
 const SYRUP_GROUP_NAME = "Syrups & sweeteners";
+const HIDDEN_MODIFIER_OPTION_NAMES = new Set(["HALF A PUMP"]);
 
 function formatColdFoamFlavorLabel(optionName) {
   return optionName.replace(/\s*Cold Foam\s*$/i, "").trim() || optionName;
 }
 
 function formatOptionName(optionName) {
-  return optionName.replace(/\(Disabled\)/g, "").trim();
+  return optionName
+    .replace(/\(Disabled\)/g, "")
+    .replace(/\s*\(\+\$[\d.]+\)\s*$/g, "")
+    .trim();
+}
+
+function getModifierGroupDisplayName(group) {
+  if (group.displayName) return group.displayName;
+  if (group.name === "Extra Single Shots (Iced)") return "Extra Single Shots";
+  return group.name;
 }
 
 // Open/close state for a dropdown, closing on outside click, tap, or Escape
@@ -161,7 +171,7 @@ function DropdownTrigger({
   );
 }
 
-function DropdownPanel({ ariaLabel, multiSelectable, children }) {
+function DropdownPanel({ ariaLabel, multiSelectable, className, children }) {
   return (
     <motion.ul
       initial={{ opacity: 0, y: -6 }}
@@ -171,7 +181,9 @@ function DropdownPanel({ ariaLabel, multiSelectable, children }) {
       role="listbox"
       aria-label={ariaLabel}
       aria-multiselectable={multiSelectable || undefined}
-      className="absolute z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-lg border-2 border-gray-200 bg-white shadow-lg"
+      className={`absolute z-20 mt-2 w-full overflow-y-auto rounded-lg border-2 border-gray-200 bg-white shadow-lg ${
+        className || "max-h-56"
+      }`}
     >
       {children}
     </motion.ul>
@@ -366,6 +378,8 @@ function MultiSelectQuantityDropdown({
   ariaLabel,
 }) {
   const { open, setOpen, containerRef } = useDropdown();
+  const selectedRowRefs = useRef({});
+  const previousSelectedRef = useRef(selectedNames);
 
   const selectedOptions = selectedNames
     .map((name) => options.find((opt) => opt.name === name))
@@ -377,6 +391,22 @@ function MultiSelectQuantityDropdown({
   const atMaxSelections = maxSelections
     ? selectedNames.length >= maxSelections
     : false;
+
+  useEffect(() => {
+    if (!open) {
+      previousSelectedRef.current = selectedNames;
+      return;
+    }
+    const newlySelected = selectedNames.find(
+      (name) => !previousSelectedRef.current.includes(name),
+    );
+    previousSelectedRef.current = selectedNames;
+    if (!newlySelected) return;
+    selectedRowRefs.current[newlySelected]?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [open, selectedNames]);
 
   return (
     <div className="space-y-2">
@@ -393,30 +423,93 @@ function MultiSelectQuantityDropdown({
           }
           subtitle={
             selectedOptions.length > 0
-              ? `+${formatPrice(selectionTotal)} · tap to add or remove`
+              ? `+${formatPrice(selectionTotal)} · tap to add another or set pumps`
               : placeholderSubtitle
           }
         />
 
         <AnimatePresence>
           {open && (
-            <DropdownPanel ariaLabel={ariaLabel} multiSelectable>
+            <DropdownPanel
+              ariaLabel={ariaLabel}
+              multiSelectable
+              className="max-h-72"
+            >
               {options.map((option) => {
                 const isSelected = selectedNames.includes(option.name);
+                const quantity = getQuantity(option.name);
+                const linePrice =
+                  (option.price || 0) * (isSelected ? quantity : 1);
                 return (
-                  <DropdownOption
+                  <li
                     key={option._id || option.name}
-                    isSelected={isSelected}
-                    isDisabled={!isSelected && atMaxSelections}
-                    showCheck
-                    label={formatOptionName(option.name)}
-                    priceLabel={
-                      (option.price || 0) > 0
-                        ? `+${formatPrice(option.price)}`
-                        : "Free"
-                    }
-                    onClick={() => onToggle(option.name)}
-                  />
+                    ref={(node) => {
+                      if (node) selectedRowRefs.current[option.name] = node;
+                      else delete selectedRowRefs.current[option.name];
+                    }}
+                    className={`border-b border-gray-100 last:border-b-0 ${
+                      isSelected ? "bg-[var(--lime-green)]/10" : ""
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      disabled={!isSelected && atMaxSelections}
+                      onClick={() => onToggle(option.name)}
+                      className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors ${
+                        isSelected
+                          ? "font-semibold text-[var(--coffee-brown)]"
+                          : "text-gray-800 hover:bg-gray-50"
+                      } ${!isSelected && atMaxSelections ? "cursor-not-allowed opacity-40" : ""}`}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
+                            isSelected
+                              ? "border-[var(--lime-green)] bg-[var(--lime-green)]"
+                              : "border-gray-300"
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {isSelected && (
+                            <svg
+                              className="h-3 w-3 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        <span className="truncate">
+                          {formatOptionName(option.name)}
+                        </span>
+                      </span>
+                      <span className="ml-3 shrink-0 font-semibold text-gray-700">
+                        {linePrice > 0 ? `+${formatPrice(linePrice)}` : "Free"}
+                      </span>
+                    </button>
+                    {isSelected && (
+                      <div
+                        className="flex items-center pb-2.5 pl-9 pr-3"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <QuantityStepper
+                          quantity={quantity}
+                          unitLabel={unitLabel}
+                          onDecrease={() => onQuantityChange(option.name, -1)}
+                          onIncrease={() => onQuantityChange(option.name, 1)}
+                        />
+                      </div>
+                    )}
+                  </li>
                 );
               })}
             </DropdownPanel>
@@ -997,7 +1090,9 @@ export default function CustomizationModal({
                     const selected = selectedModifiers[group.name] || [];
                     const hasError = validationErrors[group.name];
                     const availableOptions = (group.options || []).filter(
-                      (opt) => opt.available,
+                      (opt) =>
+                        opt.available &&
+                        !HIDDEN_MODIFIER_OPTION_NAMES.has(opt.name),
                     );
                     const isWildVeganBase = group.name === "Wild Vegan Base";
                     const isColdFoamGroup = group.name === "Cold Foam";
@@ -1010,7 +1105,7 @@ export default function CustomizationModal({
                       <div key={group._id || group.name} className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className="text-base font-semibold text-gray-900">
-                            {group.displayName || group.name}
+                            {getModifierGroupDisplayName(group)}
                             {group.required && !isWildVeganBase && (
                               <span className="text-red-500 ml-1">*</span>
                             )}
@@ -1046,7 +1141,7 @@ export default function CustomizationModal({
                                   selectedName={selected[0] || null}
                                   formatLabel={formatColdFoamFlavorLabel}
                                   placeholderTitle="Select cold foam"
-                                  placeholderSubtitle="Tap to choose plain, matcha, or a flavor"
+                                  placeholderSubtitle="Tap to choose flavored cold foam."
                                   onSelect={(optionName) =>
                                     selectSingleModifier(group.name, optionName)
                                   }
@@ -1191,9 +1286,7 @@ export default function CustomizationModal({
                                           />
                                         )}
                                         <span className="ml-3 text-sm font-medium text-gray-900">
-                                          {option.name
-                                            .replace(/\(Disabled\)/g, "")
-                                            .trim()}
+                                          {formatOptionName(option.name)}
                                         </span>
                                       </div>
 

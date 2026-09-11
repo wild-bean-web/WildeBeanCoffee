@@ -2,7 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import { MenuItem, ModifierGroup } from "../models/index.js";
 import { errorResponse, validateQueryBoolean } from "../utils/validation.js";
-import { isMenuItemHiddenFromCustomer } from "../config/customerMenuExclusions.js";
+import {
+  isMenuItemHiddenFromCustomer,
+  isModifierOptionHiddenFromCustomer,
+  stripHiddenModifierOptions,
+} from "../config/customerMenuExclusions.js";
 
 const router = express.Router();
 
@@ -39,7 +43,9 @@ router.get("/", async (req, res, next) => {
       .populate("modifierGroups", "name displayName description type required minSelections maxSelections options available")
       .sort({ section: 1, name: 1 })
       .lean();
-    items = items.filter((item) => !isMenuItemHiddenFromCustomer(item.name));
+    items = items
+      .filter((item) => !isMenuItemHiddenFromCustomer(item.name))
+      .map(stripHiddenModifierOptions);
 
     // For Coffee & Espresso section, sort hot items before iced/cold items
     if (section === "Coffee & Espresso" || (!section && items.some(item => item.section === "Coffee & Espresso"))) {
@@ -131,7 +137,7 @@ router.get("/:id", async (req, res, next) => {
     if (isMenuItemHiddenFromCustomer(item.name)) {
       return errorResponse(res, 404, "Menu item not found");
     }
-    res.json({ data: item });
+    res.json({ data: stripHiddenModifierOptions(item) });
   } catch (err) {
     next(err);
   }
@@ -144,7 +150,14 @@ router.get("/modifier-groups", async (req, res, next) => {
     const groups = await ModifierGroup.find({ available: true })
       .sort({ name: 1 })
       .lean();
-    res.json({ data: groups });
+    res.json({
+      data: groups.map((group) => ({
+        ...group,
+        options: (group.options || []).filter(
+          (opt) => !isModifierOptionHiddenFromCustomer(opt.name),
+        ),
+      })),
+    });
   } catch (err) {
     next(err);
   }
