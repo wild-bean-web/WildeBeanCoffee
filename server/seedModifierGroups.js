@@ -14,7 +14,7 @@ export const modifierGroups = [
   {
     name: "Espresso Bean",
     displayName: "Regular, Decaf, or Half-Caf",
-    description: "Regular espresso, decaf, or half-caf",
+    description: "Select Caffination",
     type: "single",
     required: true,
     options: [
@@ -125,7 +125,6 @@ export const modifierGroups = [
       { name: "Cinnamon Bun Syrup Pump", price: 0.5, available: true },
       { name: "Coconut Single Pump", price: 0.3, available: true },
       { name: "Cookie Butter Single Pump", price: 0.5, available: true },
-      { name: "HALF A PUMP", price: 0, available: true },
       { name: "Hazelnut Single Pump", price: 0.3, available: true },
       { name: "Honey", price: 0.3, available: true },
       { name: "Mango puree", price: 0.6, available: true },
@@ -146,7 +145,7 @@ export const modifierGroups = [
   },
   {
     name: "Coffee Toppings",
-    description: "Add dry toppings to your drink (cinnamon or cocoa).",
+    description: "Add Powdered Garnish",
     type: "multiple",
     required: false,
     minSelections: 0,
@@ -159,13 +158,13 @@ export const modifierGroups = [
   {
     name: "Whipped Cream",
     displayName: "Whipped cream (add-on)",
-    description: "Extra whipped cream (+$0.75).",
+    description: "Extra whipped cream.",
     type: "multiple",
     required: false,
     minSelections: 0,
     maxSelections: 1,
     options: [
-      { name: "Add whipped cream (+$0.75)", price: 0.75, available: true },
+      { name: "Add whipped cream", price: 0.75, available: true },
     ],
   },
   {
@@ -181,6 +180,7 @@ export const modifierGroups = [
   },
   {
     name: "Extra Single Shots (Iced)",
+    displayName: "Extra Single Shots",
     description: "Add extra espresso shots ($1.25 per shot)",
     type: "multiple",
     required: false,
@@ -215,8 +215,7 @@ export const modifierGroups = [
   },
   {
     name: "Milk Choice",
-    description:
-      "Whole, 2%, skim, or half & half at no charge. Heavy cream +$0.60. Almond, oat, or soy +$0.80.",
+    description: "Choice of Milk",
     type: "single",
     required: true,
     options: [
@@ -233,8 +232,7 @@ export const modifierGroups = [
   },
   {
     name: "Milk Choice (Smoothies)",
-    description:
-      "Whole, 2%, skim, or half & half at no charge. Heavy cream +$0.60. Almond, oat, or soy +$0.80.",
+    description: "Choice of Milk",
     type: "single",
     required: true,
     options: [
@@ -263,7 +261,7 @@ export const modifierGroups = [
   },
   {
     name: "Cold Foam",
-    description: "Optional topping. Tap to choose plain, matcha, or a flavored cold foam.",
+    description: "Tap to choose flavored cold foam.",
     type: "single",
     required: false,
     options: [

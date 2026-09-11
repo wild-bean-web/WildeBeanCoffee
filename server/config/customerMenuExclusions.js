@@ -4,6 +4,26 @@
  */
 const HIDDEN = new Set(["Almond Croissant"]);
 
+/** Modifier option names hidden from the public customer menu API. */
+const HIDDEN_MODIFIER_OPTIONS = new Set(["HALF A PUMP"]);
+
 export function isMenuItemHiddenFromCustomer(name) {
   return typeof name === "string" && HIDDEN.has(name);
+}
+
+export function isModifierOptionHiddenFromCustomer(name) {
+  return typeof name === "string" && HIDDEN_MODIFIER_OPTIONS.has(name);
+}
+
+export function stripHiddenModifierOptions(item) {
+  if (!item?.modifierGroups?.length) return item;
+  return {
+    ...item,
+    modifierGroups: item.modifierGroups.map((group) => ({
+      ...group,
+      options: (group.options || []).filter(
+        (opt) => !isModifierOptionHiddenFromCustomer(opt.name),
+      ),
+    })),
+  };
 }

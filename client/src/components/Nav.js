@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { isKitchenAdminEmail } from "@/lib/kitchenAdmin";
 import ProfileDropdown from "./ProfileDropdown";
 import Lottie from "lottie-react";
 import Toast from "./Toast";
@@ -18,12 +19,7 @@ export default function Nav() {
   const [userAvatarAnimation, setUserAvatarAnimation] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Admin emails
-  const ADMIN_EMAILS = [
-    "danielwoldehana@yahoo.com",
-    "info@wildbeancoffeeshop.com",
-  ];
-  const isAdmin = user && user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+  const isAdmin = Boolean(user?.email && isKitchenAdminEmail(user.email));
 
   // Load userAvatar animation
   useEffect(() => {
