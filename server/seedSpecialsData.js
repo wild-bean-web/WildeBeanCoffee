@@ -528,10 +528,13 @@ export const specialsSeed = [
     weekOf: "2026-09-14",
     weekLabel: "9/14",
     base: ["Oat milk", "Ice", "Double shot espresso"],
-    build: [b("Tiramisu", "2 pumps", "3 pumps")],
+    build: [
+      b("Tiramisu", "2 pumps", "3 pumps"),
+      b("Vanilla", "1 pump", "1 pump"),
+    ],
     toppings: ["Toasted marshmallow cold foam", "Marshmallow fluff"],
     method: [
-      "Tiramisu syrup + oat milk + ice",
+      "Tiramisu + vanilla + oat milk + ice",
       "Double shot espresso",
       "Top with toasted marshmallow cold foam",
       "Garnish with marshmallow fluff",
@@ -606,6 +609,24 @@ export const specialsSeed = [
       "Add ice",
       "Top with cookie butter cold foam",
       "Garnish with Biscoff cookie crumbs",
+    ],
+  },
+  {
+    name: "Pecan Chai Pie",
+    category: "Chai",
+    weekOf: "2026-09-14",
+    weekLabel: "9/14",
+    base: ["Milk", "Ice"],
+    build: [
+      b("Pecan", "2 pumps", "3 pumps"),
+      b("Chai concentrate", "6 pumps", "8 pumps"),
+    ],
+    toppings: ["Vanilla cold foam", "Crushed pecans"],
+    method: [
+      "Pecan + chai + milk, mix",
+      "Add ice",
+      "Top with vanilla cold foam",
+      "Garnish with crushed pecans",
     ],
   },
   {
