@@ -45,6 +45,10 @@ import {
   getDatabaseNameFromUri,
   getUserFromUri,
 } from "./config/mongoUri.js";
+import {
+  deliverManagerOutboxBatch,
+  releaseStaleManagerOutboxClaims,
+} from "./services/managerOutbox.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -201,12 +205,40 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-app.listen(port, () => {
+let managerOutboxTimer = null;
+
+async function runManagerOutboxRelay() {
+  try {
+    await releaseStaleManagerOutboxClaims();
+    const result = await deliverManagerOutboxBatch();
+    if (!result.skipped && (result.delivered > 0 || result.failed > 0)) {
+      console.log("[MANAGER OUTBOX] Delivery cycle", result);
+    }
+  } catch (error) {
+    console.error("[MANAGER OUTBOX] Relay cycle failed", {
+      errorName: error?.name || "Error",
+    });
+  }
+}
+
+app.listen(port, async () => {
   console.log(`API running at http://localhost:${port}`);
-  connectWithRetry();
+  await connectWithRetry();
+  if (
+    dbState.status === "connected" &&
+    process.env.MANAGER_INGESTION_URL &&
+    process.env.MANAGER_OUTBOX_SECRET
+  ) {
+    await runManagerOutboxRelay();
+    managerOutboxTimer = setInterval(runManagerOutboxRelay, 30_000);
+    managerOutboxTimer.unref();
+  }
 });
 
 const gracefulShutdown = async () => {
+  if (managerOutboxTimer) {
+    clearInterval(managerOutboxTimer);
+  }
   await mongoose.connection.close();
   process.exit(0);
 };

@@ -9,6 +9,7 @@ import { isBeanStampsEnabled, isAdminOrderCompEnabled } from "../config/featureF
 import { BEAN_STAMPS_REWARD_PAYMENT_REF } from "../config/loyaltyConstants.js";
 import { isKitchenAdminEmail } from "../config/kitchenAdmins.js";
 import { validateTipForItems } from "./tipValidation.js";
+import { appendOrderOutboxEvent } from "./managerOutbox.js";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -598,6 +599,13 @@ export async function placeOnlineOrder(body, user, options = {}) {
       paymentRef: order.paymentRef,
       loyaltyRedeemApplied,
     });
+    if (order.paymentStatus === "paid") {
+      await appendOrderOutboxEvent({
+        order,
+        eventType: "website.order.paid",
+        session: s,
+      });
+    }
   };
 
   try {
@@ -651,6 +659,17 @@ export async function placeOnlineOrder(body, user, options = {}) {
           paymentRef: order.paymentRef,
           loyaltyRedeemApplied,
         });
+        if (order.paymentStatus === "paid") {
+          await appendOrderOutboxEvent({
+            order,
+            eventType: "website.order.paid",
+          }).catch((error) => {
+            console.error("Manager outbox append failed", {
+              orderId: String(order._id),
+              errorName: error?.name || "Error",
+            });
+          });
+        }
       } catch (createErr) {
         if (isDuplicateKeyError(createErr)) {
           const existing = await Order.findOne({

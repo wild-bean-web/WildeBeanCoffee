@@ -1,0 +1,3 @@
+CREATE TRIGGER inventory_count_observations_append_only
+BEFORE UPDATE OR DELETE ON inventory_count_observations
+FOR EACH ROW EXECUTE FUNCTION manager_reject_all_mutation();

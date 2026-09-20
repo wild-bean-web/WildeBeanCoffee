@@ -31,3 +31,7 @@ Thumbs.db
 .vercel/
 .cache/
 
+# Manager-only local financial data and database state
+.manager-data/
+manager/.manager-data/
+

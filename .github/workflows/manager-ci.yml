@@ -1,0 +1,40 @@
+name: Manager CI
+
+on:
+  pull_request:
+    paths:
+      - "manager/**"
+      - ".github/workflows/manager-ci.yml"
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - "manager/**"
+      - ".github/workflows/manager-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manager-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: manager
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12"
+          cache: npm
+          cache-dependency-path: manager/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

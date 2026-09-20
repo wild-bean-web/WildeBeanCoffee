@@ -20,6 +20,7 @@ import { tryMarkHostedCheckoutPaidFromCloverPaymentLookup } from "../services/cl
 import { notifyOrderOpsAlert } from "../services/orderOpsAlerts.js";
 import { resolveKitchenDateRangeFromQuery } from "../utils/kitchenQueryDateRange.js";
 import { canUnmarkPickedUp } from "../utils/orderPickupDay.js";
+import { appendOrderOutboxEvent } from "../services/managerOutbox.js";
 
 const router = express.Router();
 
@@ -603,6 +604,25 @@ router.patch(
         previous.status !== "cancelled"
       ) {
         await revokeLoyaltyStampForOrder(id);
+      }
+
+      const managerEventType =
+        update.paymentStatus === "refunded" &&
+        previous.paymentStatus !== "refunded"
+          ? "website.order.refunded"
+          : update.status === "cancelled" && previous.status !== "cancelled"
+            ? "website.order.cancelled"
+            : null;
+      if (managerEventType) {
+        await appendOrderOutboxEvent({
+          order,
+          eventType: managerEventType,
+        }).catch((error) => {
+          console.error("Manager outbox status append failed", {
+            orderId: String(order._id),
+            errorName: error?.name || "Error",
+          });
+        });
       }
 
       orderEventEmitter.emit("order:updated", order);
