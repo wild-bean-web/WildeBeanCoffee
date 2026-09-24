@@ -12,22 +12,78 @@ import type { JsonObject } from "../src/db/schema/shared";
 import {
   parseInventoryCsv,
   summarizeInventoryCandidates,
+  type InventoryImportCandidate,
 } from "../src/imports/inventory-csv";
 
 const PARSER_VERSION = "legacy-inventory-v1";
+
+interface SourceManifest {
+  entries?: Array<{ filename?: string; sha256?: string }>;
+}
+
+async function shaFromManifest(
+  filename: string,
+): Promise<string | null> {
+  try {
+    const manifestPath = path.resolve(".manager-data/source-manifest.json");
+    const manifest = JSON.parse(
+      await readFile(manifestPath, "utf8"),
+    ) as SourceManifest;
+    const entry = manifest.entries?.find((item) => item.filename === filename);
+    return entry?.sha256 && /^[0-9a-f]{64}$/.test(entry.sha256)
+      ? entry.sha256
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadInventorySource(absolutePath: string): Promise<{
+  candidates: InventoryImportCandidate[];
+  sourceFilename: string;
+  sourceSha256: string;
+}> {
+  const bytes = await readFile(absolutePath);
+  const fileSha256 = createHash("sha256").update(bytes).digest("hex");
+
+  if (absolutePath.toLowerCase().endsWith(".json")) {
+    const preview = JSON.parse(bytes.toString("utf8")) as {
+      sourceFilename?: unknown;
+      candidates?: unknown;
+    };
+    if (!Array.isArray(preview.candidates)) {
+      throw new Error("Inventory preview JSON is missing candidates.");
+    }
+    const candidates = preview.candidates as InventoryImportCandidate[];
+    const sourceFilename =
+      typeof preview.sourceFilename === "string" && preview.sourceFilename.trim()
+        ? path.basename(preview.sourceFilename)
+        : path.basename(absolutePath);
+    return {
+      candidates,
+      sourceFilename,
+      sourceSha256: (await shaFromManifest(sourceFilename)) ?? fileSha256,
+    };
+  }
+
+  return {
+    candidates: parseInventoryCsv(bytes.toString("utf8")),
+    sourceFilename: path.basename(absolutePath),
+    sourceSha256: fileSha256,
+  };
+}
 
 async function main(): Promise<void> {
   const sourcePath = process.argv[2];
   if (!sourcePath) {
     throw new Error(
-      "Usage: tsx scripts/stage-inventory-import.ts <inventory.csv>",
+      "Usage: tsx scripts/stage-inventory-import.ts <inventory.csv|inventory-preview.json>",
     );
   }
 
   const absolutePath = path.resolve(sourcePath);
-  const bytes = await readFile(absolutePath);
-  const sourceSha256 = createHash("sha256").update(bytes).digest("hex");
-  const candidates = parseInventoryCsv(bytes.toString("utf8"));
+  const { candidates, sourceFilename, sourceSha256 } =
+    await loadInventorySource(absolutePath);
   const db = getDb();
 
   const [organization] = await db
@@ -64,7 +120,7 @@ async function main(): Promise<void> {
       .values({
         organizationId: organization.id,
         importKind: "legacy_inventory",
-        sourceFilename: path.basename(absolutePath),
+        sourceFilename,
         sourceSha256,
         parserVersion: PARSER_VERSION,
         status: "staged",
@@ -94,10 +150,7 @@ async function main(): Promise<void> {
             vendorUnitPriceCents: candidate.vendorUnitPriceCents,
             provenance: "imported",
           },
-          issues: [
-            ...candidate.issues,
-            "requires_base_uom_and_pack_review",
-          ],
+          issues: candidate.issues,
         })),
       );
     }
@@ -111,6 +164,7 @@ async function main(): Promise<void> {
         stagedRows: candidates.length,
         postedRows: 0,
         sourceSha256,
+        sourceFilename,
       },
       null,
       2,

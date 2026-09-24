@@ -505,10 +505,12 @@ a {
   padding: 0 10px;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
+  background: transparent;
   color: var(--coffee-800);
   font-size: 11px;
   font-weight: 680;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .date-range-preset-active,
@@ -622,6 +624,25 @@ a {
   border-radius: 16px;
   background: var(--surface);
   padding: 17px;
+}
+
+.metric-card-total {
+  grid-column: 1 / -1;
+}
+
+.pnl-metrics .metric-card:not(.metric-card-total) {
+  grid-column: span 2;
+}
+
+.pnl-gap {
+  margin: -8px 0 22px;
+  border: 1px solid var(--amber-100);
+  border-radius: 12px;
+  background: var(--amber-100);
+  padding: 12px 14px;
+  color: var(--amber-700);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .metric-label {
@@ -1065,6 +1086,120 @@ tr.table-group-link:hover {
   padding: 8px 26px 28px;
 }
 
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 8px 0 12px;
+  color: var(--coffee-900);
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.trend-chart {
+  display: grid;
+  gap: 8px;
+}
+
+.trend-chart svg {
+  width: 100%;
+  height: auto;
+}
+
+.trend-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.trend-axis {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.trend-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.trend-line-sales {
+  stroke: #1f8a4c;
+}
+
+.trend-line-expenses {
+  stroke: #d64545;
+}
+
+.trend-guide {
+  stroke: var(--coffee-700);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.trend-hover-date {
+  fill: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trend-tooltip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  color: var(--coffee-900);
+  font-size: 13px;
+}
+
+.trend-tooltip-hint {
+  color: var(--muted);
+}
+
+.trend-empty {
+  margin: 12px 0 4px;
+  color: var(--muted);
+}
+
+.trend-ranges {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.trend-range {
+  flex: 1;
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.trend-range:hover {
+  color: var(--coffee-900);
+}
+
+.trend-range-active {
+  background: color-mix(in srgb, #1f8a4c 14%, transparent);
+  color: #1f8a4c;
+}
+
 .payroll-employee-card {
   padding: 22px 0;
   border-bottom: 1px solid var(--border);
@@ -1479,6 +1614,336 @@ tr.table-group-link:hover {
   .auth-brand {
     display: grid;
     place-items: center;
+  }
+}
+
+.expense-group-filter {
+  margin: -12px 0 22px;
+}
+
+.expense-view-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.expense-pie-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 8px 20px;
+  align-items: center;
+  padding: 18px 19px 8px;
+}
+
+.expense-pie-column {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.expense-pie {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.expense-pie-slice {
+  cursor: pointer;
+  transform-box: view-box;
+  transform-origin: 0 0;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.expense-pie-tooltip {
+  display: grid;
+  justify-items: center;
+  min-height: 34px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.expense-pie-tooltip strong {
+  color: var(--coffee-950);
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.expense-legend {
+  display: grid;
+  gap: 4px;
+  max-height: 360px;
+  margin: 0;
+  padding: 0 0 12px;
+  overflow: auto;
+  list-style: none;
+}
+
+.expense-legend li {
+  margin: 0;
+}
+
+.expense-legend button {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, opacity 160ms ease;
+}
+
+.expense-legend button.is-active,
+.expense-legend button:hover,
+.expense-legend button:focus-visible {
+  background: var(--cream-100);
+}
+
+.expense-legend button.is-dim {
+  opacity: 0.4;
+}
+
+.expense-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.expense-legend-name,
+.expense-legend-amount {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.expense-legend-name strong,
+.expense-bar-label span:first-child {
+  overflow: hidden;
+  color: var(--coffee-950);
+  font-size: 13px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-legend-name span,
+.expense-legend-amount span,
+.expense-line-group {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.expense-legend-amount {
+  justify-items: end;
+  color: var(--coffee-950);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-bars {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 18px 19px 20px;
+  list-style: none;
+}
+
+.expense-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-bar-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--cream-100);
+}
+
+.expense-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.expense-empty {
+  margin: 0;
+  padding: 22px 19px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.expense-lines {
+  max-height: 32rem;
+  overflow: auto;
+}
+
+.expense-line-group {
+  display: block;
+}
+
+.expense-lines thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.expense-lines-header {
+  flex-wrap: wrap;
+}
+
+.expense-line-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.expense-category-filter {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.expense-category-filter .input {
+  min-width: 220px;
+  background: var(--surface);
+}
+
+.expense-report {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+  color: var(--coffee-950);
+}
+
+.expense-report-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.expense-report-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.expense-report-heading h1 {
+  margin: 4px 0 6px;
+  font-size: 32px;
+  letter-spacing: -0.04em;
+}
+
+.expense-report h2 {
+  margin: 28px 0 8px;
+  font-size: 16px;
+}
+
+.expense-report-summary p,
+.expense-report section > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.expense-report-summary dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 18px;
+  margin: 0;
+}
+
+.expense-report-summary dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.expense-report-summary dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 680;
+}
+
+.expense-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.expense-report th,
+.expense-report td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.expense-report th:last-child,
+.expense-report td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-report thead th {
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+@media (max-width: 720px) {
+  .expense-pie-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .expense-report-toolbar {
+    display: none !important;
+  }
+
+  .expense-report {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .expense-report h2,
+  .expense-report section {
+    break-inside: avoid;
+  }
+
+  .expense-report section:last-child {
+    break-inside: auto;
+  }
+
+  .expense-report tr {
+    break-inside: avoid;
+  }
+
+  .expense-report thead {
+    display: table-header-group;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.6in;
   }
 }
 

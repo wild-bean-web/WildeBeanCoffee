@@ -7,7 +7,9 @@ import {
   Landmark,
   Menu,
   PackageSearch,
+  PieChart,
   ReceiptText,
+  Scale,
   ScanLine,
   Settings,
   ShoppingBasket,
@@ -78,6 +80,18 @@ const navigation: NavigationItem[] = [
     label: "Labor",
     icon: Users,
     capability: "payroll:view",
+  },
+  {
+    href: "/expenses",
+    label: "Expenses",
+    icon: PieChart,
+    capability: "bank:view",
+  },
+  {
+    href: "/pnl",
+    label: "P&L",
+    icon: Scale,
+    capability: "profit:view",
   },
   {
     href: "/profit",

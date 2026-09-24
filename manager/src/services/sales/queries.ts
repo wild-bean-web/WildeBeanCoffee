@@ -28,8 +28,8 @@ export async function listDailySalesControls(
 
 export async function listDailySalesControlsForRange(
   session: ManagerSession,
-  startsOn: string,
-  endsOn: string,
+  startsOn?: string,
+  endsOn?: string,
 ) {
   const scope = locationScope(session);
   if (!getServerEnv().DATABASE_URL || !scope) return [];
@@ -40,8 +40,8 @@ export async function listDailySalesControlsForRange(
       and(
         eq(dailySalesControls.organizationId, scope.organizationId),
         eq(dailySalesControls.locationId, scope.locationId),
-        gte(dailySalesControls.businessDate, startsOn),
-        lte(dailySalesControls.businessDate, endsOn),
+        startsOn ? gte(dailySalesControls.businessDate, startsOn) : undefined,
+        endsOn ? lte(dailySalesControls.businessDate, endsOn) : undefined,
       ),
     )
     .orderBy(desc(dailySalesControls.businessDate));

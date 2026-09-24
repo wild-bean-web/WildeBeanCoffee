@@ -7,6 +7,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { CountAssignments } from "@/components/count-assignments";
+import { CatalogImportPost } from "@/components/catalog-import-post";
 import { CountSessionActions } from "@/components/count-session-actions";
 import { WasteForm } from "@/components/waste-form";
 import { hasCapability } from "@/lib/auth/capabilities";
@@ -49,7 +50,7 @@ export default async function InventoryPage() {
         title="Opening baseline"
         description={
           locationName
-            ? `On-hand quantities, counts, and waste for ${locationName} only. Count-sheet names are the AKA cataloged from invoices. Starting a count includes every active item; newly cataloged items are added to any open sheet.`
+            ? `On-hand quantities, counts, and waste for ${locationName} only. Staff count the AKA. Post the staged spreadsheet or catalog an invoice, then start a count.`
             : "The first approved physical count establishes trustworthy on-hand quantities. Earlier COGS stays visibly estimated."
         }
         actions={
@@ -86,7 +87,7 @@ export default async function InventoryPage() {
             {snapshot.productCount > 0
               ? "AKA names on the count sheet"
               : stagedProducts > 0
-                ? "Staged for review"
+                ? "Staged spreadsheet"
                 : "Catalog from an invoice"}
           </p>
         </article>
@@ -140,9 +141,9 @@ export default async function InventoryPage() {
         {products.length === 0 ? (
           <div className="panel-body">
             <p className="text-sm text-muted">
-              No store items are on the count sheet yet. Open a Restaurant Store
-              invoice, catalog each line with a short AKA such as “16 oz Plastic
-              Cold Cup”, then start a count.
+              No store items are on the count sheet yet. Post the staged
+              inventory spreadsheet, or catalog an invoice line with a short AKA
+              such as “16 oz Plastic Cold Cup”, then start a count.
             </p>
           </div>
         ) : (
@@ -228,7 +229,10 @@ export default async function InventoryPage() {
           <div className="panel-header">
             <div>
               <h2>Import staging</h2>
-              <p>Source rows remain drafts until units and packs are reviewed.</p>
+              <p>
+                Count in each. Purchase packs stay on the vendor item. Posting
+                writes AKA names onto this location&apos;s count sheet.
+              </p>
             </div>
           </div>
           <ul className="list">
@@ -243,13 +247,35 @@ export default async function InventoryPage() {
                     {batch.rowCount} rows · {formatShortDate(batch.createdAt)}
                   </p>
                 </div>
-                <StatusPill
-                  tone={batch.reviewCount > 0 ? "warning" : "success"}
-                >
-                  {batch.reviewCount > 0
-                    ? `${batch.reviewCount} to review`
-                    : batch.status}
-                </StatusPill>
+                <div className="flex flex-col items-end gap-2">
+                  <StatusPill
+                    tone={
+                      batch.status === "posted"
+                        ? "success"
+                        : batch.reviewCount > 0
+                          ? "warning"
+                          : "success"
+                    }
+                  >
+                    {batch.status === "posted"
+                      ? "Posted"
+                      : batch.reviewCount > 0
+                        ? `${batch.reviewCount} staged`
+                        : batch.status}
+                  </StatusPill>
+                  {batch.importKind === "legacy_inventory" ? (
+                    <CatalogImportPost
+                      canPost={canAdjust}
+                      batch={{
+                        id: batch.id,
+                        sourceFilename: batch.sourceFilename,
+                        status: batch.status,
+                        rowCount: batch.rowCount,
+                        reviewCount: batch.reviewCount,
+                      }}
+                    />
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

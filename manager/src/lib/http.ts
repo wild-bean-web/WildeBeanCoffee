@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { IllegalDocumentTransitionError } from "@/domain/documents";
 import { ManagerAuthError } from "@/lib/auth/session";
 import { DocumentServiceError } from "@/services/documents/errors";
+import { ImportServiceError } from "@/services/imports/errors";
 import { InventoryServiceError } from "@/services/inventory/errors";
 import { LocationScopeError } from "@/services/locations/errors";
 import { PayrollServiceError } from "@/services/payroll/errors";
@@ -37,6 +38,10 @@ export function routeErrorResponse(error: unknown) {
   }
 
   if (error instanceof InventoryServiceError) {
+    return errorResponse(error.status, error.code, error.message);
+  }
+
+  if (error instanceof ImportServiceError) {
     return errorResponse(error.status, error.code, error.message);
   }
 

@@ -73,7 +73,8 @@ export function CloverSalesImport({
         type="button"
         className="button button-accent"
         onClick={() => void importSales()}
-        disabled={pending}
+        disabled={pending || !from || !to}
+        title={!from || !to ? "Choose a start and end date to import" : undefined}
       >
         {pending ? (
           <LoaderCircle size={17} className="animate-spin" />

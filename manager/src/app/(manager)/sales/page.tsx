@@ -8,15 +8,14 @@ import {
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { CloverSalesImport } from "@/components/clover-sales-import";
 import { PageHeader } from "@/components/page-header";
+import { SalesExpenseGraph } from "@/components/sales-expense-graph";
 import { StatusPill } from "@/components/status-pill";
+import { dailyFlows } from "@/domain/sales-expense-series";
+import { hasCapability } from "@/lib/auth/capabilities";
 import { requireCapability } from "@/lib/auth/session";
-import {
-  monthEndIso,
-  monthStartIso,
-  parseDateRangeParams,
-  todayIso,
-} from "@/lib/date-range";
+import { parseDateRangeParams, todayIso } from "@/lib/date-range";
 import { formatMoney, formatShortDate } from "@/lib/format";
+import { loadStatementExpenses } from "@/services/expenses/ledger";
 import { listDailySalesControlsForRange } from "@/services/sales/queries";
 import { getLocationSetup } from "@/services/locations/setup";
 import { activeLocationName } from "@/services/locations/scope";
@@ -50,16 +49,13 @@ export default async function SalesPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const session = await requireCapability("dashboard:view");
-  const today = todayIso();
-  const range = parseDateRangeParams(await searchParams) ?? {
-    startsOn: monthStartIso(today),
-    endsOn: monthEndIso(today),
-  };
-  const controls = await listDailySalesControlsForRange(
-    session,
-    range.startsOn,
-    range.endsOn,
-  );
+  const range = parseDateRangeParams(await searchParams);
+  const allControls = await listDailySalesControlsForRange(session);
+  const controls = range
+    ? allControls.filter(
+        (row) => row.businessDate >= range.startsOn && row.businessDate <= range.endsOn,
+      )
+    : allControls;
   const uniqueDays = new Map<string, (typeof controls)[number]>();
   for (const row of controls) {
     const current = uniqueDays.get(row.businessDate);
@@ -78,6 +74,26 @@ export default async function SalesPage({
   const setup = await getLocationSetup(session);
   const configured = setup.clover.configured;
   const locationName = activeLocationName(session);
+  const canViewExpenses = hasCapability(session.role, "bank:view");
+  const graphDays = canViewExpenses
+    ? dailyFlows({
+        today: todayIso(),
+        sales: allControls.map((row) => ({
+          businessDate: row.businessDate,
+          sourceSystem: row.sourceSystem,
+          grossCents: row.grossCents,
+          discountCents: row.discountCents,
+          refundCents: row.refundCents,
+          taxCents: row.taxCents,
+          tipCents: row.tipCents,
+          netCollectedCents: row.netCollectedCents,
+        })),
+        expenses: loadStatementExpenses(null, "all").entries.map((entry) => ({
+          isoDate: entry.isoDate,
+          amountCents: entry.amountCents,
+        })),
+      })
+    : [];
 
   return (
     <>
@@ -90,15 +106,24 @@ export default async function SalesPage({
             : "Real-time activity remains provisional. A day becomes verified only after order, tender, refund, tax, tip, and payment controls agree."
         }
         actions={
-          <CloverSalesImport
-            from={range.startsOn}
-            to={range.endsOn}
-            configured={configured}
-          />
+          <>
+            {canViewExpenses ? (
+              <SalesExpenseGraph days={graphDays} today={todayIso()} />
+            ) : null}
+            <CloverSalesImport
+              from={range?.startsOn ?? ""}
+              to={range?.endsOn ?? ""}
+              configured={configured}
+            />
+          </>
         }
       />
 
-      <DateRangeFilter from={range.startsOn} to={range.endsOn} />
+      <DateRangeFilter
+        from={range?.startsOn ?? ""}
+        to={range?.endsOn ?? ""}
+        allowAll
+      />
 
       <section className="metrics-grid">
         <article className="metric-card">
@@ -155,7 +180,9 @@ export default async function SalesPage({
             <div>
               <h2>Clover controls</h2>
               <p>
-                {formatShortDate(range.startsOn)} – {formatShortDate(range.endsOn)}
+                {range
+                  ? `${formatShortDate(range.startsOn)} – ${formatShortDate(range.endsOn)}`
+                  : "All dates"}
               </p>
             </div>
           </div>
