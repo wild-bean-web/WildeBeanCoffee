@@ -20,12 +20,13 @@ function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
 }
 
-function viewFor(
+async function viewFor(
+  organizationId: string | null,
   range: { startsOn: string; endsOn: string } | null,
   group: ExpenseGroup | "all",
   category: string,
-): { summary: ExpenseSummary; categoryLabel: string } {
-  const parent = loadStatementExpenses(range, group);
+): Promise<{ summary: ExpenseSummary; categoryLabel: string }> {
+  const parent = await loadStatementExpenses(organizationId, range, group);
   const available = categoryNames(parent);
   if (category && available.includes(category)) {
     return {
@@ -58,7 +59,12 @@ export default async function ExpenseReportPage({
   const group: ExpenseGroup | "all" = isExpenseGroup(requestedGroup)
     ? requestedGroup
     : "all";
-  const { summary, categoryLabel } = viewFor(range, group, first(params.category));
+  const { summary, categoryLabel } = await viewFor(
+    session.organizationId,
+    range,
+    group,
+    first(params.category),
+  );
   const locationName = activeLocationName(session) ?? "Wild Bean Coffee";
   const quarters = quarterlyExpenseTotals(summary.entries);
   const period = range

@@ -2,9 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   filterExpensesByCategory,
   quarterlyExpenseTotals,
+  redactLongNumbers,
   statementDateToIso,
   summarizeExpenses,
 } from "./ledger";
+
+describe("redactLongNumbers", () => {
+  it("keeps only the last four digits of a long account or trace number", () => {
+    expect(redactLongNumbers("ACH 9884219339 RENT")).toBe("ACH …9339 RENT");
+    expect(redactLongNumbers("CHECK 1042")).toBe("CHECK 1042");
+  });
+});
 
 describe("statementDateToIso", () => {
   it("converts a statement date to an ISO date", () => {

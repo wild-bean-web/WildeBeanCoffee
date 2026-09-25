@@ -6,6 +6,7 @@ import {
   Store,
   UserRoundCog,
 } from "lucide-react";
+import { BrandSettingsForm } from "@/components/brand-settings-form";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import {
@@ -13,14 +14,18 @@ import {
   LocationIdentityForm,
   LocationMailboxForm,
 } from "@/components/store-setup-forms";
+import { hasCapability } from "@/lib/auth/capabilities";
 import { requireManagerSession } from "@/lib/auth/session";
 import { formatCafeAddress } from "@/lib/location";
+import { getOrganizationBrand } from "@/services/brand/organization";
 import { getLocationSetup } from "@/services/locations/setup";
 
 export default async function SettingsPage() {
   const session = await requireManagerSession();
   const setup = await getLocationSetup(session);
+  const brandTheme = await getOrganizationBrand(session.organizationId);
   const locationName = setup.location?.name ?? "this store";
+  const canBrand = hasCapability(session.role, "users:manage");
 
   const brand = [
     {
@@ -84,6 +89,24 @@ export default async function SettingsPage() {
         title={setup.location ? `Set up ${locationName}` : "Set up a store"}
         description="Each location keeps its own Clover merchant, invoice mailbox, documents, inventory, and sales. Brand catalog and staff identities stay shared."
       />
+
+      {canBrand ? (
+        <section className="panel mb-5">
+          <div className="panel-header">
+            <div>
+              <h2>Company brand</h2>
+              <p>
+                Logo and colors belong to {brandTheme.displayName}. Every location in this company uses them.
+              </p>
+            </div>
+          </div>
+          <BrandSettingsForm
+            primaryColor={brandTheme.primaryColor}
+            accentColor={brandTheme.accentColor}
+            hasLogo={brandTheme.hasLogo}
+          />
+        </section>
+      ) : null}
 
       {setup.location ? (
         <>

@@ -88,7 +88,7 @@ export default async function SalesPage({
           tipCents: row.tipCents,
           netCollectedCents: row.netCollectedCents,
         })),
-        expenses: loadStatementExpenses(null, "all").entries.map((entry) => ({
+        expenses: (await loadStatementExpenses(session.organizationId, null, "all")).entries.map((entry) => ({
           isoDate: entry.isoDate,
           amountCents: entry.amountCents,
         })),

@@ -16,8 +16,8 @@ export const CloverReferenceSchema = z
   })
   .passthrough();
 
-function withoutEmployeeSecrets(value: unknown): unknown {
-  if (!value || typeof value !== "object") return value;
+function withoutEmployeeSecrets(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object") return {};
   const row = { ...(value as Record<string, unknown>) };
   delete row.pin;
   delete row.unhashedPin;

@@ -1,235 +1,176 @@
-import {
-  ArrowRight,
-  CircleAlert,
-  CircleDollarSign,
-  FileCheck2,
-  PackageCheck,
-  ReceiptText,
-  ScanLine,
-  ShoppingBasket,
-} from "lucide-react";
 import Link from "next/link";
+import { DateRangeFilter } from "@/components/date-range-filter";
+import { MoneyDonut } from "@/components/money-donut";
 import { PageHeader } from "@/components/page-header";
-import { StatusPill } from "@/components/status-pill";
-import { getManagerSession } from "@/lib/auth/session";
-import { getInventoryControlSnapshot } from "@/services/inventory/queries";
-import { getLocationSetup } from "@/services/locations/setup";
+import { hasCapability } from "@/lib/auth/capabilities";
+import { requireCapability } from "@/lib/auth/session";
+import { parseDateRangeParams, todayIso } from "@/lib/date-range";
+import { formatMoney, formatPercent } from "@/lib/format";
+import { chooseLaborCost } from "@/domain/labor-sales";
 import { activeLocationName } from "@/services/locations/scope";
+import { loadStatementExpenses } from "@/services/expenses/ledger";
+import { listPostedPayrollForPeriod } from "@/services/payroll/runs";
+import { getStatementPnl } from "@/services/profit/statement";
 
-const setupSteps = [
-  {
-    label: "Capture the next company-card receipt",
-    detail: "Start with Wegmans, Restaurant Depot, or any local purchase.",
-    href: "/purchases/capture",
-    key: "capture" as const,
-  },
-  {
-    label: "Connect the dedicated invoice inbox",
-    detail: "Forward Restaurant Store, Odeko, Amazon, and bakery invoices.",
-    href: "/settings",
-    key: "inbox" as const,
-  },
-  {
-    label: "Prepare the opening inventory count",
-    detail: "Build the count path by refrigerator, shelf, freezer, and counter.",
-    href: "/inventory",
-    key: "count" as const,
-  },
-] as const;
+function toneClass(cents: number): string {
+  return cents < 0 ? "money-negative" : "money-positive";
+}
 
-export default async function OverviewPage() {
-  const session = await getManagerSession();
-  const snapshot = session
-    ? await getInventoryControlSnapshot(session)
+export default async function OverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const session = await requireCapability("dashboard:view");
+  const range = parseDateRangeParams(await searchParams);
+  const today = todayIso();
+  const bounds = range ?? { startsOn: "2020-01-01", endsOn: today };
+  const locationName = activeLocationName(session);
+  const canBank = hasCapability(session.role, "bank:view");
+  const canLabor = hasCapability(session.role, "payroll:view");
+  const pnl = await getStatementPnl(session, range);
+  const posted = canLabor
+    ? await listPostedPayrollForPeriod(session, bounds.startsOn, bounds.endsOn, "overlap")
+    : [];
+  const expenses = canLabor
+    ? await loadStatementExpenses(session.organizationId, range, "operating")
     : null;
-  const setup = session ? await getLocationSetup(session) : null;
-  const locationName = session ? activeLocationName(session) : null;
-  const countProgress =
-    snapshot?.openCount && snapshot.openCount.totalLines > 0
-      ? Math.round(
-          (snapshot.openCount.countedLines / snapshot.openCount.totalLines) *
-            100,
-        )
-      : 0;
-  const cloverConfigured = setup?.clover.configured ?? false;
-  const mailboxConfigured = setup?.mailbox.configured ?? false;
-  const documentAiConfigured = setup?.brand.documentAiConfigured ?? false;
+  const laborChoice = chooseLaborCost({
+    posted: posted.flatMap((run) =>
+      run.periodStartsOn && run.periodEndsOn
+        ? [{
+            startsOn: run.periodStartsOn,
+            endsOn: run.periodEndsOn,
+            loadedLaborCents: run.loadedLaborCents,
+          }]
+        : [],
+    ),
+    statementPayroll:
+      expenses?.entries
+        .filter((entry) => /payroll/i.test(entry.category))
+        .map((entry) => ({ isoDate: entry.isoDate, amountCents: entry.amountCents })) ?? [],
+  });
+  const laborDays = laborChoice.days.filter(
+    (day) => day.isoDate >= bounds.startsOn && day.isoDate <= bounds.endsOn,
+  );
+  const labor =
+    laborChoice.source === "posted" && laborDays.every((day) => day.amountCents === 0)
+      ? chooseLaborCost({
+          posted: [],
+          statementPayroll:
+            expenses?.entries
+              .filter((entry) => /payroll/i.test(entry.category))
+              .map((entry) => ({ isoDate: entry.isoDate, amountCents: entry.amountCents })) ?? [],
+        })
+      : { ...laborChoice, days: laborDays, totalCents: laborDays.reduce((sum, day) => sum + day.amountCents, 0) };
+  const laborShare = pnl.salesCents > 0 ? labor.totalCents / pnl.salesCents : null;
+  const slices = [
+    { label: "Cafe operating", cents: pnl.operatingCents, color: "#5a3d2a" },
+    { label: "Personal", cents: pnl.personalCents, color: "#347ba5" },
+    { label: "Cash taken", cents: pnl.cashCents, color: "#9b681c" },
+    { label: "Unnamed", cents: pnl.otherCents, color: "#a4473b" },
+  ];
 
   return (
     <>
       <PageHeader
-        eyebrow="Operations workspace"
-        title={locationName ? `Today at ${locationName}` : "Today at Wild Bean"}
-        description={
-          locationName
-            ? `This workspace is ${locationName} only. Switch locations in the sidebar to see another location's documents, inventory, and sales.`
-            : "Capture what happened once. The system will organize purchases, inventory, sales, and close exceptions around the source record."
-        }
-        actions={
-          <Link href="/purchases/capture" className="button button-accent">
-            <ScanLine size={18} aria-hidden="true" />
-            Capture receipt
-          </Link>
-        }
+        eyebrow="Store performance"
+        title={locationName ? locationName : "This store"}
+        description="Product sales from the register, next to the money that left the bank. Tips and sales tax are not profit. Personal charges and cash taken are not treated as the store losing money."
       />
 
-      <section className="metrics-grid" aria-label="Operational summary">
+      <DateRangeFilter from={range?.startsOn ?? ""} to={range?.endsOn ?? ""} allowAll />
+
+      <section className="metrics-grid" aria-label="Store performance">
         <article className="metric-card">
-          <div className="metric-label">
-            <span>Needs review</span>
-            <CircleAlert className="metric-icon" size={18} />
-          </div>
-          <p className="metric-value">0</p>
-          <p className="metric-note">Document exceptions</p>
-        </article>
-        <article className="metric-card">
-          <div className="metric-label">
-            <span>Unmatched card</span>
-            <CircleDollarSign className="metric-icon" size={18} />
-          </div>
-          <p className="metric-value">$0</p>
-          <p className="metric-note">Company-card charges</p>
-        </article>
-        <article className="metric-card">
-          <div className="metric-label">
-            <span>Count progress</span>
-            <PackageCheck className="metric-icon" size={18} />
-          </div>
-          <p className="metric-value">
-            {snapshot?.openCount ? `${countProgress}%` : "0%"}
-          </p>
+          <div className="metric-label"><span>Sales</span></div>
+          <p className="metric-value">{formatMoney(pnl.salesCents)}</p>
           <p className="metric-note">
-            {snapshot?.baselinePosted
-              ? "Baseline posted"
-              : snapshot?.openCount
-                ? snapshot.openCount.countNumber
-                : "No active count"}
+            {pnl.salesDays > 0 ? `${pnl.salesDays} register days` : "No register sales in these dates"}
           </p>
         </article>
         <article className="metric-card">
-          <div className="metric-label">
-            <span>Sales status</span>
-            <ShoppingBasket className="metric-icon" size={18} />
-          </div>
-          <p className="metric-value">{cloverConfigured ? "Ready" : "—"}</p>
-          <p className="metric-note">
-            {cloverConfigured ? "Clover configured" : "Connect Clover"}
+          <div className="metric-label"><span>Cafe operating</span></div>
+          <p className="metric-value">{canBank ? formatMoney(pnl.operatingCents) : "—"}</p>
+          <p className="metric-note">Rent, food, payroll, utilities</p>
+        </article>
+        <article className="metric-card metric-card-total">
+          <div className="metric-label"><span>Store leftover</span></div>
+          <p className={`metric-value ${canBank ? toneClass(pnl.storeLeftoverCents) : ""}`}>
+            {canBank ? formatMoney(pnl.storeLeftoverCents) : "—"}
           </p>
+          <p className="metric-note">Sales minus cafe operating</p>
+        </article>
+        <article className="metric-card">
+          <div className="metric-label"><span>After everything</span></div>
+          <p className={`metric-value ${canBank ? toneClass(pnl.afterAllOutflowsCents) : ""}`}>
+            {canBank ? formatMoney(pnl.afterAllOutflowsCents) : "—"}
+          </p>
+          <p className="metric-note">Sales minus every recorded outflow</p>
         </article>
       </section>
 
       <div className="content-grid content-grid-main">
+        {canBank ? (
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <h2>Where the money went</h2>
+                <p>
+                  The ring is money that left the account. The center is what the store had left after cafe operating costs.
+                </p>
+              </div>
+              <Link href="/pnl" className="button">
+                Open P&amp;L
+              </Link>
+            </div>
+            <MoneyDonut
+              slices={slices}
+              centerLabel="Store leftover"
+              centerCents={pnl.storeLeftoverCents}
+            />
+          </section>
+        ) : null}
+
         <section className="panel">
           <div className="panel-header">
             <div>
-              <h2>Start cleanly</h2>
-              <p>These actions stop the data gap from getting larger.</p>
+              <h2>Labor against sales</h2>
+              <p>
+                {labor.source === "posted"
+                  ? "Posted payroll for these dates, compared with register sales."
+                  : labor.source === "statements"
+                    ? "Payroll from the bank statements, because no payroll preview is posted yet. It is not added on top of the operating total."
+                    : "No payroll is recorded for these dates."}
+              </p>
             </div>
-            <StatusPill tone="info">Initial setup</StatusPill>
+            {canLabor ? (
+              <Link href="/labor" className="button">
+                Open labor
+              </Link>
+            ) : null}
           </div>
-          <ul className="list">
-            {setupSteps.map((step, index) => {
-              const status =
-                step.key === "capture"
-                  ? "Ready"
-                  : step.key === "inbox"
-                    ? mailboxConfigured
-                      ? "Ready"
-                      : "Configure"
-                    : snapshot?.baselinePosted
-                      ? "Posted"
-                      : snapshot?.openCount
-                        ? "In progress"
-                        : "Not started";
-              const label =
-                step.key === "inbox"
-                  ? mailboxConfigured
-                    ? "Invoice mailbox connected"
-                    : "Connect this store’s invoice mailbox"
-                  : step.label;
-              return (
-              <li className="list-row" key={step.label}>
-                <div className="list-leading">{index + 1}</div>
-                <div className="list-copy">
-                  <p className="list-title">{label}</p>
-                  <p className="list-meta">{step.detail}</p>
-                </div>
-                <StatusPill
-                  tone={
-                    status === "Ready" || status === "Posted"
-                      ? "success"
-                      : status === "In progress"
-                        ? "info"
-                        : "neutral"
-                  }
-                >
-                  {status}
-                </StatusPill>
-                <Link
-                  href={
-                    step.key === "inbox" && mailboxConfigured
-                      ? "/documents"
-                      : step.href
-                  }
-                  className="icon-button"
-                  aria-label={`Open ${label}`}
-                >
-                  <ArrowRight size={18} />
-                </Link>
-              </li>
-              );
-            })}
-          </ul>
+          <div className="metrics-grid money-inline-metrics">
+            <article className="metric-card">
+              <div className="metric-label"><span>Labor</span></div>
+              <p className="metric-value">{formatMoney(labor.totalCents)}</p>
+              <p className="metric-note">
+                {laborShare === null ? "Needs sales to show a share" : `${formatPercent(laborShare)} of sales`}
+              </p>
+            </article>
+            <article className="metric-card">
+              <div className="metric-label"><span>Sales minus labor</span></div>
+              <p className={`metric-value ${toneClass(pnl.salesCents - labor.totalCents)}`}>
+                {formatMoney(pnl.salesCents - labor.totalCents)}
+              </p>
+              <p className="metric-note">
+                {pnl.salesCents - labor.totalCents >= 0
+                  ? "Sales covered labor"
+                  : "Labor was higher than sales"}
+              </p>
+            </article>
+          </div>
         </section>
-
-        <aside className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>Integration readiness</h2>
-              <p>Separate manager credentials only.</p>
-            </div>
-          </div>
-          <ul className="list">
-            <li className="list-row">
-              <div className="list-leading">
-                <ShoppingBasket size={18} />
-              </div>
-              <div className="list-copy">
-                <p className="list-title">Clover sales</p>
-                <p className="list-meta">
-                  {setup?.location
-                    ? `Orders and tenders for ${setup.location.name}`
-                    : "Orders, items, tenders, and refunds"}
-                </p>
-              </div>
-              <StatusPill tone={cloverConfigured ? "success" : "warning"}>
-                {cloverConfigured ? "Configured" : "Needs credentials"}
-              </StatusPill>
-            </li>
-            <li className="list-row">
-              <div className="list-leading">
-                <ReceiptText size={18} />
-              </div>
-              <div className="list-copy">
-                <p className="list-title">Document extraction</p>
-                <p className="list-meta">Invoices and receipt images</p>
-              </div>
-              <StatusPill tone={documentAiConfigured ? "success" : "warning"}>
-                {documentAiConfigured ? "Configured" : "Needs credentials"}
-              </StatusPill>
-            </li>
-            <li className="list-row">
-              <div className="list-leading">
-                <FileCheck2 size={18} />
-              </div>
-              <div className="list-copy">
-                <p className="list-title">Historical sources</p>
-                <p className="list-meta">Manifest before any transformation</p>
-              </div>
-              <StatusPill tone="info">Tool ready</StatusPill>
-            </li>
-          </ul>
-        </aside>
       </div>
     </>
   );

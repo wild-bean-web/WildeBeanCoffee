@@ -71,6 +71,20 @@
       "when": 1789722000000,
       "tag": "0009_void_posted_payroll",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789730000000,
+      "tag": "0010_statement_expense_lines",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789734000000,
+      "tag": "0011_statement_uploads",
+      "breakpoints": true
     }
   ]
 }

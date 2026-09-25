@@ -4,7 +4,6 @@ import {
   BarChart3,
   ClipboardCheck,
   FileText,
-  Landmark,
   Menu,
   PackageSearch,
   PieChart,
@@ -18,9 +17,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type CSSProperties, type ReactNode } from "react";
 import { BrandMark } from "@/components/brand-mark";
 import { LocationSwitcher } from "@/components/location-switcher";
+import { NavigationProgress } from "@/components/navigation-progress";
+import { SignOutButton } from "@/components/sign-out-button";
 import {
   hasCapability,
   type Capability,
@@ -35,6 +36,10 @@ interface AppShellProps {
   isDemo?: boolean;
   locations?: ManagerLocation[];
   activeLocationId?: string | null;
+  organizationName?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  hasLogo?: boolean;
 }
 
 interface NavigationItem {
@@ -94,12 +99,6 @@ const navigation: NavigationItem[] = [
     capability: "profit:view",
   },
   {
-    href: "/profit",
-    label: "Prime cost",
-    icon: Landmark,
-    capability: "profit:view",
-  },
-  {
     href: "/close",
     label: "Monthly close",
     icon: ClipboardCheck,
@@ -121,12 +120,25 @@ export function AppShell({
   isDemo = false,
   locations = [],
   activeLocationId = null,
+  organizationName = "Manager",
+  primaryColor = "#24160e",
+  accentColor = "#619b32",
+  hasLogo = false,
 }: AppShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const visibleNavigation = navigation.filter((item) =>
     hasCapability(role, item.capability),
   );
+  const logoSrc = hasLogo ? "/api/brand/logo" : "/brand/wild-bean-logo.jpg";
+  const brandStyle = {
+    "--coffee-950": primaryColor,
+    "--coffee-900": primaryColor,
+    "--coffee-800": primaryColor,
+    "--lime-700": accentColor,
+    "--lime-600": accentColor,
+    "--lime-500": accentColor,
+  } as CSSProperties;
 
   const navigationLinks = (
     <>
@@ -152,12 +164,12 @@ export function AppShell({
   );
 
   return (
-    <div className="manager-shell">
+    <div className="manager-shell" style={brandStyle}>
       <aside className="sidebar" aria-label="Manager navigation">
         <div className="brand-lockup">
-          <BrandMark />
+          <BrandMark src={logoSrc} />
           <div>
-            <p className="brand-name">Wild Bean</p>
+            <p className="brand-name">{organizationName}</p>
             <p className="brand-subtitle">Manager</p>
           </div>
         </div>
@@ -188,6 +200,7 @@ export function AppShell({
           >
             <Settings size={18} aria-hidden="true" />
           </Link>
+          <SignOutButton />
         </div>
       </aside>
 
@@ -203,9 +216,9 @@ export function AppShell({
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
         <div className="brand-lockup brand-lockup-mobile">
-          <BrandMark />
+          <BrandMark src={logoSrc} />
           <div>
-            <p className="brand-name">Wild Bean</p>
+            <p className="brand-name">{organizationName}</p>
             <p className="brand-subtitle">Manager</p>
           </div>
         </div>
@@ -232,11 +245,17 @@ export function AppShell({
               canCreate={hasCapability(role, "users:manage")}
             />
             {navigationLinks}
+            <SignOutButton />
           </nav>
         </div>
       ) : null}
 
-      <main className="manager-content">{children}</main>
+      <main className="manager-content" aria-busy={false}>
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+        {children}
+      </main>
 
       {hasCapability(role, "purchase:capture") ? (
         <Link href="/purchases/capture" className="capture-fab">

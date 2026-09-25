@@ -366,7 +366,7 @@ export async function importCloverLaborRange(
   await appendAuditEvent({
     organizationId: scope.organizationId,
     actorType: "staff",
-    actorStaffMemberId: session.staffMemberId,
+    actorStaffMemberId: session.staffMemberId ?? undefined,
     actorExternalId: session.userId,
     sourceSystem: "clover",
     action: "payroll.clover_imported",

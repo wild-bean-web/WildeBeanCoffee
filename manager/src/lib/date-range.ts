@@ -125,21 +125,24 @@ export function reportRangePresets(today = todayIso()): {
   label: string;
   range: DateRange;
 }[] {
+  const yesterday = addDaysIso(today, -1);
   return [
+    { id: "today", label: "Today", range: { startsOn: today, endsOn: today } },
+    { id: "yesterday", label: "Yesterday", range: { startsOn: yesterday, endsOn: yesterday } },
+    {
+      id: "this-week",
+      label: "This week",
+      range: { startsOn: sundayOfIsoDate(today), endsOn: today },
+    },
     {
       id: "this-month",
       label: "This month",
-      range: { startsOn: monthStartIso(today), endsOn: monthEndIso(today) },
+      range: { startsOn: monthStartIso(today), endsOn: today },
     },
     {
-      id: "last-month",
-      label: "Last month",
-      range: lastMonthRange(today),
-    },
-    {
-      id: "last-14",
-      label: "Last 14 days",
-      range: { startsOn: addDaysIso(today, -13), endsOn: today },
+      id: "last-7",
+      label: "Last 7 days",
+      range: { startsOn: addDaysIso(today, -6), endsOn: today },
     },
     {
       id: "last-30",
@@ -147,14 +150,14 @@ export function reportRangePresets(today = todayIso()): {
       range: { startsOn: addDaysIso(today, -29), endsOn: today },
     },
     {
+      id: "last-90",
+      label: "Last 90 days",
+      range: { startsOn: addDaysIso(today, -89), endsOn: today },
+    },
+    {
       id: "quarter",
       label: "This quarter",
       range: { startsOn: quarterStartIso(today), endsOn: today },
-    },
-    {
-      id: "ytd",
-      label: "Year to date",
-      range: { startsOn: yearStartIso(today), endsOn: today },
     },
   ];
 }

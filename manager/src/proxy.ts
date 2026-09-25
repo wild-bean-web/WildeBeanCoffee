@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicPaths = ["/login", "/api/health", "/api/webhooks"];
+const publicPaths = ["/login", "/reset-password", "/api/health", "/api/webhooks"];
 
 function isPublicPath(pathname: string): boolean {
   return publicPaths.some(
@@ -9,9 +9,22 @@ function isPublicPath(pathname: string): boolean {
   );
 }
 
+const productionHosts = new Set([
+  "wild-bean-manager.vercel.app",
+  "wild-bean-manager-lastsamurailijs-projects.vercel.app",
+]);
+
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get("host")?.split(":")[0]?.toLowerCase();
+
+  if (host && productionHosts.has(host) && !pathname.startsWith("/api/")) {
+    const destination = new URL(request.url);
+    destination.protocol = "https:";
+    destination.host = "manager.wildbeancoffeeshop.com";
+    return NextResponse.redirect(destination, 308);
+  }
 
   if (isPublicPath(pathname)) {
     return response;

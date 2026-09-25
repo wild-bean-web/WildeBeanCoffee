@@ -103,7 +103,7 @@ describe("CloverFetchReadClient", () => {
 
   it("lists employees on the merchant employees path", async () => {
     const fetchImplementation = vi.fn(
-      async (): Promise<Response> =>
+      async (_input: RequestInfo | URL): Promise<Response> =>
         new Response(JSON.stringify({ elements: [{ id: "EMP1", name: "Kalie" }] }), {
           status: 200,
           headers: { "content-type": "application/json" },

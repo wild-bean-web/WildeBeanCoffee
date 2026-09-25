@@ -5,8 +5,9 @@ import { StatusPill } from "@/components/status-pill";
 import { salesGap } from "@/domain/statement-pnl";
 import { requireCapability } from "@/lib/auth/session";
 import { parseDateRangeParams } from "@/lib/date-range";
-import { formatMoney, formatShortDate } from "@/lib/format";
+import { formatMoney, formatPercent, formatShortDate } from "@/lib/format";
 import { activeLocationName } from "@/services/locations/scope";
+import { getLocationPnl } from "@/services/profit/location";
 import { getStatementPnl } from "@/services/profit/statement";
 
 function moneyTone(cents: number): "success" | "danger" | "neutral" {
@@ -39,6 +40,7 @@ export default async function StatementPnlPage({
         : null;
   const from = range?.startsOn ?? "";
   const to = range?.endsOn ?? "";
+  const prime = await getLocationPnl(session, range ?? undefined).catch(() => null);
 
   return (
     <>
@@ -181,6 +183,62 @@ export default async function StatementPnlPage({
           </div>
         </section>
       ) : null}
+
+      <section className="panel mt-5">
+        <div className="panel-header">
+          <div>
+            <h2>Prime cost check</h2>
+            <p>
+              Food cost plus loaded labor, as a share of sales. Payroll and food
+              that already left the bank are inside cafe operating expenses above,
+              so this check is not subtracted again.
+            </p>
+          </div>
+        </div>
+        {prime && prime.status === "ready" ? (
+          <div className="metrics-grid">
+            <article className="metric-card">
+              <div className="metric-label">
+                <span>Cost of goods</span>
+              </div>
+              <p className="metric-value">
+                {prime.cogsCents === null ? "—" : formatMoney(prime.cogsCents)}
+              </p>
+              <p className="metric-note">
+                {prime.cogsCents === null
+                  ? "Waiting on a posted inventory count"
+                  : `Target ${formatPercent(prime.benchmarks.cogsShare)} of sales`}
+              </p>
+            </article>
+            <article className="metric-card">
+              <div className="metric-label">
+                <span>Loaded labor</span>
+              </div>
+              <p className="metric-value">{formatMoney(prime.loadedLaborCents)}</p>
+              <p className="metric-note">
+                Posted payroll only · target {formatPercent(prime.benchmarks.laborShare)}
+              </p>
+            </article>
+            <article className="metric-card">
+              <div className="metric-label">
+                <span>Prime cost</span>
+              </div>
+              <p className="metric-value">{formatPercent(prime.ratios.prime)}</p>
+              <p className="metric-note">
+                Target {formatPercent(prime.benchmarks.primeCostShare)} of sales
+                {prime.cogsCents === null
+                  ? ". The percent stays blank until cost of goods is posted."
+                  : "."}
+              </p>
+            </article>
+          </div>
+        ) : (
+          <p className="metric-note">
+            Prime cost appears after an accounting period is open. Bank-statement
+            payroll, food, rent, and utilities are already in the totals above.
+          </p>
+        )}
+      </section>
     </>
   );
 }

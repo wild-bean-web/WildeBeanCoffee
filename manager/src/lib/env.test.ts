@@ -14,21 +14,22 @@ const originalValues = Object.fromEntries(
   managedKeys.map((key) => [key, process.env[key]]),
 );
 
+function writeEnv(key: string, value: string | undefined) {
+  const env = process.env as Record<string, string | undefined>;
+  if (value === undefined) delete env[key];
+  else env[key] = value;
+}
+
 afterEach(() => {
   for (const key of managedKeys) {
-    const original = originalValues[key];
-    if (original === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = original;
-    }
+    writeEnv(key, originalValues[key]);
   }
   resetServerEnvForTests();
 });
 
 describe("getServerEnv", () => {
   it("treats blank optional URLs as unset in demo mode", () => {
-    process.env.NODE_ENV = "development";
+    writeEnv("NODE_ENV", "development");
     process.env.MANAGER_DEMO_MODE = "true";
     process.env.NEXT_PUBLIC_SUPABASE_URL = "";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "";

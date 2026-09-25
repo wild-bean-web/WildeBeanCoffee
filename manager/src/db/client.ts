@@ -1,6 +1,7 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres, { type Sql } from "postgres";
 
+import { databasePoolMax } from "./pool";
 import * as schema from "./schema";
 
 export type ManagerDatabase = PostgresJsDatabase<typeof schema>;
@@ -93,9 +94,20 @@ const initializeDatabase = (): {
   db: ManagerDatabase;
   sql: ManagerSqlClient;
 } => {
-  const sqlClient = postgres(readDatabaseUrl(), {
-    max: readPoolSize(),
+  const databaseUrl = readDatabaseUrl();
+  const hostname = new URL(databaseUrl).hostname;
+  const sqlClient = postgres(databaseUrl, {
+    max: databasePoolMax({
+      serverless: process.env.VERCEL === "1",
+      configured: readPoolSize(),
+    }),
+    idle_timeout: 5,
+    max_lifetime: 60,
     prepare: readPrepareStatements(),
+    ssl:
+      hostname === "localhost" || hostname === "127.0.0.1"
+        ? undefined
+        : "require",
     connection: {
       application_name: "wild-bean-manager",
     },

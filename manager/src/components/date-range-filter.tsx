@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarRange } from "lucide-react";
+import { useState } from "react";
+import { Calendar, CalendarRange } from "lucide-react";
 import {
   reportRangePresets,
   sameRange,
@@ -26,6 +27,48 @@ function rangeHref(
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function compactDate(iso: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "Choose";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${iso}T12:00:00.000Z`));
+}
+
+function CalendarField({
+  label,
+  name,
+  initialValue,
+  required,
+}: {
+  label: string;
+  name: string;
+  initialValue: string;
+  required: boolean;
+}) {
+  const [value, setValue] = useState(initialValue);
+
+  return (
+    <label className="date-range-field">
+      <span>{label}</span>
+      <span className="date-picker-face" aria-hidden="true">
+        <Calendar size={16} />
+        <span>{compactDate(value)}</span>
+      </span>
+      <input
+        className="input date-picker-input"
+        type="date"
+        name={name}
+        value={value}
+        required={required}
+        aria-label={label}
+        onChange={(event) => setValue(event.target.value)}
+      />
+    </label>
+  );
+}
+
 export function DateRangeFilter({
   from,
   to,
@@ -43,6 +86,8 @@ export function DateRangeFilter({
   const preserved = Object.entries(preserve ?? {}).filter(
     (entry): entry is [string, string] => Boolean(entry[1]),
   );
+  const matchesPreset = presets.some((preset) => sameRange(selected, preset.range));
+  const customActive = Boolean(from && to) && !matchesPreset;
 
   return (
     <form className="date-range-filter" method="get">
@@ -72,33 +117,30 @@ export function DateRangeFilter({
             href={rangeHref(pathname, null, preserve)}
             className={`date-range-preset${!from && !to ? " date-range-preset-active" : ""}`}
           >
-            All dates
+            All time
           </Link>
         ) : null}
       </div>
-      <label className="date-range-field">
-        <span>From</span>
-        <input
-          className="input"
-          type="date"
-          name="from"
-          defaultValue={from}
-          required={!allowAll}
-        />
-      </label>
-      <label className="date-range-field">
-        <span>To</span>
-        <input
-          className="input"
-          type="date"
-          name="to"
-          defaultValue={to}
-          required={!allowAll}
-        />
-      </label>
+      <div className={`date-range-custom${customActive ? " date-range-custom-active" : ""}`}>
+        <span className="date-range-custom-label">Custom</span>
+      <CalendarField
+        key={`from-${from}`}
+        label="From"
+        name="from"
+        initialValue={from}
+        required={!allowAll}
+      />
+      <CalendarField
+        key={`to-${to}`}
+        label="To"
+        name="to"
+        initialValue={to}
+        required={!allowAll}
+      />
       <button type="submit" className="button">
         Apply
       </button>
+      </div>
     </form>
   );
 }

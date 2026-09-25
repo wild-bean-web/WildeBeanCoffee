@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { LineChart, X } from "lucide-react";
 import {
@@ -179,6 +179,108 @@ function HoverMarker({
   );
 }
 
+function GroupedBars({
+  points,
+  grain,
+  secondLabel,
+  activeIndex,
+  onSelect,
+}: {
+  points: SalesExpensePoint[];
+  grain: SalesExpenseSeries["grain"];
+  secondLabel: string;
+  activeIndex: number | null;
+  onSelect: (index: number) => void;
+}) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [hostWidth, setHostWidth] = useState(640);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const update = () => setHostWidth(host.clientWidth || 640);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  const width = 640;
+  const height = 176;
+  const left = 8;
+  const right = 8;
+  const top = 10;
+  const bottom = 28;
+  const plotBottom = height - bottom;
+  const plotHeight = plotBottom - top;
+  const slot = (width - left - right) / Math.max(points.length, 1);
+  const barWidth = Math.max(3, Math.min(14, slot * 0.3));
+  const pixelsPerUnit = Math.max(hostWidth, 1) / width;
+  const axisFont = 11 / pixelsPerUnit;
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(hostWidth / 96))));
+  const peak = Math.max(
+    1,
+    ...points.flatMap((point) => [point.salesCents, Math.max(point.expenseCents ?? 0, 0)]),
+  );
+  const barTop = (value: number) => top + plotHeight - (Math.max(value, 0) / peak) * plotHeight;
+  const labelStep = labelEvery;
+
+  function select(event: PointerEvent<SVGSVGElement>) {
+    const svg = event.currentTarget;
+    const matrix = svg.getScreenCTM();
+    if (!matrix || points.length === 0) return;
+    const pointer = svg.createSVGPoint();
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    const local = pointer.matrixTransform(matrix.inverse());
+    const index = Math.min(
+      points.length - 1,
+      Math.max(0, Math.floor((local.x - left) / slot)),
+    );
+    onSelect(index);
+  }
+
+  return (
+    <div className="trend-scroll" ref={hostRef}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={`Bar chart of sales and ${secondLabel.toLowerCase()}`}
+        onPointerDown={select}
+      >
+        <line x1={left} x2={width - right} y1={plotBottom} y2={plotBottom} className="trend-grid" />
+        {points.map((point, index) => {
+          const x = left + index * slot;
+          const pair = barWidth * 2 + 2;
+          const start = x + Math.max(0, (slot - pair) / 2);
+          const salesHeight = Math.max(plotBottom - barTop(point.salesCents), point.salesCents > 0 ? 2 : 0);
+          const labor = Math.max(point.expenseCents ?? 0, 0);
+          const laborHeight = Math.max(plotBottom - barTop(labor), labor > 0 ? 2 : 0);
+          const selected = index === activeIndex;
+          const showLabel =
+            index === 0 || index === points.length - 1 || (index % labelStep === 0 && points.length - index >= labelStep);
+          return (
+            <g key={point.isoDate} opacity={activeIndex === null || selected ? 1 : 0.72}>
+              <rect x={start} y={plotBottom - salesHeight} width={barWidth} height={salesHeight} rx={2} fill={SALES_COLOR} />
+              <rect x={start + barWidth + 2} y={plotBottom - laborHeight} width={barWidth} height={laborHeight} rx={2} fill={EXPENSE_COLOR} />
+              {showLabel ? (
+                <text
+                  x={index === 0 ? left : index === points.length - 1 ? width - right : x + slot / 2}
+                  y={height - 8}
+                  textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"}
+                  className="trend-bar-label"
+                  fontSize={axisFont}
+                >
+                  {pointLabel(point.isoDate, grain)}
+                </text>
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 function grainCaption(grain: SalesExpenseSeries["grain"]): string {
   if (grain === "day") return "Each point is one day";
   if (grain === "week") return "Each point is one week";
@@ -188,12 +290,34 @@ function grainCaption(grain: SalesExpenseSeries["grain"]): string {
 export function SalesExpenseGraph({
   days,
   today,
+  title = "Sales and expenses",
+  secondLabel = "Expenses",
+  presentation = "button",
+  chart = "line",
 }: {
   days: DailyFlowPoint[];
   today: string;
+  title?: string;
+  secondLabel?: string;
+  presentation?: "button" | "inline";
+  chart?: "line" | "bars";
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(presentation === "inline");
   const titleId = useId();
+  const graph = (
+    <SalesExpenseGraphModal
+      days={days}
+      today={today}
+      title={title}
+      secondLabel={secondLabel}
+      titleId={titleId}
+      inline={presentation === "inline"}
+      chartKind={chart}
+      onClose={() => setOpen(false)}
+    />
+  );
+
+  if (presentation === "inline") return graph;
 
   return (
     <>
@@ -201,14 +325,7 @@ export function SalesExpenseGraph({
         <LineChart size={17} />
         View graph
       </button>
-      {open ? (
-        <SalesExpenseGraphModal
-          days={days}
-          today={today}
-          titleId={titleId}
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
+      {open ? graph : null}
     </>
   );
 }
@@ -216,12 +333,20 @@ export function SalesExpenseGraph({
 function SalesExpenseGraphModal({
   days,
   today,
+  title,
+  secondLabel,
   titleId,
+  inline,
+  chartKind,
   onClose,
 }: {
   days: DailyFlowPoint[];
   today: string;
+  title: string;
+  secondLabel: string;
   titleId: string;
+  inline: boolean;
+  chartKind: "line" | "bars";
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -243,6 +368,7 @@ function SalesExpenseGraphModal({
     points.some((point) => point.expenseCents === null && point.isoDate > lastExpense);
 
   useEffect(() => {
+    if (inline) return;
     closeRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -254,11 +380,11 @@ function SalesExpenseGraphModal({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKey);
     };
-  }, [onClose]);
+  }, [inline, onClose]);
 
   useEffect(() => {
-    setActiveIndex(null);
-  }, [span]);
+    setActiveIndex(chartKind === "bars" && points.length > 0 ? points.length - 1 : null);
+  }, [span, chartKind, points.length]);
 
   function hoverAt(event: MouseEvent<SVGSVGElement>) {
     const svg = svgRef.current;
@@ -290,35 +416,33 @@ function SalesExpenseGraphModal({
   const ticks = [geometry.max, geometry.min + (geometry.max - geometry.min) / 2, geometry.min];
   const labelStep = Math.max(1, Math.ceil(points.length / 6));
 
-  return createPortal(
-    <div
-      className="modal-backdrop"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="modal-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+  const chart = (
+      <div className={inline ? "panel" : "modal-dialog"} role={inline ? undefined : "dialog"} aria-modal={inline ? undefined : true} aria-labelledby={titleId}>
         <div className="modal-header">
           <div>
-            <h2 id={titleId}>Sales and expenses</h2>
+            <h2 id={titleId}>{title}</h2>
             <p>
-              {grainCaption(grain)}
+              {chartKind === "bars"
+                ? grainCaption(grain).replace("point", "pair of bars")
+                : grainCaption(grain)}
               {expenseStopsEarly && lastExpense
-                ? `. Expenses are recorded through ${formatShortDate(lastExpense)}`
+                ? ` Recorded through ${formatShortDate(lastExpense)}.`
                 : ""}
             </p>
           </div>
-          <button
-            ref={closeRef}
-            type="button"
-            className="icon-button"
-            aria-label="Close graph"
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
+          {inline ? null : (
+            <button
+              ref={closeRef}
+              type="button"
+              className="icon-button"
+              aria-label="Close graph"
+              onClick={onClose}
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
-        <div className="modal-body">
+        <div className={inline ? "trend-inline-body" : "modal-body"}>
           <div className="trend-legend">
             <span>
               <i className="trend-swatch" style={{ background: SALES_COLOR }} />
@@ -326,18 +450,40 @@ function SalesExpenseGraphModal({
             </span>
             <span>
               <i className="trend-swatch" style={{ background: EXPENSE_COLOR }} />
-              Expenses {expenseKnown ? formatMoney(expenseTotal) : "not recorded"}
+              {secondLabel} {expenseKnown ? formatMoney(expenseTotal) : "not recorded"}
             </span>
           </div>
           {points.length === 0 ? (
-            <p className="trend-empty">No sales or expenses are recorded for these dates.</p>
+            <p className="trend-empty">No sales or {secondLabel.toLowerCase()} are recorded for these dates.</p>
+          ) : chartKind === "bars" ? (
+            <div className="trend-chart">
+              <GroupedBars
+                points={points}
+                grain={grain}
+                secondLabel={secondLabel}
+                activeIndex={activeIndex}
+                onSelect={setActiveIndex}
+              />
+              {active ? (
+                <p className="trend-tooltip">
+                  <strong>{pointLabel(active.isoDate, grain)}</strong>
+                  <span style={{ color: SALES_COLOR }}>Sales {formatMoney(active.salesCents)}</span>
+                  <span style={{ color: EXPENSE_COLOR }}>
+                    {secondLabel}{" "}
+                    {active.expenseCents === null ? "not recorded" : formatMoney(active.expenseCents)}
+                  </span>
+                </p>
+              ) : (
+                <p className="trend-tooltip trend-tooltip-hint">Tap a pair of bars to read that date.</p>
+              )}
+            </div>
           ) : (
             <div className="trend-chart">
               <svg
                 ref={svgRef}
                 viewBox={`0 0 ${geometry.width} ${geometry.height}`}
                 role="img"
-                aria-label={`Line graph of sales and expenses. Sales ${formatMoney(salesTotal)}. Expenses ${expenseKnown ? formatMoney(expenseTotal) : "not recorded"}.`}
+                aria-label={`Line graph of sales and ${secondLabel.toLowerCase()}. Sales ${formatMoney(salesTotal)}. ${secondLabel} ${expenseKnown ? formatMoney(expenseTotal) : "not recorded"}.`}
                 onMouseLeave={() => setActiveIndex(null)}
                 onMouseMove={hoverAt}
               >
@@ -396,7 +542,7 @@ function SalesExpenseGraphModal({
                   <strong>{pointLabel(active.isoDate, grain)}</strong>
                   <span style={{ color: SALES_COLOR }}>Sales {formatMoney(active.salesCents)}</span>
                   <span style={{ color: EXPENSE_COLOR }}>
-                    Expenses{" "}
+                    {secondLabel}{" "}
                     {active.expenseCents === null ? "not recorded" : formatMoney(active.expenseCents)}
                   </span>
                 </p>
@@ -422,6 +568,17 @@ function SalesExpenseGraphModal({
           </div>
         </div>
       </div>
+  );
+
+  if (inline) return chart;
+  return createPortal(
+    <div
+      className="modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      {chart}
     </div>,
     document.body,
   );

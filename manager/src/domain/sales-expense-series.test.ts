@@ -67,7 +67,9 @@ describe("graphSpanSeries", () => {
   it("starts year to date in January", () => {
     const series = graphSpanSeries(days, "ytd", today);
     expect(series.grain).toBe("week");
-    expect(series.points[0]?.isoDate.startsWith("2026-01")).toBe(true);
-    expect(series.points.at(-1)?.isoDate <= today).toBe(true);
+    const firstIso = series.points[0]?.isoDate ?? "";
+    const lastIso = series.points.at(-1)?.isoDate ?? "";
+    expect(firstIso.startsWith("2026-01")).toBe(true);
+    expect(lastIso <= today).toBe(true);
   });
 });

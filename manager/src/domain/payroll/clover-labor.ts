@@ -2,7 +2,7 @@ import {
   instantToIsoDate,
   sundayOfIsoDate,
 } from "@/lib/date-range";
-import type { ParsedPayrollEmployee, ParsedPayrollPreview } from "./preview";
+import type { ParsedPayrollEmployee, ParsedPayrollPreview, PayrollEarning } from "./preview";
 
 const MAX_SHIFT_HOURS = 24;
 const WEEKLY_OVERTIME_HOURS = 40;
@@ -219,7 +219,7 @@ export function buildCloverLaborPreview(
     const tipsCents = tipsByEmployee.get(employeeId) ?? 0;
     const employerTaxCents = Math.round(wagesCents * burden);
     const loadedLaborCents = wagesCents + employerTaxCents;
-    const earnings = [
+    const earnings: PayrollEarning[] = [
       {
         code: "regular",
         label: "Regular",

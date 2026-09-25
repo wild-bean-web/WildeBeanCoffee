@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  output: "standalone",
+  // Standalone is for the container host. Vercel serves the Next build output, and
+  // standalone mode leaves that deployment with no routes.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   poweredByHeader: false,
   transpilePackages: ["pdfjs-dist"],
   turbopack: {

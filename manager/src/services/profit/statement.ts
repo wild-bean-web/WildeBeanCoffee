@@ -14,8 +14,12 @@ export async function getStatementPnl(
   session: ManagerSession,
   range: DateRange | null,
 ): Promise<StatementPnl> {
-  const expenses = loadStatementExpenses(range, "all");
   const scope = locationScope(session);
+  const expenses = await loadStatementExpenses(
+    scope?.organizationId ?? null,
+    range,
+    "all",
+  );
   if (!scope || !getServerEnv().DATABASE_URL) {
     return buildStatementPnl([], expenses);
   }

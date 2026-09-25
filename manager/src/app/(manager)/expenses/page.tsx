@@ -7,6 +7,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { DateRangeFilter } from "@/components/date-range-filter";
+import { StatementSource } from "@/components/statement-source";
 import { ExpenseBreakdown } from "@/components/expense-breakdown";
 import { ExpenseCategoryFilter } from "@/components/expense-category-filter";
 import { PageHeader } from "@/components/page-header";
@@ -24,6 +25,7 @@ import {
 import { formatMoney, formatShortDate } from "@/lib/format";
 import { activeLocationName } from "@/services/locations/scope";
 import { loadStatementExpenses } from "@/services/expenses/ledger";
+import { latestStatementBasis } from "@/services/expenses/statement-upload";
 
 function expenseHref(
   group: ExpenseGroup | "all",
@@ -54,8 +56,11 @@ export default async function ExpensesPage({
     : "all";
   const from = range?.startsOn ?? "";
   const to = range?.endsOn ?? "";
-  const totals = loadStatementExpenses(range, "all");
-  const summary = group === "all" ? totals : loadStatementExpenses(range, group);
+  const totals = await loadStatementExpenses(session.organizationId, range, "all");
+  const summary =
+    group === "all"
+      ? totals
+      : await loadStatementExpenses(session.organizationId, range, group);
   const categories = categoryNames(summary);
   const requestedCategory = (
     Array.isArray(params.category) ? params.category[0] : params.category
@@ -66,6 +71,9 @@ export default async function ExpensesPage({
   const category = requestedCategory || "";
   const lines = category ? filterExpensesByCategory(summary, category) : summary;
   const locationName = activeLocationName(session);
+  const basis = session.organizationId
+    ? await latestStatementBasis(session.organizationId)
+    : { lineCount: 0, latestDate: null, upload: null };
   const reportQuery = expenseSearchParams({
     from,
     to,
@@ -91,6 +99,19 @@ export default async function ExpensesPage({
             ? `Statement lines for ${locationName}, dated when they posted. Cafe operating costs are the store expenses. Personal charges, cash withdrawals, and unnamed purchases stay in their own totals. Loan draws and loan payments are not on this page.`
             : "Statement lines dated when they posted. Cafe operating costs are the store expenses. Loan draws and loan payments are not on this page."
         }
+      />
+
+      <StatementSource
+        basis={{
+          lineCount: basis.lineCount,
+          latestDate: basis.latestDate,
+          upload: basis.upload
+            ? {
+                ...basis.upload,
+                createdAt: basis.upload.createdAt.toISOString(),
+              }
+            : null,
+        }}
       />
 
       <DateRangeFilter

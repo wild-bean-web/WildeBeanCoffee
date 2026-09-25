@@ -48,6 +48,10 @@ export interface ExpenseSummary {
 
 const ISO_FROM_STATEMENT = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
+export function redactLongNumbers(value: string): string {
+  return value.replace(/\d{8,}/g, (digits) => `…${digits.slice(-4)}`);
+}
+
 export function statementDateToIso(value: string): string | null {
   const match = ISO_FROM_STATEMENT.exec(value.trim());
   if (!match) return null;
@@ -189,7 +193,7 @@ export function summarizeExpenses(
     const isoDate = statementDateToIso(line.date);
     if (!isoDate) continue;
     if (range && (isoDate < range.startsOn || isoDate > range.endsOn)) continue;
-    const description = line.description.trim();
+    const description = redactLongNumbers(line.description).trim();
     const category = line.category.trim();
     if (!description || !category || !Number.isInteger(line.signedCents)) continue;
     entries.push({

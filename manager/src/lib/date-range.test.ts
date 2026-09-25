@@ -7,6 +7,7 @@ import {
   monthEndIso,
   monthStartIso,
   parseDateRangeParams,
+  reportRangePresets,
   quarterStartIso,
   sundayOfIsoDate,
   zonedDayStartMs,
@@ -28,6 +29,29 @@ describe("date range helpers", () => {
       startsOn: "2026-08-01",
       endsOn: "2026-08-31",
     });
+  });
+
+  it("offers the owner date presets through today", () => {
+    const presets = reportRangePresets("2026-09-24");
+    expect(presets.map((preset) => preset.label)).toEqual([
+      "Today",
+      "Yesterday",
+      "This week",
+      "This month",
+      "Last 7 days",
+      "Last 30 days",
+      "Last 90 days",
+      "This quarter",
+    ]);
+    expect(presets.find((preset) => preset.id === "today")?.range).toEqual({
+      startsOn: "2026-09-24",
+      endsOn: "2026-09-24",
+    });
+    expect(presets.find((preset) => preset.id === "this-week")?.range).toEqual({
+      startsOn: "2026-09-20",
+      endsOn: "2026-09-24",
+    });
+    expect(presets.find((preset) => preset.id === "last-90")?.range.startsOn).toBe("2026-06-27");
   });
 
   it("parses and sorts query params", () => {
