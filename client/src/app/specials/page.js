@@ -48,7 +48,7 @@ function BulletList({ items }) {
   );
 }
 
-function BuildTable({ build }) {
+function BuildTable({ build, sizeSmall = "16 oz", sizeLarge = "20 oz" }) {
   if (!build?.length) return null;
   return (
     <div className="mt-1 overflow-hidden rounded-md border border-[var(--coffee-brown)]/10">
@@ -56,8 +56,8 @@ function BuildTable({ build }) {
         <thead className="bg-[var(--coffee-brown-very-light)] text-[11px] font-bold uppercase tracking-wider text-[var(--coffee-brown-light)]">
           <tr>
             <th className="px-2.5 py-1.5 font-bold">Item</th>
-            <th className="px-2.5 py-1.5 font-bold">16 oz</th>
-            <th className="px-2.5 py-1.5 font-bold">20 oz</th>
+            <th className="px-2.5 py-1.5 font-bold">{sizeSmall}</th>
+            <th className="px-2.5 py-1.5 font-bold">{sizeLarge}</th>
           </tr>
         </thead>
         <tbody>
@@ -140,7 +140,11 @@ function SpecialCard({ special }) {
           {hasBuild ? (
             <div>
               <SectionLabel>Size</SectionLabel>
-              <BuildTable build={special.build} />
+              <BuildTable
+                build={special.build}
+                sizeSmall={special.sizeSmall || "16 oz"}
+                sizeLarge={special.sizeLarge || "20 oz"}
+              />
             </div>
           ) : null}
 

@@ -28,6 +28,9 @@ const SpecialSchema = new mongoose.Schema(
     toppings: [{ type: String, trim: true }],
     /** Short ordered steps when the build isn’t obvious. */
     method: [{ type: String, trim: true }],
+    /** Labels for the two size columns (build.oz16 / build.oz20). */
+    sizeSmall: { type: String, trim: true, default: "16 oz" },
+    sizeLarge: { type: String, trim: true, default: "20 oz" },
     /** Monday (or sheet date) this special ran / starts. */
     weekOf: { type: Date, required: true },
     /** Human label, e.g. "8/12" or "Archive". */

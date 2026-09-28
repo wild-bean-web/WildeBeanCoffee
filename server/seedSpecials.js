@@ -72,6 +72,8 @@ async function seedSpecials() {
       })),
       toppings: item.toppings || [],
       method: item.method || [],
+      sizeSmall: item.sizeSmall || "16 oz",
+      sizeLarge: item.sizeLarge || "20 oz",
       weekOf,
       weekLabel: item.weekLabel || "",
       notes: item.notes || "",
