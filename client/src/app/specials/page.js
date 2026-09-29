@@ -56,8 +56,8 @@ function BuildTable({ build, sizeSmall = "16 oz", sizeLarge = "20 oz" }) {
         <thead className="bg-[var(--coffee-brown-very-light)] text-[11px] font-bold uppercase tracking-wider text-[var(--coffee-brown-light)]">
           <tr>
             <th className="px-2.5 py-1.5 font-bold">Item</th>
-            <th className="px-2.5 py-1.5 font-bold">{sizeSmall}</th>
-            <th className="px-2.5 py-1.5 font-bold">{sizeLarge}</th>
+            <th className="px-2.5 py-1.5 font-bold leading-tight">{sizeSmall}</th>
+            <th className="px-2.5 py-1.5 font-bold leading-tight">{sizeLarge}</th>
           </tr>
         </thead>
         <tbody>

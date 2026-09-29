@@ -104,6 +104,23 @@ async function seedSpecials() {
     );
   }
 
+  const retired = await Special.deleteMany({
+    $or: [
+      {
+        name: "Fallin' for Coconut",
+        weekOf: new Date("2026-09-14T12:00:00.000Z"),
+      },
+      { name: "Iced Fallin' for Coconut" },
+      { name: "Iced L'Orange Truffle Mocha" },
+      { name: "Iced Maple Pecan Latte" },
+    ],
+  });
+  if (retired.deletedCount) {
+    console.log(
+      `[seed:specials] Removed ${retired.deletedCount} retired special(s)`,
+    );
+  }
+
   console.log(`[seed:specials] Upserted ${upserted} special(s)`);
   await mongoose.disconnect();
 }
