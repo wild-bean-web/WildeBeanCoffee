@@ -541,7 +541,9 @@ export const menuItemsFromCSV = [
     image: "",
     available: true,
     active: true,
-    modifierGroupNames: ICED_LATTE_MODIFIERS,
+    modifierGroupNames: ICED_LATTE_MODIFIERS.map((name) =>
+      name === "Milk Choice" ? "Milk Choice (Included)" : name,
+    ),
   },
   {
     name: "Iced Cappuccino",

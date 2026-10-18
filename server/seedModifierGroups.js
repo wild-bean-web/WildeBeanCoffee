@@ -1,6 +1,11 @@
 // Modifier Groups Seed Data
 // Based on Clover POS export analysis - Updated with exact options and pricing
 
+import {
+  INCLUDED_MILK_GROUP_NAME,
+  INCLUDED_MILK_OPTIONS,
+} from "./config/includedMilk.js";
+
 export const modifierGroups = [
   {
     name: "Shot Preference",
@@ -229,6 +234,14 @@ export const modifierGroups = [
       { name: "Soy Milk", price: 0.8, available: true },
       { name: "Almond Milk", price: 0.8, available: true },
     ],
+  },
+  {
+    name: INCLUDED_MILK_GROUP_NAME,
+    displayName: "Milk Choice",
+    description: "Made with oat milk. Every milk option is included.",
+    type: "single",
+    required: true,
+    options: INCLUDED_MILK_OPTIONS,
   },
   {
     name: "Milk Choice (Smoothies)",

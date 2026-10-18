@@ -97,7 +97,7 @@ describe("KitchenOrderAlertHost", () => {
 
     expect(screen.getByText("New order")).toBeInTheDocument();
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
-    expect(screen.getByText(/1x Latte/)).toBeInTheDocument();
+    expect(screen.getByText(/1x \(HOT\) Latte/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Kitchen Dashboard" })).toBeInTheDocument();
   });
 
