@@ -5,12 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function CloverSalesImport({
-  from,
-  to,
   configured,
 }: {
-  from: string;
-  to: string;
   configured: boolean;
 }) {
   const router = useRouter();
@@ -21,34 +17,75 @@ export function CloverSalesImport({
   async function importSales() {
     setPending(true);
     setError(null);
-    setMessage(null);
+    setMessage("Finding the days that still need sales…");
     try {
-      const response = await fetch("/api/sales/clover/import", {
+      const planResponse = await fetch("/api/sales/clover/import", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan: true }),
       });
-      const result = (await response.json()) as {
-        data?: {
-          importedDays: number;
-          failedDays: number;
-          startsOn: string;
-          endsOn: string;
-        };
+      const plan = (await planResponse.json()) as {
+        data?: { startsOn: string; endsOn: string; dates: string[] };
         error?: { message: string };
       };
-      if (!response.ok || !result.data) {
-        throw new Error(
-          result.error?.message ?? "Clover sales were not imported.",
-        );
+      if (!planResponse.ok || !plan.data) {
+        throw new Error(plan.error?.message ?? "Clover sales were not imported.");
       }
+
+      const failures: string[] = [];
+      let importedDays = 0;
+      for (const [index, businessDate] of plan.data.dates.entries()) {
+        setMessage(
+          `Importing ${businessDate} (${index + 1} of ${plan.data.dates.length})…`,
+        );
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 150_000);
+        try {
+          const response = await fetch("/api/sales/clover/import", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ businessDate }),
+            signal: controller.signal,
+          });
+          const result = (await response.json()) as {
+            data?: {
+              importedDays: number;
+              days: Array<{ businessDate: string; error: string | null }>;
+            };
+            error?: { message: string };
+          };
+          if (!response.ok || !result.data) {
+            throw new Error(
+              result.error?.message ?? "Clover sales were not imported.",
+            );
+          }
+          importedDays += result.data.importedDays;
+          for (const day of result.data.days) {
+            if (day.error) failures.push(`${day.businessDate}: ${day.error}`);
+          }
+        } catch (caught) {
+          const message =
+            caught instanceof Error && caught.name === "AbortError"
+              ? `${businessDate}: that day took too long. Try it again.`
+              : caught instanceof Error
+                ? caught.message
+                : `${businessDate}: Clover sales were not imported.`;
+          if (message.includes("cannot be unlocked") || message.includes("rejected this store")) {
+            throw new Error(message);
+          }
+          failures.push(message);
+        } finally {
+          window.clearTimeout(timer);
+        }
+      }
+
       setMessage(
-        result.data.failedDays > 0
-          ? `Imported ${result.data.importedDays} day${result.data.importedDays === 1 ? "" : "s"}; ${result.data.failedDays} day${result.data.failedDays === 1 ? "" : "s"} failed.`
-          : `Imported ${result.data.importedDays} Clover day${result.data.importedDays === 1 ? "" : "s"} from ${result.data.startsOn} to ${result.data.endsOn}.`,
+        `Imported ${importedDays} day${importedDays === 1 ? "" : "s"} from ${plan.data.startsOn} through ${plan.data.endsOn}.`,
       );
+      setError(failures.length > 0 ? failures.slice(0, 3).join(" ") : null);
       router.refresh();
     } catch (caught) {
+      setMessage(null);
       setError(
         caught instanceof Error
           ? caught.message
@@ -73,8 +110,8 @@ export function CloverSalesImport({
         type="button"
         className="button button-accent"
         onClick={() => void importSales()}
-        disabled={pending || !from || !to}
-        title={!from || !to ? "Choose a start and end date to import" : undefined}
+        disabled={pending}
+        title="Imports the last saved day through today"
       >
         {pending ? (
           <LoaderCircle size={17} className="animate-spin" />

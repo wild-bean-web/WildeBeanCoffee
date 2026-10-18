@@ -6,7 +6,11 @@ import {
   lastMonthRange,
   monthEndIso,
   monthStartIso,
+  cloverCatchUpRange,
   parseDateRangeParams,
+  payrollPeriodContaining,
+  payrollRangePresets,
+  previousPayrollPeriod,
   reportRangePresets,
   quarterStartIso,
   sundayOfIsoDate,
@@ -52,6 +56,35 @@ describe("date range helpers", () => {
       endsOn: "2026-09-24",
     });
     expect(presets.find((preset) => preset.id === "last-90")?.range.startsOn).toBe("2026-06-27");
+  });
+
+  it("follows Homebase two-week payroll periods", () => {
+    expect(payrollPeriodContaining("2026-09-25")).toEqual({
+      startsOn: "2026-09-22",
+      endsOn: "2026-10-05",
+    });
+    expect(previousPayrollPeriod("2026-09-25")).toEqual({
+      startsOn: "2026-09-08",
+      endsOn: "2026-09-21",
+    });
+    expect(payrollRangePresets("2026-09-25").map((preset) => preset.label)).toEqual([
+      "Current payroll",
+      "Previous payroll",
+      "Today",
+      "Yesterday",
+    ]);
+  });
+
+  it("imports the last saved Clover day through today", () => {
+    expect(cloverCatchUpRange("2026-09-25", "2026-09-23")).toEqual({
+      startsOn: "2026-09-23",
+      endsOn: "2026-09-25",
+    });
+    expect(cloverCatchUpRange("2026-09-25", "2026-09-25")).toEqual({
+      startsOn: "2026-09-24",
+      endsOn: "2026-09-25",
+    });
+    expect(cloverCatchUpRange("2026-09-25", null).startsOn).toBe("2026-08-26");
   });
 
   it("parses and sorts query params", () => {

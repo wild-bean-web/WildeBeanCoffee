@@ -40,6 +40,7 @@ const roleCapabilities = {
   owner: capabilities,
   manager: [
     "dashboard:view",
+    "payroll:view",
     "purchase:capture",
     "purchase:review",
     "receiving:record",

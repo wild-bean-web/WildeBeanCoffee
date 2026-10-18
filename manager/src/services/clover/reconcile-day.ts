@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import {
   calculateDailyControlTotals,
   CloverApiError,
@@ -28,9 +28,10 @@ import {
 import type { JsonObject } from "@/db/schema/shared";
 import type { ManagerSession } from "@/lib/auth/session";
 import { getServerEnv } from "@/lib/env";
-import { addDaysIso, eachIsoDate, todayIso, zonedDayStartMs } from "@/lib/date-range";
+import { addDaysIso, cloverCatchUpRange, eachIsoDate, todayIso, zonedDayStartMs } from "@/lib/date-range";
 import { requireLocationScope } from "@/services/locations/scope";
 import { SalesServiceError } from "@/services/sales/errors";
+import { rewrapSecret } from "@/lib/credentials";
 import { cloverClientConfigForConnection } from "./connection-config";
 import {
   persistNormalizedCloverOrder,
@@ -84,6 +85,22 @@ export async function reconcileCloverBusinessDate(input: {
     .where(eq(locations.id, connection.locationId))
     .limit(1);
   const timezone = cafe?.timezone ?? env.MANAGER_TIMEZONE;
+  const encrypted = connection.settings.apiTokenEnc;
+  if (typeof encrypted === "string" && encrypted.startsWith("enc:v1:")) {
+    try {
+      const opened = rewrapSecret(encrypted);
+      if (opened.changed) {
+        const settings = { ...connection.settings, apiTokenEnc: opened.packed };
+        await db
+          .update(integrationConnections)
+          .set({ settings, updatedAt: new Date() })
+          .where(eq(integrationConnections.id, connection.id));
+        connection.settings = settings;
+      }
+    } catch {
+      // The sales import reports the unlock error when the client is built.
+    }
+  }
   const config = cloverClientConfigForConnection(connection);
   const client = new CloverFetchReadClient(config);
   const filter = filterWindow(input.businessDate, timezone);
@@ -93,17 +110,8 @@ export async function reconcileCloverBusinessDate(input: {
 
   for await (const order of client.listOrders({
     filter,
-    maxPages: 100,
-    expand: [
-      "lineItems",
-      "lineItems.modifications",
-      "lineItems.discounts",
-      "payments",
-      "payment.tender",
-      "discounts",
-      "refunds",
-      "orderType",
-    ],
+    maxPages: 20,
+    expand: ["orderType"],
   })) {
     const normalized = normalizeCloverOrder(order, {
       merchantId: config.merchantId,
@@ -119,7 +127,7 @@ export async function reconcileCloverBusinessDate(input: {
 
   for await (const payment of client.listPayments({
     filter,
-    maxPages: 100,
+    maxPages: 20,
     expand: ["refunds", "tender"],
   })) {
     const normalized = normalizeCloverPayment(payment, {
@@ -151,7 +159,7 @@ export async function reconcileCloverBusinessDate(input: {
 
   for await (const refund of client.listRefunds({
     filter,
-    maxPages: 100,
+    maxPages: 20,
   })) {
     const normalized = normalizeCloverRefund(refund, {
       merchantId: config.merchantId,
@@ -292,6 +300,50 @@ export async function reconcileCloverBusinessDate(input: {
 
 const MAX_IMPORT_DAYS = 31;
 
+async function cloverCatchUpWindow(session: ManagerSession) {
+  const scope = requireLocationScope(session);
+  const env = getServerEnv();
+  const [cafe] = env.DATABASE_URL
+    ? await getDb()
+        .select({ timezone: locations.timezone })
+        .from(locations)
+        .where(eq(locations.id, scope.locationId))
+        .limit(1)
+    : [];
+  const today = todayIso(cafe?.timezone ?? env.MANAGER_TIMEZONE);
+  let latestSaved: string | null = null;
+  if (env.DATABASE_URL) {
+    const [latest] = await getDb()
+      .select({ businessDate: dailySalesControls.businessDate })
+      .from(dailySalesControls)
+      .where(
+        and(
+          eq(dailySalesControls.organizationId, scope.organizationId),
+          eq(dailySalesControls.locationId, scope.locationId),
+          eq(dailySalesControls.sourceSystem, "clover"),
+        ),
+      )
+      .orderBy(desc(dailySalesControls.businessDate))
+      .limit(1);
+    latestSaved = latest?.businessDate ?? null;
+  }
+  const range = cloverCatchUpRange(today, latestSaved);
+  return {
+    startsOn: range.startsOn,
+    endsOn: range.endsOn,
+    dates: eachIsoDate(range.startsOn, range.endsOn),
+  };
+}
+
+export async function planCloverSalesCatchUp(session: ManagerSession) {
+  return cloverCatchUpWindow(session);
+}
+
+export async function importCloverSalesThroughToday(session: ManagerSession) {
+  const range = await cloverCatchUpWindow(session);
+  return importCloverSalesRange(session, range.startsOn, range.endsOn);
+}
+
 export async function importCloverSalesRange(
   session: ManagerSession,
   startsOn: string,
@@ -368,6 +420,12 @@ export async function importCloverSalesRange(
         error: null as string | null,
       });
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("cannot be unlocked")
+      ) {
+        throw new SalesServiceError(error.message, 409, "CLOVER_TOKEN_LOCKED");
+      }
       if (error instanceof CloverApiError) {
         console.error("Clover sales import day failed", {
           businessDate,

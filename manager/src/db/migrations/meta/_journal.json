@@ -85,6 +85,13 @@
       "when": 1789734000000,
       "tag": "0011_statement_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789740000000,
+      "tag": "0012_location_subscriptions",
+      "breakpoints": true
     }
   ]
 }

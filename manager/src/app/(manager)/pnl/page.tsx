@@ -2,7 +2,7 @@ import { Scale } from "lucide-react";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
-import { salesGap } from "@/domain/statement-pnl";
+import { presentedLeftover, salesGap } from "@/domain/statement-pnl";
 import { requireCapability } from "@/lib/auth/session";
 import { parseDateRangeParams } from "@/lib/date-range";
 import { formatMoney, formatPercent, formatShortDate } from "@/lib/format";
@@ -30,6 +30,9 @@ export default async function StatementPnlPage({
   const session = await requireCapability("profit:view");
   const range = parseDateRangeParams(await searchParams);
   const pnl = await getStatementPnl(session, range);
+  const books = presentedLeftover(pnl);
+  const leftoverCents = books.leftoverCents;
+  const afterAllCents = books.afterAllCents;
   const locationName = activeLocationName(session);
   const gap = salesGap(pnl);
   const gapText =
@@ -81,21 +84,31 @@ export default async function StatementPnlPage({
         <article className="metric-card metric-card-total">
           <div className="metric-label">
             <span>Store leftover</span>
-            <StatusPill tone={moneyTone(pnl.storeLeftoverCents)}>
-              {resultLabel(pnl.storeLeftoverCents)}
-            </StatusPill>
+            {leftoverCents === null ? null : (
+              <StatusPill tone={moneyTone(leftoverCents)}>
+                {resultLabel(leftoverCents)}
+              </StatusPill>
+            )}
           </div>
-          <p className="metric-value">{formatMoney(pnl.storeLeftoverCents)}</p>
-          <p className="metric-note">Sales minus cafe operating expenses</p>
+          <p className="metric-value">{leftoverCents === null ? "—" : formatMoney(leftoverCents)}</p>
+          <p className="metric-note">
+            {books.limitedToBooks && pnl.booksThrough
+              ? `Through ${formatShortDate(pnl.booksThrough)}. ${formatMoney(pnl.salesOutsideBooksCents)} of later sales are not included.`
+              : leftoverCents === null
+                ? "No bank lines in these dates, so leftover is not shown."
+                : "Sales minus cafe operating expenses"}
+          </p>
         </article>
         <article className="metric-card metric-card-total">
           <div className="metric-label">
             <span>Left after all recorded outflows</span>
-            <StatusPill tone={moneyTone(pnl.afterAllOutflowsCents)}>
-              {resultLabel(pnl.afterAllOutflowsCents)}
-            </StatusPill>
+            {afterAllCents === null ? null : (
+              <StatusPill tone={moneyTone(afterAllCents)}>
+                {resultLabel(afterAllCents)}
+              </StatusPill>
+            )}
           </div>
-          <p className="metric-value">{formatMoney(pnl.afterAllOutflowsCents)}</p>
+          <p className="metric-value">{afterAllCents === null ? "—" : formatMoney(afterAllCents)}</p>
           <p className="metric-note">
             Sales minus every recorded expense, including personal charges, cash withdrawals, and unnamed items
           </p>
@@ -132,7 +145,7 @@ export default async function StatementPnlPage({
               </tr>
               <tr className="group-subtotal">
                 <th>Store leftover</th>
-                <td className="numeric">{formatMoney(pnl.storeLeftoverCents)}</td>
+                <td className="numeric">{leftoverCents === null ? "—" : formatMoney(leftoverCents)}</td>
               </tr>
               <tr>
                 <td>Personal, paid by the business</td>
@@ -148,7 +161,7 @@ export default async function StatementPnlPage({
               </tr>
               <tr className="group-subtotal">
                 <th>Left after all recorded outflows</th>
-                <td className="numeric">{formatMoney(pnl.afterAllOutflowsCents)}</td>
+                <td className="numeric">{afterAllCents === null ? "—" : formatMoney(afterAllCents)}</td>
               </tr>
             </tbody>
           </table>

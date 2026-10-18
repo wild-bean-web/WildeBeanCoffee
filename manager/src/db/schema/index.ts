@@ -1,5 +1,6 @@
 export * from "./accounting";
 export * from "./audit";
+export * from "./billing";
 export * from "./cards";
 export * from "./catalog";
 export * from "./core";

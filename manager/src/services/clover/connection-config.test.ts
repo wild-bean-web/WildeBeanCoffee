@@ -39,6 +39,25 @@ describe("Clover connection credentials", () => {
     );
   });
 
+  it("asks for a fresh token when the saved ciphertext cannot be unlocked", () => {
+    const previous = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = env.DATABASE_URL;
+    const packed = encryptSecret("stored-cafe-token-987654");
+    process.env.DATABASE_URL = "postgres://manager:manager@127.0.0.1:5433/other";
+    const connection = {
+      id: "conn-1",
+      locationId: "loc-1",
+      externalAccountId: "MERCHANT_ROCKVILLE",
+      credentialReference: "encrypted:v1",
+      settings: { apiTokenEnc: packed, tokenLast4: "7654" },
+    };
+
+    expect(() => cloverClientConfigForConnection(connection, env)).toThrow(
+      /paste the merchant token again/i,
+    );
+    process.env.DATABASE_URL = previous;
+  });
+
   it("falls back to the brand env token until the store token is saved", () => {
     const connection = {
       id: "conn-1",

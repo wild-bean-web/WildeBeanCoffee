@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { z } from "zod";
@@ -210,7 +210,35 @@ export const getManagerSession = cache(
         )
         .limit(1);
 
-      if (!staff) return null;
+      let member = staff;
+      if (!member) {
+        const [invited] = await db
+          .select({
+            id: staffMembers.id,
+            organizationId: staffMembers.organizationId,
+            displayName: staffMembers.displayName,
+          })
+          .from(staffMembers)
+          .where(
+            and(
+              sql`lower(${staffMembers.email}) = ${user.email.toLowerCase()}`,
+              eq(staffMembers.status, "invited"),
+            ),
+          )
+          .limit(1);
+        if (!invited) return null;
+        await db
+          .update(staffMembers)
+          .set({
+            authUserId: user.id,
+            status: "active",
+            updatedAt: new Date(),
+          })
+          .where(eq(staffMembers.id, invited.id));
+        member = invited;
+      }
+
+      const staffRecord = member;
 
       const today = new Date().toISOString().slice(0, 10);
       const assignments = await db
@@ -226,8 +254,8 @@ export const getManagerSession = cache(
         )
         .where(
           and(
-            eq(staffRoleAssignments.staffMemberId, staff.id),
-            eq(staffRoleAssignments.organizationId, staff.organizationId),
+            eq(staffRoleAssignments.staffMemberId, staffRecord.id),
+            eq(staffRoleAssignments.organizationId, staffRecord.organizationId),
             isNull(staffRoleAssignments.revokedAt),
             lte(staffRoleAssignments.effectiveFrom, today),
             or(
@@ -258,9 +286,9 @@ export const getManagerSession = cache(
           assignment.roleScope === "organization",
       );
       const allowedLocations = hasOrganizationScope
-        ? await loadActiveLocations(staff.organizationId)
+        ? await loadActiveLocations(staffRecord.organizationId)
         : (
-            await loadActiveLocations(staff.organizationId)
+            await loadActiveLocations(staffRecord.organizationId)
           ).filter((location) =>
             assignments.some(
               (assignment) =>
@@ -272,11 +300,11 @@ export const getManagerSession = cache(
       return withActiveLocation(
         {
           userId: user.id,
-          staffMemberId: staff.id,
+          staffMemberId: staffRecord.id,
           email: user.email,
-          displayName: staff.displayName,
+          displayName: staffRecord.displayName,
           role,
-          organizationId: staff.organizationId,
+          organizationId: staffRecord.organizationId,
           isDemo: false,
         },
         allowedLocations,

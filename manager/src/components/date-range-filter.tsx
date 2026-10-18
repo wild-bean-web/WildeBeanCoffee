@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Calendar, CalendarRange } from "lucide-react";
 import {
+  payrollRangePresets,
   reportRangePresets,
   sameRange,
   type DateRange,
@@ -74,15 +75,24 @@ export function DateRangeFilter({
   to,
   allowAll = false,
   preserve,
+  variant = "default",
+  payrollAnchor,
+  payrollPeriodDays,
 }: {
   from: string;
   to: string;
   allowAll?: boolean;
   preserve?: Record<string, string | undefined>;
+  variant?: "default" | "payroll";
+  payrollAnchor?: string;
+  payrollPeriodDays?: 7 | 14;
 }) {
   const pathname = usePathname();
   const selected: DateRange = { startsOn: from, endsOn: to };
-  const presets = reportRangePresets();
+  const presets =
+    variant === "payroll"
+      ? payrollRangePresets(undefined, payrollAnchor, payrollPeriodDays)
+      : reportRangePresets();
   const preserved = Object.entries(preserve ?? {}).filter(
     (entry): entry is [string, string] => Boolean(entry[1]),
   );

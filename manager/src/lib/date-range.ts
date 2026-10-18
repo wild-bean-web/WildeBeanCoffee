@@ -162,6 +162,66 @@ export function reportRangePresets(today = todayIso()): {
   ];
 }
 
+/** Homebase pay periods are 14 days, Tuesday through the following Monday. */
+export const PAYROLL_PERIOD_DAYS = 14;
+export const PAYROLL_PERIOD_ANCHOR = "2026-09-08";
+
+export function daysBetweenIso(start: string, end: string): number {
+  const from = Date.parse(`${start}T12:00:00.000Z`);
+  const to = Date.parse(`${end}T12:00:00.000Z`);
+  return Math.round((to - from) / 86_400_000);
+}
+
+export function payrollPeriodContaining(
+  isoDate: string,
+  anchor = PAYROLL_PERIOD_ANCHOR,
+  periodDays = PAYROLL_PERIOD_DAYS,
+): DateRange {
+  const length = periodDays === 7 ? 7 : PAYROLL_PERIOD_DAYS;
+  const index = Math.floor(daysBetweenIso(anchor, isoDate) / length);
+  const startsOn = addDaysIso(anchor, index * length);
+  return { startsOn, endsOn: addDaysIso(startsOn, length - 1) };
+}
+
+export function previousPayrollPeriod(
+  isoDate: string,
+  anchor = PAYROLL_PERIOD_ANCHOR,
+  periodDays = PAYROLL_PERIOD_DAYS,
+): DateRange {
+  const current = payrollPeriodContaining(isoDate, anchor, periodDays);
+  const length = periodDays === 7 ? 7 : PAYROLL_PERIOD_DAYS;
+  const startsOn = addDaysIso(current.startsOn, -length);
+  return { startsOn, endsOn: addDaysIso(startsOn, length - 1) };
+}
+
+export function payrollRangePresets(
+  today = todayIso(),
+  anchor = PAYROLL_PERIOD_ANCHOR,
+  periodDays = PAYROLL_PERIOD_DAYS,
+): {
+  id: string;
+  label: string;
+  range: DateRange;
+}[] {
+  const yesterday = addDaysIso(today, -1);
+  return [
+    { id: "current-payroll", label: "Current payroll", range: payrollPeriodContaining(today, anchor, periodDays) },
+    { id: "previous-payroll", label: "Previous payroll", range: previousPayrollPeriod(today, anchor, periodDays) },
+    { id: "today", label: "Today", range: { startsOn: today, endsOn: today } },
+    { id: "yesterday", label: "Yesterday", range: { startsOn: yesterday, endsOn: yesterday } },
+  ];
+}
+
+/** Refresh the last saved day, fill any gap, and include yesterday and today. */
+export function cloverCatchUpRange(today: string, latestSaved: string | null): DateRange {
+  const floor = addDaysIso(today, -30);
+  const yesterday = addDaysIso(today, -1);
+  let startsOn = latestSaved && latestSaved <= today ? latestSaved : floor;
+  if (startsOn > yesterday) startsOn = yesterday;
+  if (startsOn < floor) startsOn = floor;
+  return { startsOn, endsOn: today };
+}
+
 export function sameRange(left: DateRange | null, right: DateRange): boolean {
   return Boolean(
     left && left.startsOn === right.startsOn && left.endsOn === right.endsOn,

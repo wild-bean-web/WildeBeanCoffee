@@ -27,6 +27,11 @@ export interface StatementPnl {
   afterAllOutflowsCents: number;
   expenseFirst: string | null;
   expenseLast: string | null;
+  booksThrough: string | null;
+  salesInsideBooksCents: number;
+  salesOutsideBooksCents: number;
+  comparableLeftoverCents: number | null;
+  comparableAfterAllCents: number | null;
   operatingCategories: { category: string; amountCents: number }[];
 }
 
@@ -88,6 +93,16 @@ export function buildStatementPnl(
     if (!expenseLast || entry.isoDate > expenseLast) expenseLast = entry.isoDate;
   }
 
+  let salesInsideBooksCents = 0;
+  if (expenseLast) {
+    for (const day of chosen) {
+      if (day.businessDate <= expenseLast) {
+        salesInsideBooksCents += productSalesCents(day);
+      }
+    }
+  }
+  const salesOutsideBooksCents = expenseLast ? salesCents - salesInsideBooksCents : 0;
+
   return {
     salesCents,
     salesDays: chosen.length,
@@ -104,9 +119,40 @@ export function buildStatementPnl(
     afterAllOutflowsCents: salesCents - expenseCents,
     expenseFirst,
     expenseLast,
+    booksThrough: expenseLast,
+    salesInsideBooksCents,
+    salesOutsideBooksCents,
+    comparableLeftoverCents: expenseLast ? salesInsideBooksCents - operatingCents : null,
+    comparableAfterAllCents: expenseLast ? salesInsideBooksCents - expenseCents : null,
     operatingCategories: expenses.byCategory
       .filter((row) => row.group === "operating" && row.amountCents !== 0)
       .map((row) => ({ category: row.category, amountCents: row.amountCents })),
+  };
+}
+
+export function presentedLeftover(pnl: StatementPnl): {
+  leftoverCents: number | null;
+  afterAllCents: number | null;
+  limitedToBooks: boolean;
+} {
+  if (
+    pnl.booksThrough &&
+    pnl.salesOutsideBooksCents > 0 &&
+    pnl.comparableLeftoverCents !== null
+  ) {
+    return {
+      leftoverCents: pnl.comparableLeftoverCents,
+      afterAllCents: pnl.comparableAfterAllCents,
+      limitedToBooks: true,
+    };
+  }
+  if (!pnl.booksThrough && pnl.salesCents > 0) {
+    return { leftoverCents: null, afterAllCents: null, limitedToBooks: false };
+  }
+  return {
+    leftoverCents: pnl.storeLeftoverCents,
+    afterAllCents: pnl.afterAllOutflowsCents,
+    limitedToBooks: false,
   };
 }
 

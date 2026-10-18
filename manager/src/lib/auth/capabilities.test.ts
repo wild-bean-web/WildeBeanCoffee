@@ -4,7 +4,9 @@ import { capabilitiesFor, hasCapability } from "./capabilities";
 describe("manager role capabilities", () => {
   it("keeps financial details away from operational roles", () => {
     expect(hasCapability("manager", "profit:view")).toBe(false);
-    expect(hasCapability("manager", "payroll:view")).toBe(false);
+    expect(hasCapability("manager", "bank:view")).toBe(false);
+    expect(hasCapability("manager", "dashboard:view")).toBe(true);
+    expect(hasCapability("manager", "payroll:view")).toBe(true);
     expect(hasCapability("manager", "payroll:capture")).toBe(false);
     expect(hasCapability("accountant", "payroll:capture")).toBe(true);
     expect(hasCapability("accountant", "profit:view")).toBe(true);

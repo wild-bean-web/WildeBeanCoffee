@@ -84,6 +84,8 @@ describe("buildStatementPnl", () => {
     expect(pnl.salesDays).toBe(1);
     expect(pnl.storeLeftoverCents).toBe(5400);
     expect(pnl.afterAllOutflowsCents).toBe(4400);
+    expect(pnl.salesOutsideBooksCents).toBe(8400);
+    expect(pnl.comparableLeftoverCents).toBe(-3000);
     expect(pnl.operatingCategories).toEqual([
       { category: "Rent", amountCents: 3000 },
     ]);

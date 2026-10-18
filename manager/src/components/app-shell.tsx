@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  ChefHat,
   ClipboardCheck,
   FileText,
   Menu,
@@ -73,6 +74,12 @@ const navigation: NavigationItem[] = [
     label: "Inventory",
     icon: PackageSearch,
     capability: "inventory:count",
+  },
+  {
+    href: "/recipes",
+    label: "Recipes",
+    icon: ChefHat,
+    capability: "inventory:view-cost",
   },
   {
     href: "/sales",

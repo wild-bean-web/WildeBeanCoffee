@@ -13,8 +13,10 @@ import { requireCapability } from "@/lib/auth/session";
 import {
   monthStartIso,
   parseDateRangeParams,
+  payrollPeriodContaining,
   todayIso,
 } from "@/lib/date-range";
+import { getPayrollCalendar } from "@/services/payroll/calendar";
 import { formatHours, formatMoney, formatPercent, formatShortDate } from "@/lib/format";
 import { loadStatementExpenses } from "@/services/expenses/ledger";
 import { getLocationSetup } from "@/services/locations/setup";
@@ -36,7 +38,10 @@ export default async function LaborPage({
 }) {
   const session = await requireCapability("payroll:view");
   const today = todayIso();
-  const range = parseDateRangeParams(await searchParams);
+  const calendar = await getPayrollCalendar(session.organizationId);
+  const range =
+    parseDateRangeParams(await searchParams) ??
+    payrollPeriodContaining(today, calendar.anchor, calendar.periodDays);
   const runs = await listPayrollRuns(
     session,
     range
@@ -132,9 +137,11 @@ export default async function LaborPage({
       />
 
       <DateRangeFilter
-        from={range?.startsOn ?? ""}
-        to={range?.endsOn ?? ""}
-        allowAll
+        from={range.startsOn}
+        to={range.endsOn}
+        variant="payroll"
+        payrollAnchor={calendar.anchor}
+        payrollPeriodDays={calendar.periodDays}
       />
 
       <section className="metrics-grid">

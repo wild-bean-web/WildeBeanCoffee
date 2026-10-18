@@ -56,7 +56,21 @@ export function resolveCloverApiToken(
 ): string {
   const encrypted = settingString(connection.settings, "apiTokenEnc");
   if (encrypted?.startsWith("enc:v1:")) {
-    return decryptSecret(encrypted);
+    try {
+      return decryptSecret(encrypted);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "";
+      if (
+        detail.includes("authenticate data") ||
+        detail.includes("malformed") ||
+        detail.includes("not a recognized")
+      ) {
+        throw new Error(
+          "The saved Clover token cannot be unlocked. Open Store setup, paste the merchant token again, and save.",
+        );
+      }
+      throw error;
+    }
   }
 
   if (connection.credentialReference === CLOVER_ENV_TOKEN_REFERENCE) {

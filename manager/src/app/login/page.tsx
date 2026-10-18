@@ -1,6 +1,7 @@
 "use client";
 
 import { LockKeyhole } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { BrandMark } from "@/components/brand-mark";
@@ -65,8 +66,7 @@ export default function LoginPage() {
 
           <h2>Sign in</h2>
           <p>
-            Accounts are invitation-only. Financial and inventory permissions
-            are assigned separately for each staff member.
+            Owners start a company. Everyone else signs in from an invite.
           </p>
 
           <form className="form-grid" onSubmit={handleSubmit}>
@@ -110,6 +110,9 @@ export default function LoginPage() {
               {submitting ? "Signing in…" : "Continue securely"}
             </button>
           </form>
+          <p className="mt-3 text-sm text-muted">
+            New store? <Link href="/start">Start a company</Link>
+          </p>
 
           {!supabaseConfigured ? (
             <div className="setup-notice">

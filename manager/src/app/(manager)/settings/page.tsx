@@ -7,6 +7,9 @@ import {
   UserRoundCog,
 } from "lucide-react";
 import { BrandSettingsForm } from "@/components/brand-settings-form";
+import { InviteStaffForm } from "@/components/invite-staff-form";
+import { LocationBillingList } from "@/components/location-billing";
+import { PayrollCalendarForm } from "@/components/payroll-calendar-form";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import {
@@ -18,12 +21,19 @@ import { hasCapability } from "@/lib/auth/capabilities";
 import { requireManagerSession } from "@/lib/auth/session";
 import { formatCafeAddress } from "@/lib/location";
 import { getOrganizationBrand } from "@/services/brand/organization";
+import { listLocationBilling } from "@/services/billing/locations";
+import { getPayrollCalendar } from "@/services/payroll/calendar";
+import { listCompanyPeople } from "@/services/staff/invite";
+import { roleLabel } from "@/domain/companies";
 import { getLocationSetup } from "@/services/locations/setup";
 
 export default async function SettingsPage() {
   const session = await requireManagerSession();
   const setup = await getLocationSetup(session);
   const brandTheme = await getOrganizationBrand(session.organizationId);
+  const payrollCalendar = await getPayrollCalendar(session.organizationId);
+  const people = session.organizationId ? await listCompanyPeople(session.organizationId) : [];
+  const billing = session.organizationId ? await listLocationBilling(session.organizationId) : [];
   const locationName = setup.location?.name ?? "this store";
   const canBrand = hasCapability(session.role, "users:manage");
 
@@ -105,6 +115,62 @@ export default async function SettingsPage() {
             accentColor={brandTheme.accentColor}
             hasLogo={brandTheme.hasLogo}
           />
+        </section>
+      ) : null}
+
+      {canBrand ? (
+        <section className="panel mb-5">
+          <div className="panel-header">
+            <div>
+              <h2>Pay calendar</h2>
+              <p>
+                Current payroll and Previous payroll on the Labor page follow this company&apos;s first pay-period day.
+              </p>
+            </div>
+          </div>
+          <PayrollCalendarForm
+            anchor={payrollCalendar.anchor}
+            periodDays={payrollCalendar.periodDays}
+            saved={payrollCalendar.saved}
+          />
+        </section>
+      ) : null}
+
+      {canBrand ? (
+        <section className="panel mb-5">
+          <div className="panel-header">
+            <div>
+              <h2>People</h2>
+              <p>Invite a manager, purchaser, counter, or accountant. They get an email and sign in.</p>
+            </div>
+          </div>
+          <InviteStaffForm />
+          {people.length > 0 ? (
+            <ul className="exception-list">
+              {people.map((person) => (
+                <li key={person.id}>
+                  <div>
+                    <strong>{person.displayName}</strong>
+                    <span>
+                      {person.email} · {roleLabel(person.role)} · {person.status}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
+      {canBrand && billing.length > 0 ? (
+        <section className="panel mb-5">
+          <div className="panel-header">
+            <div>
+              <h2>Location billing</h2>
+              <p>A new company&apos;s first location includes 14 days. After that, each location is a subscription.</p>
+            </div>
+          </div>
+          <LocationBillingList locations={billing} />
         </section>
       ) : null}
 

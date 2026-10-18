@@ -5,11 +5,13 @@ import { PageHeader } from "@/components/page-header";
 import { hasCapability } from "@/lib/auth/capabilities";
 import { requireCapability } from "@/lib/auth/session";
 import { parseDateRangeParams, todayIso } from "@/lib/date-range";
-import { formatMoney, formatPercent } from "@/lib/format";
+import { formatMoney, formatPercent, formatShortDate } from "@/lib/format";
 import { chooseLaborCost } from "@/domain/labor-sales";
+import { presentedLeftover } from "@/domain/statement-pnl";
 import { activeLocationName } from "@/services/locations/scope";
 import { loadStatementExpenses } from "@/services/expenses/ledger";
 import { listPostedPayrollForPeriod } from "@/services/payroll/runs";
+import { getBookExceptions } from "@/services/profit/exceptions";
 import { getStatementPnl } from "@/services/profit/statement";
 
 function toneClass(cents: number): string {
@@ -64,6 +66,19 @@ export default async function OverviewPage({
         })
       : { ...laborChoice, days: laborDays, totalCents: laborDays.reduce((sum, day) => sum + day.amountCents, 0) };
   const laborShare = pnl.salesCents > 0 ? labor.totalCents / pnl.salesCents : null;
+  const books = presentedLeftover(pnl);
+  const exceptions = await getBookExceptions(session);
+  const leftoverNote =
+    books.limitedToBooks && pnl.booksThrough
+      ? `Through ${formatShortDate(pnl.booksThrough)}. ${formatMoney(pnl.salesOutsideBooksCents)} of later sales are not included.`
+      : books.leftoverCents === null
+        ? "No bank lines in these dates, so leftover is not shown."
+        : "Sales minus cafe operating";
+  const visibleExceptions = exceptions.filter((item) => {
+    if (item.id === "bank-gap" || item.id === "unnamed") return canBank;
+    if (item.id === "payroll") return canLabor;
+    return true;
+  });
   const slices = [
     { label: "Cafe operating", cents: pnl.operatingCents, color: "#5a3d2a" },
     { label: "Personal", cents: pnl.personalCents, color: "#347ba5" },
@@ -96,22 +111,43 @@ export default async function OverviewPage({
         </article>
         <article className="metric-card metric-card-total">
           <div className="metric-label"><span>Store leftover</span></div>
-          <p className={`metric-value ${canBank ? toneClass(pnl.storeLeftoverCents) : ""}`}>
-            {canBank ? formatMoney(pnl.storeLeftoverCents) : "—"}
+          <p className={`metric-value ${canBank && books.leftoverCents !== null ? toneClass(books.leftoverCents) : ""}`}>
+            {canBank && books.leftoverCents !== null ? formatMoney(books.leftoverCents) : "—"}
           </p>
-          <p className="metric-note">Sales minus cafe operating</p>
+          <p className="metric-note">{canBank ? leftoverNote : "Sales minus cafe operating"}</p>
         </article>
         <article className="metric-card">
           <div className="metric-label"><span>After everything</span></div>
-          <p className={`metric-value ${canBank ? toneClass(pnl.afterAllOutflowsCents) : ""}`}>
-            {canBank ? formatMoney(pnl.afterAllOutflowsCents) : "—"}
+          <p className={`metric-value ${canBank && books.afterAllCents !== null ? toneClass(books.afterAllCents) : ""}`}>
+            {canBank && books.afterAllCents !== null ? formatMoney(books.afterAllCents) : "—"}
           </p>
           <p className="metric-note">Sales minus every recorded outflow</p>
         </article>
       </section>
 
+      {visibleExceptions.length > 0 ? (
+        <section className="panel" aria-label="Needs attention">
+          <div className="panel-header">
+            <div>
+              <h2>Needs attention</h2>
+              <p>These are the gaps between this store and a book you can trust.</p>
+            </div>
+          </div>
+          <ul className="exception-list">
+            {visibleExceptions.map((item) => (
+              <li key={item.id}>
+                <Link href={item.href}>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <div className="content-grid content-grid-main">
-        {canBank ? (
+        {canBank && books.leftoverCents !== null ? (
           <section className="panel">
             <div className="panel-header">
               <div>
@@ -127,7 +163,7 @@ export default async function OverviewPage({
             <MoneyDonut
               slices={slices}
               centerLabel="Store leftover"
-              centerCents={pnl.storeLeftoverCents}
+              centerCents={books.leftoverCents ?? 0}
             />
           </section>
         ) : null}

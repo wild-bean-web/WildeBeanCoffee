@@ -110,11 +110,7 @@ export default async function SalesPage({
             {canViewExpenses ? (
               <SalesExpenseGraph days={graphDays} today={todayIso()} />
             ) : null}
-            <CloverSalesImport
-              from={range?.startsOn ?? ""}
-              to={range?.endsOn ?? ""}
-              configured={configured}
-            />
+            <CloverSalesImport configured={configured} />
           </>
         }
       />
