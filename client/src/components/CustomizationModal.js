@@ -46,7 +46,15 @@ const PREDETERMINED_BOWL_DEFAULTS = {
   },
 };
 
-const MILK_CHOICE_GROUPS = ["Milk Choice", "Milk Choice (Smoothies)"];
+const MILK_CHOICE_GROUPS = [
+  "Milk Choice",
+  "Milk Choice (Smoothies)",
+  "Milk Choice (Included)",
+];
+const INCLUDED_OAT_MILK_DRINKS = new Set([
+  "Tiramisu Cacao Shaken Espresso",
+  "Tiramisu Shaken Espresso",
+]);
 const SYRUP_GROUP_NAME = "Syrups & sweeteners";
 const HIDDEN_MODIFIER_OPTION_NAMES = new Set(["HALF A PUMP"]);
 
@@ -629,16 +637,16 @@ export default function CustomizationModal({
               defaultOption = group.options.find(
                 (opt) => opt.name === "Regular Ice" && opt.available,
               );
-            } else if (
-              group.name === "Milk Choice" ||
-              group.name === "Milk Choice (Smoothies)"
-            ) {
+            } else if (MILK_CHOICE_GROUPS.includes(group.name)) {
               const isMatchaDrink =
                 menuItem?.tags?.includes("matcha") ||
                 /matcha/i.test(menuItem?.name || "");
               let defaultMilk = isMatchaDrink ? "2% Milk" : "Whole Milk";
               if (menuItem?.name === "Berry Mango Tango") {
                 defaultMilk = "Almond Milk";
+              }
+              if (INCLUDED_OAT_MILK_DRINKS.has(menuItem?.name)) {
+                defaultMilk = "Oat Milk";
               }
               defaultOption = group.options.find(
                 (opt) => opt.name === defaultMilk && opt.available,

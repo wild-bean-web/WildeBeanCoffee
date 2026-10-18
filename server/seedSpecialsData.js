@@ -24,6 +24,8 @@ export function b(item, oz16, oz20 = "") {
  *   build?: { item: string, oz16: string, oz20?: string }[],
  *   toppings?: string[],
  *   method?: string[],
+ *   sizeSmall?: string,
+ *   sizeLarge?: string,
  *   notes?: string,
  * }} SpecialSeed */
 
@@ -125,6 +127,21 @@ export const specialsSeed = [
       "Garnish with hazelnut sauce",
     ],
     notes: "20 oz is a suggested recipe.",
+  },
+  {
+    name: "Caramel Apple Butter Shaken Espresso",
+    category: "Coffee",
+    weekOf: "2026-09-28",
+    weekLabel: "9/28",
+    base: ["Double shot espresso", "Splash of milk of choice"],
+    build: [b("Caramel apple butter", "3 pumps", "4 pumps")],
+    toppings: ["Light caramel drizzle"],
+    method: [
+      "Caramel apple butter + double shot espresso",
+      "Shake with ice",
+      "Finish with a splash of the customer's choice of milk",
+      "Garnish with a light caramel drizzle",
+    ],
   },
   {
     name: "Caramel Bun Shaken Espresso",
@@ -250,17 +267,24 @@ export const specialsSeed = [
   {
     name: "Fallin' for Coconut",
     category: "Coffee",
-    weekOf: "2026-09-14",
-    weekLabel: "9/14",
-    base: ["Almond milk", "Ice", "Double shot espresso"],
+    weekOf: "2026-09-28",
+    weekLabel: "9/28",
+    sizeSmall: "12 oz hot / 16 oz iced",
+    sizeLarge: "16 oz hot / 20 oz iced",
+    base: [
+      "Double shot espresso",
+      "Hot: steamed milk",
+      "Iced: milk and ice",
+    ],
     build: [
       b("Mocha", "1 pump", "1 pump"),
       b("Coconut", "1 pump", "2 pumps"),
     ],
     toppings: [],
     method: [
-      "Syrups + almond milk + ice",
-      "Double shot espresso",
+      "Syrups in cup",
+      "Hot: pull espresso, then steamed milk",
+      "Iced: add milk and ice, then espresso",
     ],
   },
   {
@@ -279,6 +303,31 @@ export const specialsSeed = [
     ],
   },
   {
+    name: "L'Orange Truffle Mocha",
+    category: "Coffee",
+    weekOf: "2026-09-28",
+    weekLabel: "9/28",
+    sizeSmall: "12 oz hot / 16 oz iced",
+    sizeLarge: "16 oz hot / 20 oz iced",
+    base: [
+      "Double shot espresso",
+      "Hot: steamed oat milk",
+      "Iced: oat milk and ice",
+    ],
+    build: [
+      b("Chocolate", "1 1/4 pumps", "2 1/4 pumps"),
+      b("Orange extract", "7 drops", "10 drops"),
+    ],
+    toppings: ["Whipped cream", "Cocoa powder"],
+    method: [
+      "Chocolate + orange extract in cup",
+      "Hot: pull espresso, then steamed oat milk",
+      "Iced: add oat milk and ice, then espresso",
+      "Top with whipped cream",
+      "Garnish with cocoa powder",
+    ],
+  },
+  {
     name: "Mango Spiced Cold Brew",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -287,6 +336,30 @@ export const specialsSeed = [
     build: [],
     toppings: ["Mango cold foam", "Cinnamon powder"],
     notes: "Same build for 16 oz and 20 oz.",
+  },
+  {
+    name: "Maple Pecan Latte",
+    category: "Coffee",
+    weekOf: "2026-09-28",
+    weekLabel: "9/28",
+    sizeSmall: "12 oz hot / 16 oz iced",
+    sizeLarge: "16 oz hot / 20 oz iced",
+    base: [
+      "Double shot espresso",
+      "Hot: steamed milk",
+      "Iced: milk and ice",
+    ],
+    build: [
+      b("Maple", "1 pump", "2 pumps"),
+      b("Pecan", "1 pump", "1 pump"),
+    ],
+    toppings: ["Cinnamon"],
+    method: [
+      "Syrups in cup",
+      "Hot: pull espresso, then steamed milk",
+      "Iced: add milk and ice, then espresso",
+      "Garnish with cinnamon",
+    ],
   },
   {
     name: "Neapolitan Dream (Shaken Espresso)",
@@ -314,6 +387,21 @@ export const specialsSeed = [
       "Double shot espresso",
       "Top with vanilla cold foam",
       "Garnish with pecan crunch",
+    ],
+  },
+  {
+    name: "Pistachio Hazelnut Dream",
+    category: "Coffee",
+    weekOf: "2026-10-12",
+    weekLabel: "10/12",
+    base: ["Oat milk", "Ice", "Double shot espresso"],
+    build: [b("Hazelnut", "2 pumps", "3 pumps")],
+    toppings: ["Pistachio cold foam", "Light pistachio sauce drizzle"],
+    method: [
+      "Hazelnut + oat milk + ice",
+      "Double shot espresso",
+      "Top with pistachio cold foam",
+      "Garnish with a light pistachio sauce drizzle",
     ],
   },
   {
@@ -378,6 +466,33 @@ export const specialsSeed = [
       "Double shot espresso",
       "Top with vanilla cold foam",
       "Garnish with cinnamon sugar",
+    ],
+  },
+  {
+    name: "Pumpkin Banana Bread Bliss",
+    category: "Coffee",
+    weekOf: "2026-10-12",
+    weekLabel: "10/12",
+    sizeSmall: "12 oz hot / 16 oz iced",
+    sizeLarge: "16 oz hot / 20 oz iced",
+    base: [
+      "Double shot espresso",
+      "Hot: steamed milk",
+      "Iced: milk and ice",
+    ],
+    build: [
+      b("Pumpkin pie sauce", "Line cup", "Line cup"),
+      b("Pumpkin", "1 pump", "2 pumps"),
+      b("Banana bread", "1 pump", "1 pump"),
+    ],
+    toppings: ["Whipped cream", "Graham-cracker crumbs"],
+    method: [
+      "Line the inside of the cup with pumpkin pie sauce",
+      "Syrups in cup",
+      "Hot: pull espresso, then steamed milk",
+      "Iced: add milk and ice, then espresso",
+      "Top with whipped cream",
+      "Garnish with graham-cracker crumbs",
     ],
   },
   {
@@ -491,6 +606,21 @@ export const specialsSeed = [
     method: ["Add syrups + salt + espresso", "Shake with ice", "Finish with splash of milk"],
   },
   {
+    name: "Salted Maple Toffee Cloud",
+    category: "Coffee",
+    weekOf: "2026-10-12",
+    weekLabel: "10/12",
+    base: ["Oat milk", "Ice", "Double shot espresso"],
+    build: [b("Toffee", "2 pumps", "3 pumps")],
+    toppings: ["Maple cold foam", "Very light pinch of sea salt"],
+    method: [
+      "Toffee + oat milk + ice",
+      "Double shot espresso",
+      "Top with maple cold foam",
+      "Garnish with a very light pinch of sea salt",
+    ],
+  },
+  {
     name: "Skinny Shaken Espresso",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -594,6 +724,24 @@ export const specialsSeed = [
       "Add ice",
       "Top with vanilla cold foam",
       "Garnish with a dust of cinnamon powder",
+    ],
+  },
+  {
+    name: "Blueberry Pancake Chai",
+    category: "Chai",
+    weekOf: "2026-10-12",
+    weekLabel: "10/12",
+    base: ["Milk", "Ice"],
+    build: [
+      b("Blueberry puree", "1 oz", "1.2 oz"),
+      b("Chai concentrate", "5 pumps", "8 pumps"),
+    ],
+    toppings: ["Maple cold foam", "Cinnamon sugar"],
+    method: [
+      "Blueberry + chai + milk, mix",
+      "Add ice",
+      "Top with maple cold foam",
+      "Garnish with cinnamon sugar",
     ],
   },
   {
@@ -1024,6 +1172,8 @@ export function buildSearchText(item) {
     ...(item.toppings || []),
     ...(item.method || []),
     item.notes || "",
+    item.sizeSmall,
+    item.sizeLarge,
     ...(item.build || []).flatMap((line) => [line.item, line.oz16, line.oz20]),
   ];
   return parts.filter(Boolean).join(" ").toLowerCase();

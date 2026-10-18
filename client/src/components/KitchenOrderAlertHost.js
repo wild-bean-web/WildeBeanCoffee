@@ -9,6 +9,7 @@ import {
   getKitchenAudioEnabled,
   KITCHEN_AUDIO_CHANGED_EVENT,
 } from "@/lib/kitchenAudioPreference";
+import { formatKitchenDrinkName } from "@/lib/kitchenDrinkLabel";
 
 function playAlarmSound(context) {
   try {
@@ -309,7 +310,7 @@ export default function KitchenOrderAlertHost() {
                 {(currentAlert.items || []).map((item, idx) => (
                   <li key={idx}>
                     <span className="font-medium">
-                      {item.quantity}x {item.name}
+                      {item.quantity}x {formatKitchenDrinkName(item.name)}
                       {item.loyaltyRewardApplied ? (
                         <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                           Rewarded

@@ -11,6 +11,10 @@ import {
   getKitchenAudioEnabled,
   setKitchenAudioEnabled,
 } from "@/lib/kitchenAudioPreference";
+import {
+  formatKitchenDrinkName,
+  formatKitchenModifierGroupName,
+} from "@/lib/kitchenDrinkLabel";
 
 function estimateTotalFromDraft(draft) {
   if (!draft?.items || !Array.isArray(draft.items)) return null;
@@ -45,7 +49,7 @@ function formatDraftItemsForKitchen(items) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <span className="font-medium">
-                {item.quantity}x {item.name}
+                {item.quantity}x {formatKitchenDrinkName(item.name)}
                 {item.loyaltyRewardApplied ? (
                   <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                     Rewarded
@@ -1509,7 +1513,7 @@ function OrderCard({
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <span className="font-medium">
-                    {item.quantity}x {item.name}
+                    {item.quantity}x {formatKitchenDrinkName(item.name)}
                     {item.loyaltyRewardApplied ? (
                       <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                         Rewarded
@@ -1529,6 +1533,8 @@ function OrderCard({
                         if (["Cup Size (12-16)", "Cup Size (16-20)", "Cold Brew Cup Size (16-20)"].includes(rawGroupName)) {
                           groupDisplayName = "Cup Size";
                         }
+                        groupDisplayName =
+                          formatKitchenModifierGroupName(rawGroupName) || groupDisplayName;
                         const optionsText = modifier.selectedOptions
                           .map((opt) => {
                             const q = opt.quantity || 1;

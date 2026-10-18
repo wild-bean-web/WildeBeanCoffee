@@ -72,6 +72,8 @@ async function seedSpecials() {
       })),
       toppings: item.toppings || [],
       method: item.method || [],
+      sizeSmall: item.sizeSmall || "16 oz",
+      sizeLarge: item.sizeLarge || "20 oz",
       weekOf,
       weekLabel: item.weekLabel || "",
       notes: item.notes || "",
@@ -99,6 +101,23 @@ async function seedSpecials() {
   if (renamed.deletedCount) {
     console.log(
       `[seed:specials] Removed ${renamed.deletedCount} renamed special(s)`,
+    );
+  }
+
+  const retired = await Special.deleteMany({
+    $or: [
+      {
+        name: "Fallin' for Coconut",
+        weekOf: new Date("2026-09-14T12:00:00.000Z"),
+      },
+      { name: "Iced Fallin' for Coconut" },
+      { name: "Iced L'Orange Truffle Mocha" },
+      { name: "Iced Maple Pecan Latte" },
+    ],
+  });
+  if (retired.deletedCount) {
+    console.log(
+      `[seed:specials] Removed ${retired.deletedCount} retired special(s)`,
     );
   }
 

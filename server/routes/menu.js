@@ -7,6 +7,7 @@ import {
   isModifierOptionHiddenFromCustomer,
   stripHiddenModifierOptions,
 } from "../config/customerMenuExclusions.js";
+import { applyIncludedMilkPricing } from "../config/includedMilk.js";
 
 const router = express.Router();
 
@@ -45,7 +46,8 @@ router.get("/", async (req, res, next) => {
       .lean();
     items = items
       .filter((item) => !isMenuItemHiddenFromCustomer(item.name))
-      .map(stripHiddenModifierOptions);
+      .map(stripHiddenModifierOptions)
+      .map(applyIncludedMilkPricing);
 
     // For Coffee & Espresso section, sort hot items before iced/cold items
     if (section === "Coffee & Espresso" || (!section && items.some(item => item.section === "Coffee & Espresso"))) {
@@ -137,7 +139,9 @@ router.get("/:id", async (req, res, next) => {
     if (isMenuItemHiddenFromCustomer(item.name)) {
       return errorResponse(res, 404, "Menu item not found");
     }
-    res.json({ data: stripHiddenModifierOptions(item) });
+    res.json({
+      data: applyIncludedMilkPricing(stripHiddenModifierOptions(item)),
+    });
   } catch (err) {
     next(err);
   }
