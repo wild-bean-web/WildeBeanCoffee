@@ -13,13 +13,17 @@ import { generateToken } from "../middleware/auth.js";
 const app = createTestApp();
 
 async function createNonAdminUser() {
-  const user = await User.create({
-    firstName: "Regular",
-    lastName: "User",
-    email: "customer@example.com",
-    phone: "555-111-2222",
-    password: await bcrypt.hash("password", 10),
-  });
+  const email = "customer@example.com";
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.create({
+      firstName: "Regular",
+      lastName: "User",
+      email,
+      phone: "555-111-2222",
+      password: await bcrypt.hash("password", 10),
+    });
+  }
   return {
     user,
     authHeader: `Bearer ${generateToken(user._id.toString())}`,
