@@ -1098,7 +1098,7 @@ export const specialsSeed = [
       b("Honey", "½ oz", "1 oz"),
       b("Vanilla", "1 pump", "1 pump"),
       b("Orange extract", "7 drops", "10 drops"),
-      b("Matcha", "Standard 12 oz portion", "Standard 16 oz portion"),
+      b("Matcha", "1.2 oz", "1.5 oz"),
     ],
     toppings: ["Light dusting of cinnamon"],
     method: [
