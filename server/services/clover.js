@@ -2,6 +2,7 @@
  * Clover API Service
  * Handles payment processing and receipt printing via Clover API
  */
+import { HostedCheckoutDraft } from "../models/index.js";
 import {
   draftChargeTargetsCents,
   selectHostedCheckoutPayment,
@@ -146,7 +147,21 @@ export async function tryMarkHostedCheckoutPaidFromCloverPaymentLookup(
       offset += batch.length;
     }
 
-    const selected = selectHostedCheckoutPayment(elements, draftLean, Date.now());
+    const claimed = await HostedCheckoutDraft.find({
+      checkoutSessionId: { $ne: id },
+      paymentId: { $nin: [null, ""] },
+      createdAt: {
+        $gte: new Date(windowStart),
+        $lte: new Date(windowEnd),
+      },
+    })
+      .select("paymentId")
+      .lean();
+    const excludePaymentIds = claimed.map((d) => d.paymentId);
+
+    const selected = selectHostedCheckoutPayment(elements, draftLean, Date.now(), {
+      excludePaymentIds,
+    });
     if (!selected.ok && selected.reason === "ambiguous") {
       console.warn(
         "[CLOVER] hosted checkout payment lookup ambiguous",

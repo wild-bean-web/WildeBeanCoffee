@@ -884,13 +884,24 @@ export default function KitchenDashboard() {
       </AnimatePresence>
 
        {/* Header */}
-       <div className="bg-[var(--coffee-brown)] text-white shadow-lg">
+       <div
+         className={`text-white shadow-lg ${
+           onlineOrderingPaused
+             ? "bg-red-800 ring-4 ring-inset ring-red-500"
+             : "bg-[var(--coffee-brown)]"
+         }`}
+       >
          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
            {/* Mobile/tablet Layout: Stacked (screens under 900px) */}
            <div className="flex flex-col gap-4 min-[900px]:hidden">
              {/* Title and Status */}
              <div>
                <h1 className="text-2xl font-bold">Kitchen Dashboard</h1>
+               {onlineOrderingPaused && (
+                 <p className="mt-1 text-sm font-bold uppercase tracking-wide text-red-100">
+                   Online ordering paused
+                 </p>
+               )}
                <p className="mt-1 text-sm text-white/80">
                  {isConnected ? (
                    <span className="flex items-center gap-2">
@@ -1010,6 +1021,11 @@ export default function KitchenDashboard() {
            <div className="hidden min-[900px]:flex min-[900px]:items-center min-[900px]:justify-between">
              <div>
                <h1 className="text-3xl font-bold">Kitchen Dashboard</h1>
+               {onlineOrderingPaused && (
+                 <p className="mt-1 text-sm font-bold uppercase tracking-wide text-red-100">
+                   Online ordering paused
+                 </p>
+               )}
                <p className="mt-1 text-sm text-white/80">
                  {isConnected ? (
                    <span className="flex items-center gap-2">
@@ -1125,36 +1141,58 @@ export default function KitchenDashboard() {
          </div>
        </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      {onlineOrderingPaused && (
         <div
-          className={`mb-6 rounded-lg border p-4 ${
-            onlineOrderingPaused
-              ? "border-red-200 bg-red-50"
-              : "border-emerald-200 bg-emerald-50"
-          }`}
+          role="status"
+          aria-live="polite"
+          className="sticky top-0 z-30 border-b-4 border-red-950 bg-red-600 text-white shadow-xl"
         >
-          <p
-            className={`text-sm font-semibold ${
-              onlineOrderingPaused ? "text-red-800" : "text-emerald-800"
-            }`}
-          >
-            {onlineOrderingPaused
-              ? "Online ordering is currently paused."
-              : "Online ordering is currently active."}
-          </p>
-          {onlineOrderingPaused && (
-            <p className="mt-1 text-xs text-red-700">
-              Paused{" "}
-              {onlineOrderingPausedAt
-                ? `${getTimeAgo(onlineOrderingPausedAt)}`
-                : "recently"}
-              {onlineOrderingPausedByEmail
-                ? ` by ${onlineOrderingPausedByEmail}`
-                : ""}
-              .
-            </p>
-          )}
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block h-3 w-3 shrink-0 animate-pulse rounded-full bg-white"
+                  aria-hidden
+                />
+                <p className="text-lg font-black uppercase tracking-wide sm:text-xl">
+                  Online ordering paused
+                </p>
+              </div>
+              <p className="mt-1 text-sm text-red-50">
+                Customers cannot place new website orders. Existing kitchen
+                tickets below stay open and can still be worked as usual.
+              </p>
+              <p className="mt-1 text-xs font-medium text-red-100">
+                Paused{" "}
+                {onlineOrderingPausedAt
+                  ? getTimeAgo(onlineOrderingPausedAt)
+                  : "recently"}
+                {onlineOrderingPausedByEmail
+                  ? ` by ${onlineOrderingPausedByEmail}`
+                  : ""}
+                .
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => openOnlineOrderingModal(false)}
+              disabled={onlineOrderingBusy}
+              className="shrink-0 rounded-lg bg-white px-5 py-3 text-sm font-bold uppercase tracking-wide text-red-700 shadow-md transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {onlineOrderingBusy ? "Updating..." : "Resume ordering"}
+            </button>
+          </div>
         </div>
+      )}
+
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {!onlineOrderingPaused && (
+          <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-sm font-semibold text-emerald-800">
+              Online ordering is currently active.
+            </p>
+          </div>
+        )}
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">

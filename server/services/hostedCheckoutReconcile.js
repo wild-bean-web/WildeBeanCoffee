@@ -12,9 +12,88 @@ const SWEEP_INTERVAL_MS = 2 * 60 * 1000;
 const MIN_AGE_MS = 60 * 1000;
 const MAX_AGE_MS = 36 * 60 * 60 * 1000;
 const RETRY_ERROR_AFTER_MS = 10 * 60 * 1000;
+/** Same window as Clover payment matching — abandoned retries often sit here. */
+const SIBLING_WINDOW_BEFORE_MS = 2 * 60 * 1000;
+const SIBLING_WINDOW_AFTER_MS = 3 * 60 * 60 * 1000;
 
 let started = false;
 let running = false;
+
+function digitsOnly(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+/**
+ * Customers often create a second checkout session after abandoning the first.
+ * The later session is paid and fulfilled; the abandoned one must not claim that
+ * charge or raise a kitchen alert.
+ */
+export async function abandonDraftIfSupersededByFulfilledSibling(draft) {
+  const checkoutId = String(draft?.checkoutSessionId || "").trim();
+  const amountCents = Math.round(Number(draft?.amountCents));
+  const createdMs = new Date(draft?.createdAt || 0).getTime();
+  const email = String(draft?.orderDraft?.customer?.email || "")
+    .trim()
+    .toLowerCase();
+  const phone = digitsOnly(draft?.orderDraft?.customer?.phone);
+  if (!checkoutId || !Number.isFinite(createdMs) || createdMs <= 0 || amountCents <= 0) {
+    return false;
+  }
+  if (!email && phone.length < 7) return false;
+
+  const windowStart = new Date(createdMs - SIBLING_WINDOW_BEFORE_MS);
+  const windowEnd = new Date(createdMs + SIBLING_WINDOW_AFTER_MS);
+  const customerClause = [];
+  if (email) {
+    customerClause.push({ "orderDraft.customer.email": email });
+  }
+  if (phone.length >= 7) {
+    customerClause.push({ "orderDraft.customer.phone": draft.orderDraft.customer.phone });
+  }
+
+  const siblings = await HostedCheckoutDraft.find({
+    checkoutSessionId: { $ne: checkoutId },
+    status: "fulfilled",
+    amountCents,
+    createdAt: { $gte: windowStart, $lte: windowEnd },
+    $or: customerClause,
+  })
+    .select("checkoutSessionId orderDraft.customer")
+    .lean();
+
+  const match = siblings.find((sib) => {
+    const sibEmail = String(sib?.orderDraft?.customer?.email || "")
+      .trim()
+      .toLowerCase();
+    const sibPhone = digitsOnly(sib?.orderDraft?.customer?.phone);
+    if (email && sibEmail === email) return true;
+    if (phone.length >= 7 && sibPhone.length >= 7) {
+      return phone === sibPhone || phone.endsWith(sibPhone) || sibPhone.endsWith(phone);
+    }
+    return false;
+  });
+
+  if (!match) return false;
+
+  await HostedCheckoutDraft.updateOne(
+    { checkoutSessionId: checkoutId },
+    {
+      $set: { status: "abandoned" },
+      $unset: {
+        lastPlacementError: 1,
+        lastPlacementErrorAt: 1,
+        paymentApprovedAt: 1,
+        paymentId: 1,
+        placementClaimedAt: 1,
+      },
+    },
+  );
+  console.log(
+    `[hosted-checkout-reconcile] abandoned superseded draft ${checkoutId} ` +
+      `(sibling fulfilled ${match.checkoutSessionId})`,
+  );
+  return true;
+}
 
 /**
  * Create kitchen orders for website checkouts Clover already charged
@@ -26,7 +105,7 @@ export async function reconcileUnfulfilledHostedCheckouts() {
   try {
     const now = Date.now();
     const drafts = await HostedCheckoutDraft.find({
-      status: { $ne: "fulfilled" },
+      status: { $nin: ["fulfilled", "abandoned"] },
       createdAt: {
         $gte: new Date(now - MAX_AGE_MS),
         $lte: new Date(now - MIN_AGE_MS),
@@ -69,6 +148,10 @@ async function recoverDraftIfPaid(draft) {
       { checkoutSessionId: checkoutId },
       { $set: { status: "fulfilled", fulfilledOrderId: existing._id } },
     );
+    return false;
+  }
+
+  if (await abandonDraftIfSupersededByFulfilledSibling(draft)) {
     return false;
   }
 
