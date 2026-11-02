@@ -498,4 +498,34 @@ export const modifierGroups = [
       { name: "Chamomile Tea", price: 0, available: true },
     ],
   },
+  {
+    name: "Catering Milk",
+    description: "Select 1 to 2 milk options (required)",
+    type: "multiple",
+    required: true,
+    minSelections: 1,
+    maxSelections: 2,
+    options: [
+      { name: "2% Milk", price: 0, available: true },
+      { name: "Whole Milk", price: 0, available: true },
+      { name: "Half and Half", price: 0, available: true },
+      { name: "Skim Milk", price: 0, available: true },
+      { name: "No Milk", price: 0, available: true },
+    ],
+  },
+  {
+    name: "Included Supplies",
+    description: "Included with each traveler (required)",
+    type: "single",
+    required: true,
+    minSelections: 1,
+    maxSelections: 1,
+    options: [
+      {
+        name: "Sugar, Sweeteners, Stirrers & Napkins",
+        price: 0,
+        available: true,
+      },
+    ],
+  },
 ];

@@ -11,6 +11,7 @@ import ErrorDisplay from "@/components/ErrorDisplay";
 import CustomizationModal from "@/components/CustomizationModal";
 import BeanStampsPromo from "@/components/BeanStampsPromo";
 import { GRAND_OPENING_DATE, PASTRIES_ORDERING_ENABLED, PASTRIES_SECTION_NAME } from "@/lib/constants";
+import { getAddToCartLabel } from "@/lib/menuCustomizeLabel";
 
 const COFFEE_ESPRESSO_SECTION = "Coffee & Espresso";
 
@@ -257,10 +258,7 @@ function AddToCartControl({
   const showStepper = !hasModifiers && cartQuantity > 0;
 
   if (!showStepper) {
-    const cardLabel =
-      item.name === "Build Your Own Bowl" && hasModifiers
-        ? "Customize"
-        : "Add to Cart";
+    const cardLabel = getAddToCartLabel(item);
     return (
       <button
         type="button"
@@ -565,6 +563,7 @@ function MenuPageContent() {
     "Tea",
     "Smoothies (Organic & Fresh)",
     "Wild Bowl",
+    "Catering",
     "Bakery & Pastries",
   ];
 
@@ -621,6 +620,7 @@ function MenuPageContent() {
     "Tea",
     "Smoothies (Organic & Fresh)",
     "Wild Bowl",
+    "Catering",
     "Bakery & Pastries",
   ];
 
@@ -1217,7 +1217,7 @@ function MenuPageContent() {
                           onClick={() => handleAddToCartClick(selectedMenuItem)}
                           className="rounded-full bg-[var(--lime-green)] px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-[var(--lime-green-dark)]"
                         >
-                          {selectedMenuItem.name === "Build Your Own Bowl" && selectedMenuItem.modifierGroups?.length > 0 ? "Customize" : "Add to Cart"}
+                          {getAddToCartLabel(selectedMenuItem)}
                         </button>
                       ) : (
                         <div className="flex items-center justify-between rounded-full border-2 border-[var(--coffee-brown-medium-light)] bg-[var(--coffee-brown-medium-light)]">
