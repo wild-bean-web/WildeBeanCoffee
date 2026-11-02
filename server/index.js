@@ -45,6 +45,7 @@ import {
   getDatabaseNameFromUri,
   getUserFromUri,
 } from "./config/mongoUri.js";
+import { startHostedCheckoutReconcile } from "./services/hostedCheckoutReconcile.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -97,6 +98,7 @@ async function connectWithRetry(attempt = 1) {
     dbState.lastConnectedAt = new Date().toISOString();
     dbState.database = mongoose.connection.db.databaseName;
     console.log(`Connected to MongoDB (database: ${dbState.database})`);
+    startHostedCheckoutReconcile();
   } catch (err) {
     dbState.status = "error";
     dbState.lastError = err.message;

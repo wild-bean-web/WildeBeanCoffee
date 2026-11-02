@@ -284,7 +284,7 @@ async function validatePickupTimeWithinHours(pickupTime) {
     dayHours?.closes != null
   ) {
     const [openH, openM] = (dayHours.opens || "06:00").split(":").map(Number);
-    const [closeH, closeM] = (dayHours.closes || "20:00")
+    const [closeH, closeM] = (dayHours.closes || "18:00")
       .split(":")
       .map(Number);
     const openMinutes = openH * 60 + (openM || 0);

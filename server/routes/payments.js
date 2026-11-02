@@ -390,7 +390,7 @@ router.post("/webhook", async (req, res) => {
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("[PAYMENT ROUTE] Webhook error:", err);
-    res.status(200).json({ received: true, error: err.message });
+    res.status(500).json({ received: false, error: err.message });
   }
 });
 

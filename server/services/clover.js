@@ -2,6 +2,10 @@
  * Clover API Service
  * Handles payment processing and receipt printing via Clover API
  */
+import {
+  draftChargeTargetsCents,
+  selectHostedCheckoutPayment,
+} from "./hostedCheckoutPaymentMatch.js";
 
 // Lazy-load configuration to ensure environment variables are loaded first
 // This prevents issues with ES module hoisting where imports happen before dotenv.config()
@@ -75,17 +79,10 @@ function getCloverHeaders() {
   };
 }
 
-function paymentCreatedTimeMs(createdTime) {
-  const n = Number(createdTime);
-  if (!Number.isFinite(n)) return NaN;
-  if (n > 0 && n < 1e12) return Math.round(n * 1000);
-  return Math.round(n);
-}
-
 /**
  * When the Hosted Checkout merchant webhook never reaches our server, infer approval from
- * Clover v3 payments: exactly one SUCCESS payment matching draft amount (cents) in a time
- * window around the draft. Safer than trusting the client; still requires a unique match.
+ * Clover v3 payments in the hours after the draft was created. Clover stores the pretax
+ * food subtotal; the draft total includes tax and tip. Exactly one website payment may match.
  *
  * @param {string} checkoutSessionId
  * @param {{ amountCents?: number, createdAt?: Date|string }} draftLean
@@ -97,74 +94,68 @@ export async function tryMarkHostedCheckoutPaidFromCloverPaymentLookup(
 ) {
   initializeConfig();
   const id = String(checkoutSessionId || "").trim();
-  const expectedCents = Math.round(Number(draftLean?.amountCents));
-  if (!id || !Number.isFinite(expectedCents) || expectedCents <= 0) {
+  const targets = draftChargeTargetsCents(draftLean);
+  const draftMs = draftLean?.createdAt
+    ? new Date(draftLean.createdAt).getTime()
+    : NaN;
+  if (!id || targets.size === 0 || !Number.isFinite(draftMs)) {
     return { ok: false, reason: "bad_inputs" };
   }
   if (!CLOVER_API_KEY || !CLOVER_MERCHANT_ID) {
     return { ok: false, reason: "no_clover_config" };
   }
 
-  const draftMs = draftLean?.createdAt
-    ? new Date(draftLean.createdAt).getTime()
-    : Date.now() - 30 * 60 * 1000;
-  const windowStart = draftMs - 5 * 60 * 1000;
-  const windowEnd = Date.now() + 10 * 60 * 1000;
-
-  const url = `${CLOVER_API_BASE_URL}/v3/merchants/${CLOVER_MERCHANT_ID}/payments?limit=200`;
+  const windowStart = draftMs - 2 * 60 * 1000;
+  const windowEnd = Math.min(Date.now() + 60 * 1000, draftMs + 3 * 60 * 60 * 1000);
   const headers = {
     ...getCloverHeaders(),
     "User-Agent": "WildBeanCoffee/1.0 (hosted-checkout-recover)",
   };
 
   try {
-    const response = await fetch(url, { method: "GET", headers });
-    const text = await response.text();
-    let data = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      /* ignore */
-    }
-    if (!response.ok) {
-      console.error(
-        "[CLOVER] list payments for hosted approval sync",
-        response.status,
-        String(text || "").slice(0, 400),
+    const elements = [];
+    let offset = 0;
+    for (let page = 0; page < 3; page += 1) {
+      const url = new URL(
+        `${CLOVER_API_BASE_URL}/v3/merchants/${CLOVER_MERCHANT_ID}/payments`,
       );
-      return { ok: false, reason: "clover_http_error" };
+      url.searchParams.set("limit", "100");
+      url.searchParams.set("offset", String(offset));
+      url.searchParams.append("filter", `createdTime>=${windowStart}`);
+      url.searchParams.append("filter", `createdTime<=${windowEnd}`);
+      url.searchParams.set("expand", "employee");
+      const response = await fetch(url, { method: "GET", headers });
+      const text = await response.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        /* ignore */
+      }
+      if (!response.ok) {
+        console.error(
+          "[CLOVER] list payments for hosted approval sync",
+          response.status,
+          String(text || "").slice(0, 400),
+        );
+        return { ok: false, reason: "clover_http_error" };
+      }
+      const batch = Array.isArray(data?.elements) ? data.elements : [];
+      elements.push(...batch);
+      if (batch.length < 100) break;
+      offset += batch.length;
     }
 
-    const elements = Array.isArray(data?.elements) ? data.elements : [];
-    const candidates = elements.filter((p) => {
-      const amt = Number(p?.amount);
-      const ct = paymentCreatedTimeMs(p?.createdTime);
-      const res = String(p?.result || "").toUpperCase();
-      if (res !== "SUCCESS") return false;
-      if (!Number.isFinite(amt) || amt !== expectedCents) return false;
-      if (!Number.isFinite(ct) || ct < windowStart || ct > windowEnd) return false;
-      if (p?.voided === true) return false;
-      return true;
-    });
-
-    if (candidates.length === 0) {
-      return { ok: false, reason: "no_match" };
-    }
-    if (candidates.length > 1) {
+    const selected = selectHostedCheckoutPayment(elements, draftLean, Date.now());
+    if (!selected.ok && selected.reason === "ambiguous") {
       console.warn(
         "[CLOVER] hosted checkout payment lookup ambiguous",
         id,
-        "expectedCents=",
-        expectedCents,
-        "matches=",
-        candidates.length,
+        "targets=",
+        [...targets].join(","),
       );
-      return { ok: false, reason: "ambiguous" };
     }
-
-    const paymentId = String(candidates[0].id || "").trim();
-    if (!paymentId) return { ok: false, reason: "no_payment_id" };
-    return { ok: true, paymentId };
+    return selected;
   } catch (err) {
     console.error("[CLOVER] tryMarkHostedCheckoutPaidFromCloverPaymentLookup", err);
     return { ok: false, reason: "exception" };
