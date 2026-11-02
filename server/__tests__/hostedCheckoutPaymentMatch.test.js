@@ -85,4 +85,22 @@ describe("selectHostedCheckoutPayment", () => {
     );
     expect(result).toEqual({ ok: false, reason: "ambiguous" });
   });
+
+  it("ignores a payment already claimed by another fulfilled checkout", () => {
+    const result = selectHostedCheckoutPayment(
+      [
+        {
+          id: "YSY7FXZNH2N7A",
+          amount: 830,
+          result: "SUCCESS",
+          createdTime: new Date("2026-09-24T23:04:23.000Z").getTime(),
+          employee: { id: "DFLTEMPLOYEE" },
+        },
+      ],
+      ashleyDraft,
+      new Date("2026-09-24T23:10:00.000Z").getTime(),
+      { excludePaymentIds: ["YSY7FXZNH2N7A"] },
+    );
+    expect(result).toEqual({ ok: false, reason: "no_match" });
+  });
 });

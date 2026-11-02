@@ -30,17 +30,32 @@ export function draftChargeTargetsCents(draft) {
 
 /**
  * Pick the single hosted-checkout payment that belongs to this draft.
- * Ignores in-store tickets (a named register employee) and charges outside
- * the few hours after the checkout was created.
+ * Ignores in-store tickets (a named register employee), charges outside
+ * the few hours after the checkout was created, and payment ids already
+ * claimed by another fulfilled website checkout.
+ * @param {object[]} payments
+ * @param {object} draft
+ * @param {number} [now]
+ * @param {{ excludePaymentIds?: Iterable<string> }} [options]
  * @returns {{ ok: true, paymentId: string } | { ok: false, reason: string }}
  */
-export function selectHostedCheckoutPayment(payments, draft, now = Date.now()) {
+export function selectHostedCheckoutPayment(
+  payments,
+  draft,
+  now = Date.now(),
+  options = {},
+) {
   const createdAt = new Date(draft?.createdAt || 0).getTime();
   const targets = draftChargeTargetsCents(draft);
   if (!Number.isFinite(createdAt) || createdAt <= 0 || targets.size === 0) {
     return { ok: false, reason: "bad_inputs" };
   }
 
+  const exclude = new Set(
+    [...(options.excludePaymentIds || [])]
+      .map((id) => String(id || "").trim())
+      .filter(Boolean),
+  );
   const start = createdAt - WINDOW_BEFORE_MS;
   const end = Math.min(now + 60 * 1000, createdAt + WINDOW_AFTER_MS);
   const matches = [];
@@ -48,6 +63,8 @@ export function selectHostedCheckoutPayment(payments, draft, now = Date.now()) {
   for (const payment of payments || []) {
     if (String(payment?.result || "").toUpperCase() !== "SUCCESS") continue;
     if (payment?.voided === true) continue;
+    const paymentId = String(payment?.id || "").trim();
+    if (paymentId && exclude.has(paymentId)) continue;
     const employeeId =
       payment?.employee?.id ||
       (typeof payment?.employee === "string" ? payment.employee : "");

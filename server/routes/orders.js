@@ -192,6 +192,7 @@ router.get(
       const pendingSince = new Date(Date.now() - pendingWindowMs);
 
       const withErrors = await HostedCheckoutDraft.find({
+        status: { $nin: ["abandoned"] },
         lastPlacementError: { $nin: [null, ""] },
         paymentApprovedAt: { $ne: null },
       })
@@ -203,7 +204,7 @@ router.get(
         .lean();
 
       const pendingRecent = await HostedCheckoutDraft.find({
-        status: "pending",
+        status: { $in: ["pending"] },
         paymentApprovedAt: { $ne: null },
         createdAt: { $gte: pendingSince },
       })
