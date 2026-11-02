@@ -131,9 +131,9 @@ function OrderPageContent() {
   const [notes, setNotes] = useState("");
   const [storeHours, setStoreHours] = useState({
     open: 6,
-    close: 20,
+    close: 18,
     closeMinute: 0,
-  }); // Default fallback (6am-8pm)
+  }); // Default fallback (6am-6pm) until location API responds
   const [locationHours, setLocationHours] = useState(null); // Per-day hours from API for selected-date time slots
   const [onlineOrderingPaused, setOnlineOrderingPaused] = useState(false);
   const [successAnimation, setSuccessAnimation] = useState(null);
@@ -208,7 +208,7 @@ function OrderPageContent() {
           if (todayHours && !todayHours.closed) {
             // Parse opening and closing times (format: "HH:mm")
             const openTime = todayHours.opens?.split(":") || ["07", "00"];
-            const closeTime = todayHours.closes?.split(":") || ["20", "00"];
+            const closeTime = todayHours.closes?.split(":") || ["18", "00"];
 
             setStoreHours({
               open: parseInt(openTime[0], 10),
@@ -411,7 +411,7 @@ function OrderPageContent() {
         dayHours.closes != null
       ) {
         const openParts = (dayHours.opens || "06:00").split(":").map(Number);
-        const closeParts = (dayHours.closes || "20:00").split(":").map(Number);
+        const closeParts = (dayHours.closes || "18:00").split(":").map(Number);
         openHour = openParts[0];
         openMinute = openParts[1] || 0;
         closeHour = closeParts[0];

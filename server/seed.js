@@ -7,6 +7,7 @@ import { modifierGroups } from "./seedModifierGroups.js";
 import { menuItemsFromCSV } from "./seedMenuItemsFromCSV.js";
 import { applyRecipeIngredientsToSeedItem } from "./services/menuAvailabilityService.js";
 import { clearCatalogData, CATALOG_MODELS } from "./config/catalogSeed.js";
+import { STORE_HOURS } from "./config/storeHours.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -377,15 +378,7 @@ const locations = [
     phone: "+1 227-280-7062",
     email: "info@wildbeancoffeeshop.com",
     mapsUrl: "",
-    hours: [
-      { day: "Monday", opens: "07:00", closes: "20:00" },
-      { day: "Tuesday", opens: "07:00", closes: "20:00" },
-      { day: "Wednesday", opens: "07:00", closes: "20:00" },
-      { day: "Thursday", opens: "07:00", closes: "20:00" },
-      { day: "Friday", opens: "07:00", closes: "20:00" },
-      { day: "Saturday", opens: "07:00", closes: "20:00" },
-      { day: "Sunday", opens: "08:00", closes: "20:00" },
-    ],
+    hours: STORE_HOURS.map((h) => ({ ...h })),
     onlineOrderingPaused: false,
     onlineOrderingPausedAt: null,
     onlineOrderingPausedByEmail: null,
