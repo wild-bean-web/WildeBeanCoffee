@@ -29,7 +29,7 @@ describe("Catering coffee traveler seed", () => {
     );
   });
 
-  it("defines Included Supplies as required single with one $0 option", () => {
+  it("defines Included Supplies as required single with include + opt-out $0 options", () => {
     expect(supplies()).toMatchObject({
       type: "single",
       required: true,
@@ -39,6 +39,11 @@ describe("Catering coffee traveler seed", () => {
     expect(supplies().options).toEqual([
       {
         name: "Sugar, Sweeteners, Stirrers & Napkins",
+        price: 0,
+        available: true,
+      },
+      {
+        name: "No supplies",
         price: 0,
         available: true,
       },

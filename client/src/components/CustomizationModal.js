@@ -676,6 +676,12 @@ export default function CustomizationModal({
               defaultOption = group.options.find(
                 (opt) => opt.name === "Regular" && opt.available,
               );
+            } else if (group.name === "Included Supplies") {
+              defaultOption = group.options.find(
+                (opt) =>
+                  opt.name === "Sugar, Sweeteners, Stirrers & Napkins" &&
+                  opt.available,
+              );
             }
 
             // If a default option is found and the group is required, set it
