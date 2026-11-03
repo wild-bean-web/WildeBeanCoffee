@@ -928,6 +928,22 @@ export const menuItemsFromCSV = [
     ],
   },
 
+  // Catering
+  {
+    name: "HOT Drip Coffee Traveler (Serves 10)",
+    description:
+      "96 oz drip coffee traveler (serves 10). Each traveler includes 10 cups with lids, sugar and sweetener packets, stirrers, napkins, and milk — pick 1–2 milk options below. Ordering more than one traveler? Each one comes with its own set of cups and supplies.",
+    price: 29.99,
+    currency: "USD",
+    section: "Catering",
+    tags: ["catering", "coffee", "traveler", "pickup"],
+    allergens: ["Dairy"],
+    image: "/images/menu/Coffee/RegularCoffee.png",
+    available: true,
+    active: true,
+    modifierGroupNames: ["Catering Milk", "Included Supplies"],
+  },
+
   // Bakery & Pastries
   {
     name: "Plain Croissant",
