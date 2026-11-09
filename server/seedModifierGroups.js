@@ -526,6 +526,11 @@ export const modifierGroups = [
         price: 0,
         available: true,
       },
+      {
+        name: "No supplies",
+        price: 0,
+        available: true,
+      },
     ],
   },
 ];
