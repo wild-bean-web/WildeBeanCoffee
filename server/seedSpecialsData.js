@@ -78,6 +78,23 @@ export const specialsSeed = [
     ],
   },
   {
+    name: "Banana Sugar Shake-Up",
+    category: "Coffee",
+    weekOf: "2026-11-09",
+    weekLabel: "11/9",
+    base: ["Double shot espresso", "Splash of oat milk"],
+    build: [
+      b("Banana", "2 pumps", "2 pumps"),
+      b("Brown sugar", "1 pump", "2 pumps"),
+    ],
+    toppings: [],
+    method: [
+      "Syrups + double shot espresso",
+      "Shake thoroughly with ice",
+      "Finish with a splash of oat milk",
+    ],
+  },
+  {
     name: "Berry Blue Latte",
     category: "Coffee",
     weekOf: "2026-01-01",
@@ -288,6 +305,24 @@ export const specialsSeed = [
     ],
   },
   {
+    name: "Iced Mint Choco Dream",
+    category: "Coffee",
+    weekOf: "2026-11-09",
+    weekLabel: "11/9",
+    base: ["Milk", "Ice", "Double shot espresso"],
+    build: [
+      b("Peppermint", "2 pumps", "3 pumps"),
+      b("Chocolate", "½ pump", "½ pump"),
+    ],
+    toppings: ["Whipped cream", "Shaved chocolate"],
+    method: [
+      "Syrups + milk + ice",
+      "Double shot espresso",
+      "Top with whipped cream",
+      "Garnish with shaved chocolate",
+    ],
+  },
+  {
     name: "Irish White Chocolate Latte",
     category: "Coffee",
     weekOf: "2026-07-27",
@@ -360,6 +395,29 @@ export const specialsSeed = [
       "Iced: add milk and ice, then espresso",
       "Garnish with cinnamon",
     ],
+  },
+  {
+    name: "Mint Choco Dream",
+    category: "Coffee",
+    weekOf: "2026-11-09",
+    weekLabel: "11/9",
+    sizeSmall: "12 oz",
+    sizeLarge: "16 oz",
+    base: ["Steamed milk", "Double shot espresso"],
+    build: [
+      b("Peppermint", "2 pumps", "2 pumps"),
+      b("Chocolate", "½ pump", "½ pump"),
+    ],
+    toppings: ["Whipped cream", "Light white chocolate drizzle", "Shaved chocolate"],
+    method: [
+      "Syrups in cup",
+      "Double shot espresso",
+      "Steamed milk",
+      "Top with whipped cream",
+      "Finish with a light white chocolate drizzle",
+      "Garnish with shaved chocolate",
+    ],
+    notes: "Hot only. Same syrups for 12 oz and 16 oz.",
   },
   {
     name: "Neapolitan Dream (Shaken Espresso)",
@@ -1023,6 +1081,23 @@ export const specialsSeed = [
       "Add matcha",
       "Leave room for maple cold foam",
       "Garnish with pumpkin spice powder",
+    ],
+  },
+  {
+    name: "Minty Coconut Cloud Matcha",
+    category: "Matcha",
+    weekOf: "2026-11-09",
+    weekLabel: "11/9",
+    base: ["Almond milk", "Ice", "Matcha"],
+    build: [
+      b("Peppermint", "2 pumps", "2 pumps"),
+      b("Coconut", "1 pump", "2 pumps"),
+    ],
+    toppings: ["Coconut cold foam"],
+    method: [
+      "Peppermint + coconut + almond milk + ice",
+      "Add matcha",
+      "Top with coconut cold foam",
     ],
   },
   {
