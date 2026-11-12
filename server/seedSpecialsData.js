@@ -314,11 +314,11 @@ export const specialsSeed = [
       b("Peppermint", "2 pumps", "3 pumps"),
       b("Chocolate", "½ pump", "½ pump"),
     ],
-    toppings: ["Whipped cream", "Shaved chocolate"],
+    toppings: ["Peppermint cold foam", "Shaved chocolate"],
     method: [
       "Syrups + milk + ice",
       "Double shot espresso",
-      "Top with whipped cream",
+      "Top with peppermint cold foam",
       "Garnish with shaved chocolate",
     ],
   },
