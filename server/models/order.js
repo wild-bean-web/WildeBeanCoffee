@@ -39,6 +39,10 @@ const TotalsSchema = new mongoose.Schema(
     tax: { type: Number, required: true, min: 0, default: 0 },
     /** Optional barista tip (USD order-total portion); not taxed. */
     tip: { type: Number, min: 0, default: 0 },
+    /** UPS Ground charge for shipped bean orders. Free when the order has 5 or more bags. */
+    shipping: { type: Number, min: 0, default: 0 },
+    /** Coffee discount from a shipment coupon. Shipping is not discounted. */
+    discount: { type: Number, min: 0, default: 0 },
     total: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "USD" },
   },
@@ -76,8 +80,25 @@ const OrderSchema = new mongoose.Schema(
     },
     paymentRef: { type: String, trim: true }, // external payment ID
     pickupTime: { type: Date },
+    fulfillment: {
+      type: String,
+      enum: ["pickup", "ship"],
+      default: "pickup",
+    },
+    shippingAddress: {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      line1: { type: String, trim: true },
+      line2: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      postalCode: { type: String, trim: true },
+      country: { type: String, trim: true, default: "US" },
+    },
     notes: { type: String, trim: true },
     totals: { type: TotalsSchema, required: true },
+    /** Shipment coupon, such as DEVWBC or WBCLYTY. Empty when no code was used. */
+    couponCode: { type: String, trim: true, default: "" },
     /** Bean Stamps: one free line applied on this order. */
     loyaltyRedeemApplied: { type: Boolean, default: false },
     loyaltyDiscountSubtotal: { type: Number, min: 0, default: 0 },

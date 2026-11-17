@@ -5,7 +5,13 @@ import {
   assertUserHasFullStampCard,
   processLoyaltyAfterPaidOrder,
 } from "./loyalty.js";
-import { isBeanStampsEnabled, isAdminOrderCompEnabled } from "../config/featureFlags.js";
+import {
+  isBeanStampsEnabled,
+  isAdminOrderCompEnabled,
+  isBeanShippingEnabled,
+} from "../config/featureFlags.js";
+import { MAX_SHIP_BAGS, validateShippingAddress } from "../config/shipping.js";
+import { quoteStoredShipment } from "./beanShipment.js";
 import { BEAN_STAMPS_REWARD_PAYMENT_REF } from "../config/loyaltyConstants.js";
 import { isKitchenAdminEmail } from "../config/kitchenAdmins.js";
 import { validateTipForItems } from "./tipValidation.js";
@@ -218,6 +224,24 @@ export function validateOrderPayload(body) {
     errors.push("pickupTime must be a valid date if provided");
   }
 
+  if (body.fulfillment && !["pickup", "ship"].includes(body.fulfillment)) {
+    errors.push("fulfillment must be pickup or ship");
+  }
+  if (body.fulfillment === "ship") {
+    const shippingCheck = validateShippingAddress(body.shipping);
+    if (!shippingCheck.ok) errors.push(...shippingCheck.errors);
+    if (Number(taxRate) > 0) {
+      errors.push("Shipped whole-bean orders are not taxed");
+    }
+    if (!Array.isArray(items) || items.length !== 1 || items[0]?.itemType !== "product") {
+      errors.push("A shipped order must contain one whole-bean product");
+    } else if (!/yirgacheffe/i.test(items[0].name || "")) {
+      errors.push("Only Ethiopian Yirgacheffe can be shipped");
+    } else if (Number(items[0].quantity) > MAX_SHIP_BAGS) {
+      errors.push(`Quantity must be from 1 to ${MAX_SHIP_BAGS}`);
+    }
+  }
+
   return errors;
 }
 
@@ -386,6 +410,14 @@ export async function placeOnlineOrder(body, user, options = {}) {
     }
   }
 
+  if (body.fulfillment === "ship" && !isBeanShippingEnabled()) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Bean shipping is not available.",
+    };
+  }
+
   if (beanStampsRedeemCartKey && !isBeanStampsEnabled()) {
     return {
       ok: false,
@@ -402,7 +434,22 @@ export async function placeOnlineOrder(body, user, options = {}) {
     };
   }
 
-  if (!skipPickupScheduling) {
+  if (body.fulfillment === "ship" && beanStampsRedeemCartKey) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Rewards cannot be used on shipped bean orders.",
+    };
+  }
+  if (body.fulfillment === "ship" && paymentRefVal === "ADMIN_DISCOUNT") {
+    return {
+      ok: false,
+      status: 400,
+      message: "Shipped orders cannot be comped.",
+    };
+  }
+
+  if (!skipPickupScheduling && body.fulfillment !== "ship") {
     const pickupLeadError = validatePickupTimeMeetsMinimumLead(pickupTime);
     if (pickupLeadError) {
       return { ok: false, status: 400, message: pickupLeadError };
@@ -510,10 +557,36 @@ export async function placeOnlineOrder(body, user, options = {}) {
     }
   }
 
+  let shipmentQuote = null;
+  if (body.fulfillment === "ship") {
+    shipmentQuote = await quoteStoredShipment(items, {
+      requireStock: false,
+      couponCode: body.couponCode,
+    });
+    if (!shipmentQuote.ok) {
+      return {
+        ok: false,
+        status: shipmentQuote.status || 400,
+        message: shipmentQuote.message,
+      };
+    }
+    items = shipmentQuote.items;
+  }
+
   let totals = computeTotals(items, taxRate);
   let tip = 0;
   const tipStyle = body.tipStyle === "dollars" ? "dollars" : "percent";
-  if (!isAdminOrder) {
+  if (shipmentQuote) {
+    totals = {
+      subtotal: shipmentQuote.subtotal,
+      tax: 0,
+      tip: 0,
+      shipping: shipmentQuote.shipping,
+      discount: shipmentQuote.discount || 0,
+      total: shipmentQuote.total,
+      currency: "USD",
+    };
+  } else if (!isAdminOrder) {
     const tipRaw = body.tip;
     if (tipRaw !== undefined && tipRaw !== null && tipRaw !== "") {
       const tipCheck = validateTipForItems(tipRaw, items, { tipStyle });
@@ -532,6 +605,7 @@ export async function placeOnlineOrder(body, user, options = {}) {
       subtotal: totals.subtotal,
       tax: totals.tax,
       tip: 0,
+      shipping: 0,
       total: 0,
       currency: totals.currency,
     };
@@ -568,12 +642,17 @@ export async function placeOnlineOrder(body, user, options = {}) {
 
   const session = await mongoose.startSession();
   let order;
+  const shippingCheck =
+    body.fulfillment === "ship" ? validateShippingAddress(body.shipping) : null;
   const orderPayload = {
     userId,
     isGuest,
     customer,
     items,
-    pickupTime,
+    pickupTime: body.fulfillment === "ship" ? undefined : pickupTime,
+    fulfillment: body.fulfillment === "ship" ? "ship" : "pickup",
+    couponCode: body.fulfillment === "ship" ? shipmentQuote?.couponCode || "" : "",
+    shippingAddress: shippingCheck?.ok ? shippingCheck.address : undefined,
     notes,
     paymentRef: paymentRefVal,
     paymentStatus: paymentStatusVal,
@@ -717,6 +796,15 @@ export async function placeOnlineOrder(body, user, options = {}) {
       });
     } catch (err) {
       console.error("Failed to import printReceipt service:", err);
+    }
+  }
+
+  if (paymentStatusVal === "paid" && orderPayload.fulfillment === "ship") {
+    try {
+      const { sendShipmentOrderEmail } = await import("./email.js");
+      await sendShipmentOrderEmail(orderObj);
+    } catch (err) {
+      console.error("Shipment order email failed:", err?.message || err);
     }
   }
 

@@ -176,14 +176,20 @@ function OrderPageContent() {
             .filter((m) => m.onlineOrderable === false)
             .map((m) => String(m._id)),
         );
-        if (inStoreOnlyIds.size > 0) {
-          const filtered = parsed.filter(
-            (line) => !inStoreOnlyIds.has(String(line._id)),
-          );
-          if (filtered.length !== parsed.length) {
-            parsed = filtered;
-            localStorage.setItem("cart", JSON.stringify(parsed));
+        const filtered = parsed.filter((line) => {
+          if (inStoreOnlyIds.has(String(line._id))) return false;
+          if (line.inStoreOnly) return false;
+          if (
+            line.itemType === "product" &&
+            /yirgacheffe/i.test(line.name || "")
+          ) {
+            return false;
           }
+          return true;
+        });
+        if (filtered.length !== parsed.length) {
+          parsed = filtered;
+          localStorage.setItem("cart", JSON.stringify(parsed));
         }
       } catch (e) {
         console.error("Failed to sync cart with menu", e);
@@ -875,6 +881,12 @@ function OrderPageContent() {
       if (!customerInfo.firstName || !customerInfo.firstName.trim()) {
         errors.firstName = "First name is required";
       }
+      if (
+        !customerInfo.lastName?.trim() ||
+        customerInfo.lastName.trim().length < 2
+      ) {
+        errors.lastName = "Last name is required";
+      }
 
       if (!customerInfo.phone || !customerInfo.phone.trim()) {
         errors.phone = "Phone number is required";
@@ -892,6 +904,10 @@ function OrderPageContent() {
       // If user is signed in, ensure they have email
       if (!user.email && !customerInfo.email) {
         errors.email = "Email is required";
+      }
+      const signedInLastName = (user.lastName || customerInfo.lastName || "").trim();
+      if (signedInLastName.length < 2) {
+        errors.lastName = "Last name is required";
       }
     }
 
@@ -994,7 +1010,7 @@ function OrderPageContent() {
       const customerData = user
         ? {
             firstName: user.firstName || "",
-            lastName: user.lastName || "",
+            lastName: user.lastName || customerInfo.lastName || "",
             email: user.email || customerInfo.email || "",
             phone: user.phone || "",
           }
@@ -2219,6 +2235,30 @@ function OrderPageContent() {
               <h2 className="mb-6 text-2xl font-semibold text-[var(--coffee-brown)]">
                 {user ? "Order Details" : "Customer Information"}
               </h2>
+              {user && !(user.lastName || "").trim() && (
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customerInfo.lastName}
+                    onChange={(e) =>
+                      setCustomerInfo({ ...customerInfo, lastName: e.target.value })
+                    }
+                    className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 ${
+                      validationErrors.lastName
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:border-[var(--lime-green)] focus:ring-[var(--lime-green)]"
+                    }`}
+                    placeholder="Doe"
+                  />
+                  {validationErrors.lastName && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.lastName}</p>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
@@ -2267,8 +2307,7 @@ function OrderPageContent() {
 
                       <div>
                         <label className="mb-2 block text-sm font-medium text-[var(--coffee-brown)]">
-                          Last Name{" "}
-                          <span className="font-normal text-gray-500">(optional)</span>
+                          Last Name *
                         </label>
                         <input
                           type="text"

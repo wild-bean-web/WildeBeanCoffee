@@ -138,11 +138,19 @@ export default function KitchenDashboard() {
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [audioError, setAudioError] = useState(null);
 
-  // Separate orders into pending and ready
-  const pendingOrders = orders.filter(
+  const [kitchenView, setKitchenView] = useState("orders");
+  const isShipmentOrder = (order) => order.fulfillment === "ship";
+  const pickupOrders = orders.filter((order) => !isShipmentOrder(order));
+  const shipOrders = orders.filter(
+    (order) =>
+      isShipmentOrder(order) &&
+      order.status !== "completed" &&
+      order.status !== "cancelled",
+  );
+  const pendingOrders = pickupOrders.filter(
     (order) => order.status !== "ready" && order.status !== "completed"
   );
-  const readyOrders = orders.filter((order) => order.status === "ready");
+  const readyOrders = pickupOrders.filter((order) => order.status === "ready");
 
   // Initialize audio on first user interaction if enabled
   useEffect(() => {
@@ -1193,6 +1201,59 @@ export default function KitchenDashboard() {
             </p>
           </div>
         )}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setKitchenView("orders")}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              kitchenView === "orders"
+                ? "bg-[var(--coffee-brown)] text-white"
+                : "bg-white text-[var(--coffee-brown)]"
+            }`}
+          >
+            Orders
+          </button>
+          <button
+            type="button"
+            onClick={() => setKitchenView("shipments")}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              kitchenView === "shipments"
+                ? "bg-[var(--coffee-brown)] text-white"
+                : "bg-white text-[var(--coffee-brown)]"
+            }`}
+          >
+            Shipments{shipOrders.length > 0 ? ` ${shipOrders.length}` : ""}
+          </button>
+        </div>
+
+        {kitchenView === "shipments" ? (
+          <div className="mb-8">
+            <h2 className="mb-4 text-2xl font-bold text-[var(--coffee-brown)]">
+              Shipments ({shipOrders.length})
+            </h2>
+            {shipOrders.length === 0 ? (
+              <div className="rounded-lg bg-white p-12 text-center shadow-md">
+                <p className="text-lg text-gray-500">No shipments to pack</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {shipOrders.map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    isNew={newOrderIds.has(order._id)}
+                    formatTime={formatTime}
+                    formatDate={formatDate}
+                    getTimeAgo={getTimeAgo}
+                    isReady={false}
+                    onMarkPickedUp={handleMarkPickedUp}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
         {/* Ready Orders Section */}
         {readyOrders.length > 0 && (
           <div className="mb-8">
@@ -1292,6 +1353,8 @@ export default function KitchenDashboard() {
             </>
           )}
         </div>
+          </>
+        )}
 
         {/* Checkout issues (hosted checkout drafts that need attention) — last so primary work stays on top */}
         <div className="mb-8">
@@ -1540,6 +1603,27 @@ function OrderCard({
         {order.customer.email && (
           <p className="text-sm text-gray-600">{order.customer.email}</p>
         )}
+        {order.fulfillment === "ship" && order.shippingAddress && (
+          <div className="mt-3 rounded-lg bg-[var(--coffee-brown-very-light)] p-3 text-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--coffee-brown)]">
+              Ship to · UPS Ground
+            </p>
+            <p>{order.shippingAddress.line1}</p>
+            {order.shippingAddress.line2 && <p>{order.shippingAddress.line2}</p>}
+            <p>
+              {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+              {order.shippingAddress.postalCode}
+            </p>
+            {order.couponCode && (
+              <p className="mt-2 font-semibold">
+                Coupon {order.couponCode}
+                {Number(order.totals?.discount) > 0
+                  ? ` −$${Number(order.totals.discount).toFixed(2)}`
+                  : ""}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Items */}
@@ -1638,7 +1722,16 @@ function OrderCard({
       </div>
 
        {/* Action Buttons */}
-       {!isReady && (
+       {!isReady && order.fulfillment === "ship" && onMarkPickedUp && (
+         <button
+           onClick={handleMarkPickedUpClick}
+           disabled={isMarkingPickedUp}
+           className="w-full rounded-lg bg-[var(--lime-green)] px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-[var(--lime-green-dark)] disabled:opacity-50 disabled:cursor-not-allowed"
+         >
+           {isMarkingPickedUp ? "Marking..." : "Mark shipped"}
+         </button>
+       )}
+       {!isReady && order.fulfillment !== "ship" && (
          <button
            onClick={handleMarkReadyClick}
            disabled={isMarkingReady}
