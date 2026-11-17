@@ -28,6 +28,7 @@ Thumbs.db
 .vscode/
 
 # Misc
+.superpowers/
 .vercel/
 .cache/
 

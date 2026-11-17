@@ -33,6 +33,14 @@ CLOVER_ENVIRONMENT=production
 ONLINE_ORDERING_TOGGLE_PASSWORD=choose-a-strong-password
 ```
 
+**Yirgacheffe shipping** (on unless set to false):
+```
+BEAN_SHIPPING_ENABLED=true
+GOOGLE_PLACES_API_KEY=your-google-places-key
+SHIPMENT_ORDER_EMAIL=info@wildbeancoffeeshop.com
+```
+Set `BEAN_SHIPPING_ENABLED=false` to hide Get it Shipped and refuse new shipment checkouts. These three variables belong on the Railway API service. The Vercel site does not need a new variable: the shop reads the shipping offer from the API. `GOOGLE_PLACES_API_KEY` enables street autocomplete. Without it, customers can still type the address.
+
 **Optional MongoDB Settings** (if you want to customize):
 ```
 MONGO_MAX_RETRIES=5
@@ -51,6 +59,9 @@ CLOVER_MERCHANT_ID=your-clover-merchant-id-here
 CLOVER_ENVIRONMENT=production
 MONGO_MAX_RETRIES=5
 MONGO_RETRY_DELAY_MS=1000
+BEAN_SHIPPING_ENABLED=true
+GOOGLE_PLACES_API_KEY=your-google-places-key
+SHIPMENT_ORDER_EMAIL=info@wildbeancoffeeshop.com
 ```
 
 ---

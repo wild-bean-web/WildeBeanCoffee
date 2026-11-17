@@ -7,6 +7,7 @@ import {
   draftChargeTargetsCents,
   selectHostedCheckoutPayment,
 } from "./hostedCheckoutPaymentMatch.js";
+import { cloverCustomerFields } from "../utils/cloverCustomer.js";
 
 // Lazy-load configuration to ensure environment variables are loaded first
 // This prevents issues with ES module hoisting where imports happen before dotenv.config()
@@ -519,7 +520,7 @@ export async function printReceipt(order, printerId = null) {
  * @param {Object} order - Order object
  * @returns {Array} Array of receipt line objects
  */
-function formatReceiptContent(order) {
+export function formatReceiptContent(order) {
   const lines = [];
 
   // Header
@@ -529,7 +530,12 @@ function formatReceiptContent(order) {
     align: "CENTER",
     bold: true,
   });
-  lines.push({ type: "TEXT", text: "ONLINE ORDER", align: "CENTER" });
+  const isShipment = order.fulfillment === "ship";
+  lines.push({
+    type: "TEXT",
+    text: isShipment ? "SHIP ORDER" : "ONLINE ORDER",
+    align: "CENTER",
+  });
   lines.push({ type: "TEXT", text: "---", align: "CENTER" });
 
   // Order info
@@ -555,7 +561,20 @@ function formatReceiptContent(order) {
       align: "LEFT",
     });
   }
-  if (order.pickupTime) {
+  if (isShipment && order.shippingAddress) {
+    const address = order.shippingAddress;
+    lines.push({ type: "TEXT", text: "SHIP TO", align: "LEFT", bold: true });
+    lines.push({ type: "TEXT", text: address.line1 || "", align: "LEFT" });
+    if (address.line2) {
+      lines.push({ type: "TEXT", text: address.line2, align: "LEFT" });
+    }
+    lines.push({
+      type: "TEXT",
+      text: `${address.city || ""}, ${address.state || ""} ${address.postalCode || ""}`.trim(),
+      align: "LEFT",
+    });
+    lines.push({ type: "TEXT", text: "UPS Ground", align: "LEFT" });
+  } else if (order.pickupTime) {
     const pickupDate = new Date(order.pickupTime);
     lines.push({
       type: "TEXT",
@@ -590,6 +609,31 @@ function formatReceiptContent(order) {
     text: `Tax: $${order.totals.tax.toFixed(2)}`,
     align: "LEFT",
   });
+  const discountVal = Number(order.totals?.discount);
+  if (Number.isFinite(discountVal) && discountVal > 0) {
+    lines.push({
+      type: "TEXT",
+      text: `Coupon ${order.couponCode || ""}: -$${discountVal.toFixed(2)}`,
+      align: "LEFT",
+    });
+  }
+  const shippingVal = Number(order.totals?.shipping);
+  if (isShipment) {
+    lines.push({
+      type: "TEXT",
+      text:
+        Number.isFinite(shippingVal) && shippingVal > 0
+          ? `Shipping: $${shippingVal.toFixed(2)}`
+          : "Shipping: Free",
+      align: "LEFT",
+    });
+  } else if (Number.isFinite(shippingVal) && shippingVal > 0) {
+    lines.push({
+      type: "TEXT",
+      text: `Shipping: $${shippingVal.toFixed(2)}`,
+      align: "LEFT",
+    });
+  }
   const tipVal = Number(order.totals.tip);
   if (Number.isFinite(tipVal) && tipVal > 0) {
     lines.push({
@@ -706,16 +750,15 @@ export async function createHostedCheckoutSession(checkoutData) {
     throw new Error("Checkout items are required");
   }
 
-  const firstName = (customer?.firstName || "").trim();
-  const lastNameRaw = (customer?.lastName || "").trim();
-  const email = (customer?.email || "").trim();
-  if (!customer || !firstName || !email) {
-    throw new Error(
-      "Customer information (firstName, email) is required; lastName is optional"
-    );
+  const cloverCustomer = cloverCustomerFields(customer);
+  const firstName = cloverCustomer.firstName;
+  const lastNameForClover = cloverCustomer.lastName;
+  const email = cloverCustomer.email;
+  if (!email) {
+    const err = new Error("Email is required");
+    err.status = 400;
+    throw err;
   }
-  /** Clover expects a lastName string; use placeholder when guest omits it. */
-  const lastNameForClover = lastNameRaw || ".";
 
   if (!amount || amount <= 0) {
     throw new Error("Valid payment amount is required");
@@ -781,7 +824,7 @@ export async function createHostedCheckoutSession(checkoutData) {
         firstName,
         lastName: lastNameForClover,
         email,
-        phoneNumber: customer.phone || undefined,
+        phoneNumber: cloverCustomer.phoneNumber,
       },
       shoppingCart,
       taxRates:

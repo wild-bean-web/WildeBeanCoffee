@@ -12,6 +12,17 @@ export function isBeanStampsEnabled() {
 }
 
 /**
+ * Retail Yirgacheffe shipping.
+ * BEAN_SHIPPING_ENABLED=false or 0 turns it off immediately.
+ * Unset or any other value leaves it on.
+ */
+export function isBeanShippingEnabled() {
+  const v = process.env.BEAN_SHIPPING_ENABLED;
+  if (v === "false" || v === "0") return false;
+  return true;
+}
+
+/**
  * Admin QA: comped orders (paymentRef ADMIN_DISCOUNT, $0 total).
  * Set ADMIN_ORDER_COMP_ENABLED=false or 0 to reject comped orders on the server and hide the flow on the client (with NEXT_PUBLIC_ADMIN_ORDER_COMP_ENABLED).
  * Unset or true/1: enabled (preserves existing behavior).

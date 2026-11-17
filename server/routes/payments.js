@@ -9,6 +9,8 @@ import { optionalAuth } from "../middleware/auth.js";
 import { HostedCheckoutDraft, Location } from "../models/index.js";
 import { validateOrderPayload } from "../services/onlineOrderPlacement.js";
 import { validateTipCents, validateTipForItems, foodSubtotalCentsFromItems } from "../services/tipValidation.js";
+import { prepareBeanShipmentCheckout } from "../services/beanShipment.js";
+import { isBeanShippingEnabled } from "../config/featureFlags.js";
 import { orderEventEmitter } from "../services/orderEvents.js";
 import {
   verifyCloverWebhookSignature,
@@ -131,7 +133,7 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
       );
     }
 
-    const {
+    let {
       items,
       customer,
       amount,
@@ -143,6 +145,32 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
       tipAmountCents: tipAmountCentsRaw = 0,
       orderDraft,
     } = req.body;
+
+    if (orderDraft?.fulfillment === "ship" && !isBeanShippingEnabled()) {
+      return errorResponse(res, 400, "Bean shipping is not available.");
+    }
+    if (orderDraft?.fulfillment === "ship") {
+      const shipment = await prepareBeanShipmentCheckout({
+        items,
+        amount,
+        taxRate,
+        tipAmountCents: tipAmountCentsRaw,
+        orderDraft,
+      });
+      if (!shipment?.ok) {
+        return errorResponse(
+          res,
+          shipment?.status || 400,
+          shipment?.message || "This shipment cannot be checked out",
+          shipment?.errors,
+        );
+      }
+      items = shipment.cloverItems;
+      amount = shipment.amountCents;
+      taxRate = 0;
+      tipAmountCentsRaw = 0;
+      orderDraft = shipment.orderDraft;
+    }
 
     console.log("[PAYMENT ROUTE] Request data:", JSON.stringify({
       itemCount: items?.length || 0,
@@ -276,6 +304,9 @@ router.post("/create-checkout", optionalAuth, async (req, res, next) => {
       stack: err.stack,
       name: err.name,
     }, null, 2));
+    if (err.status === 400) {
+      return errorResponse(res, 400, err.message);
+    }
     next(err);
   }
 });
