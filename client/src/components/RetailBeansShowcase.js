@@ -13,7 +13,7 @@ import {
  * Retail whole-bean showcase — home (editorial split) or shop (featured banner).
  * @param {"home" | "shop"} variant
  */
-export default function RetailBeansShowcase({ variant = "home" }) {
+export default function RetailBeansShowcase({ variant = "home", shippingEnabled = false }) {
   const bean = RETAIL_YIRGACHEFFE;
   const sectionRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -59,7 +59,7 @@ export default function RetailBeansShowcase({ variant = "home" }) {
           >
             {productImage}
             <div className="absolute left-4 top-4 z-10 rounded-full bg-[var(--coffee-brown)]/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
-              In store only
+              {shippingEnabled ? "Ships in the US" : "In store only"}
             </div>
           </motion.div>
 
@@ -83,11 +83,20 @@ export default function RetailBeansShowcase({ variant = "home" }) {
                 {bean.tagline}
               </p>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--coffee-brown)]/85 sm:text-lg">
-                {bean.shortDescription} Available now at our Rockville cafe —{" "}
-                <span className="font-semibold text-[var(--coffee-brown)]">
-                  {bean.bagSize} whole-bean bags for {formatRetailPrice(bean.price)}
-                </span>
-                . Not sold online.
+                {bean.shortDescription}{" "}
+                {shippingEnabled ? (
+                  <>
+                    Order a {bean.bagSize} bag for {formatRetailPrice(bean.price)}. UPS Ground is $6.95, and shipping is free on 5 or more bags.
+                  </>
+                ) : (
+                  <>
+                    Available now at our Rockville cafe —{" "}
+                    <span className="font-semibold text-[var(--coffee-brown)]">
+                      {bean.bagSize} whole-bean bags for {formatRetailPrice(bean.price)}
+                    </span>
+                    . Not sold online.
+                  </>
+                )}
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
@@ -111,10 +120,10 @@ export default function RetailBeansShowcase({ variant = "home" }) {
                   </p>
                 </div>
                 <Link
-                  href="/location"
+                  href={shippingEnabled ? "/shop/ship" : "/location"}
                   className="inline-flex items-center gap-2 rounded-full bg-[var(--lime-green)] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[var(--lime-green-dark)] hover:shadow-lg"
                 >
-                  Visit us in store
+                  {shippingEnabled ? "Get it Shipped" : "Visit us in store"}
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

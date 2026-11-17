@@ -13,6 +13,7 @@ import RetailBeansShowcase from "@/components/RetailBeansShowcase";
 import ImageComingSoon from "@/components/ImageComingSoon";
 import { useProducts } from "@/hooks/useProducts";
 import { applyRetailBeanOverrides } from "@/lib/retailBeans";
+import { shippingApi } from "@/lib/api";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -34,6 +35,14 @@ export default function ShopPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cart, setCart] = useState([]);
   const [imageErrors, setImageErrors] = useState(new Set());
+  const [shippingEnabled, setShippingEnabled] = useState(false);
+
+  useEffect(() => {
+    shippingApi
+      .getOffer()
+      .then((offer) => setShippingEnabled(Boolean(offer?.enabled)))
+      .catch(() => setShippingEnabled(false));
+  }, []);
 
   // Load cart from localStorage
   useEffect(() => {
@@ -223,14 +232,23 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <RetailBeansShowcase variant="shop" />
+      <RetailBeansShowcase variant="shop" shippingEnabled={shippingEnabled} />
 
       {/* In-store retail notice */}
       <div className="border-b border-[var(--lime-green)]/25 bg-[var(--lime-green)]/10 px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <p className="text-center text-sm font-medium text-[var(--coffee-brown)] sm:text-base">
-            <span className="font-semibold">Whole-bean bags are sold in store only</span>
-            {" "}— pick up Ethiopian Yirgacheffe (12 oz whole beans) at our Rockville cafe. Online bag ordering is not available.
+            {shippingEnabled ? (
+              <>
+                <span className="font-semibold">Ethiopian Yirgacheffe ships in the US</span>
+                {" "}— 12 oz whole beans, $17.53. UPS Ground is $6.95 for one bag and free on 5 or more. Other bags are not sold online.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Whole-bean bags are sold in store only</span>
+                {" "}— pick up Ethiopian Yirgacheffe (12 oz whole beans) at our Rockville cafe. Online bag ordering is not available.
+              </>
+            )}
           </p>
         </div>
       </div>

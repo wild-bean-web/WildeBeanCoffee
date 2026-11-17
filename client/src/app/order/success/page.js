@@ -38,6 +38,8 @@ function OrderSuccessContent() {
   const [sessionRefForDisplay, setSessionRefForDisplay] = useState(null);
   const [showPickupCoffeeFreshnessNote, setShowPickupCoffeeFreshnessNote] =
     useState(false);
+  const [isShipment, setIsShipment] = useState(false);
+  const [shipTo, setShipTo] = useState(null);
 
   useEffect(() => {
     const completeOrder = async () => {
@@ -89,6 +91,10 @@ function OrderSuccessContent() {
           );
 
           setOrderId(result._id);
+          if (result.fulfillment === "ship") {
+            setIsShipment(true);
+            setShipTo(result.shippingAddress || null);
+          }
           clearPostCheckoutClientState();
 
           try {
@@ -120,6 +126,10 @@ function OrderSuccessContent() {
             ordersApi.recoverHostedCheckout(ref),
           );
           setOrderId(result._id);
+          if (result.fulfillment === "ship") {
+            setIsShipment(true);
+            setShipTo(result.shippingAddress || null);
+          }
           clearPostCheckoutClientState();
           try {
             await fetch("/api/payments/print-receipt", {
@@ -258,9 +268,21 @@ function OrderSuccessContent() {
               Order Placed Successfully!
             </h1>
             <p className="mb-4 text-gray-600">
-              Thank you for your order. We&apos;ll have it ready for pickup soon.
+              {isShipment
+                ? "Thank you. We'll pack your Yirgacheffe and ship it UPS Ground."
+                : "Thank you for your order. We'll have it ready for pickup soon."}
             </p>
-            <PickupArrivalNotice className="mx-auto mb-4 max-w-md text-left" />
+            {isShipment && shipTo && (
+              <p className="mx-auto mb-4 max-w-md text-sm text-gray-600">
+                {shipTo.line1}
+                {shipTo.line2 ? `, ${shipTo.line2}` : ""}
+                <br />
+                {shipTo.city}, {shipTo.state} {shipTo.postalCode}
+              </p>
+            )}
+            {!isShipment && (
+              <PickupArrivalNotice className="mx-auto mb-4 max-w-md text-left" />
+            )}
             {showPickupCoffeeFreshnessNote && (
               <p className="mx-auto mb-4 max-w-md text-left text-sm leading-snug text-stone-600">
                 {PICKUP_COFFEE_FRESHNESS_NOTE}

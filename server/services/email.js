@@ -241,6 +241,51 @@ export async function sendPasswordResetCode(email, code) {
  * Verify email transporter configuration
  * @returns {Promise<boolean>} True if email service is configured
  */
+/**
+ * Tell the shop a paid bean shipment was created.
+ * Failure is logged and ignored so the kitchen order still exists.
+ */
+export async function sendShipmentOrderEmail(order) {
+  const to = process.env.SHIPMENT_ORDER_EMAIL?.trim() || "info@wildbeancoffeeshop.com";
+  const address = order.shippingAddress || {};
+  const lines = (order.items || [])
+    .map((item) => `${item.quantity}x ${item.name}`)
+    .join("\n");
+  const id = String(order._id || "").slice(-8).toUpperCase();
+  const text = [
+    `Shipment order #${id}`,
+    `${order.customer?.name || ""}`,
+    `${order.customer?.phone || ""}`,
+    `${order.customer?.email || ""}`,
+    lines,
+    [address.line1, address.line2].filter(Boolean).join(", "),
+    `${address.city || ""}, ${address.state || ""} ${address.postalCode || ""}`,
+    `UPS Ground $${Number(order.totals?.shipping || 0).toFixed(2)}`,
+    Number(order.totals?.discount) > 0
+      ? `Coupon ${order.couponCode || ""} −$${Number(order.totals.discount).toFixed(2)}`
+      : "",
+    `Total $${Number(order.totals?.total || 0).toFixed(2)} Paid`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const fromAddress =
+      process.env.EMAIL_FROM || process.env.EMAIL_USER || "noreply@wildbeancoffeeshop.com";
+    const transport = await getTransporterAsync();
+    const info = await transport.sendMail({
+      from: `"Wild Bean Coffee" <${fromAddress}>`,
+      to,
+      subject: `Shipment order #${id}`,
+      text,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Shipment order email failed:", error?.message || error);
+    return { success: false };
+  }
+}
+
 export async function verifyEmailConfig() {
   try {
     const transport = await getTransporterAsync();

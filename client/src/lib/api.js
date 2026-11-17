@@ -476,6 +476,27 @@ export const authApi = {
 /**
  * Payments API
  */
+export const shippingApi = {
+  getOffer: async () => {
+    const result = await fetchJson("/api/shipping");
+    return result.data;
+  },
+  autocomplete: async (input) => {
+    const result = await fetchJson("/api/shipping/autocomplete", {
+      method: "POST",
+      body: JSON.stringify({ input }),
+    });
+    return result.data.suggestions || [];
+  },
+  place: async (placeId) => {
+    const result = await fetchJson("/api/shipping/place", {
+      method: "POST",
+      body: JSON.stringify({ placeId }),
+    });
+    return result.data;
+  },
+};
+
 export const paymentsApi = {
   /**
    * Create a Hosted Checkout session
