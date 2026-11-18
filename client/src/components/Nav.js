@@ -11,6 +11,37 @@ import Lottie from "lottie-react";
 import Toast from "./Toast";
 import { BEAN_STAMPS_ENABLED } from "@/lib/loyaltyConstants";
 
+const DOORDASH_STORE_URL =
+  "https://www.doordash.com/store/41513961?utm_source=mx_share";
+
+function DoorDashDeliveryLink({ className = "", onClick }) {
+  return (
+    <a
+      href={DOORDASH_STORE_URL}
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--coffee-brown)] px-4 py-1.5 text-center font-semibold text-[var(--coffee-brown)] transition-colors hover:bg-[var(--coffee-brown)] hover:text-white ${className}`}
+    >
+      DoorDash Delivery
+      <svg
+        aria-hidden="true"
+        className="h-3.5 w-3.5 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+        />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6v6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10 14 21 3" />
+      </svg>
+    </a>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -111,8 +142,8 @@ export default function Nav() {
   return (
     <nav className="sticky top-0 z-50 w-full max-w-full bg-white shadow-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 min-w-0 items-center justify-between gap-2">
-          <Link href="/" className="flex flex-shrink-0 items-center gap-2 overflow-hidden">
+        <div className="flex h-16 min-w-0 items-center justify-between gap-2 lg:h-auto lg:min-h-16 lg:py-2">
+          <Link href="/" className="flex h-16 flex-shrink-0 items-center gap-2 overflow-hidden">
             <Image
               src="/images/logo/LogoWtext.png"
               alt="Wild Bean Coffee"
@@ -145,16 +176,19 @@ export default function Nav() {
                 <span>Bean Stamps</span>
               </Link>
             )}
-            <Link
-              href="/order"
-              className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors ${
-                isActive("/order")
-                  ? "bg-[var(--lime-green-dark)]"
-                  : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
-              }`}
-            >
-              {orderNavLabel}
-            </Link>
+            <div className="flex flex-col items-stretch gap-1.5">
+              <Link
+                href="/order"
+                className={`rounded-full px-4 py-2 text-center text-sm font-semibold text-white transition-colors ${
+                  isActive("/order")
+                    ? "bg-[var(--lime-green-dark)]"
+                    : "bg-[var(--lime-green)] hover:bg-[var(--lime-green-dark)]"
+                }`}
+              >
+                {orderNavLabel}
+              </Link>
+              <DoorDashDeliveryLink className="text-sm" />
+            </div>
             {/* Kitchen Dashboard - Admin Only */}
             {isAdmin && (
               <Link
@@ -296,6 +330,10 @@ export default function Nav() {
               >
                 {orderNavLabel}
               </Link>
+              <DoorDashDeliveryLink
+                className="text-base"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
               {/* Kitchen Dashboard - Admin Only (Mobile) */}
               {isAdmin && (
                 <Link
