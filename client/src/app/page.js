@@ -609,9 +609,9 @@ export default function Home() {
             {[
               {
                 icon: "/animations/fresh-roasted.json",
-                title: "Locally Roasted",
+                title: "Roasted Fresh In House",
                 description:
-                  "We partner with a local roaster for our Ethiopian single-origin coffee, so every cup is fresh and full of flavor.",
+                  "We roast our Ethiopian single-origin coffee in house, so every cup is fresh and full of flavor.",
                 enterFrom: "left", // From left side of screen
               },
               {
