@@ -135,5 +135,57 @@ describe('Nav', () => {
       expect(link.closest('a')).toHaveAttribute('href', '/menu')
     })
   })
+
+  const doorDashStoreUrl =
+    'https://www.doordash.com/store/41513961?utm_source=mx_share'
+
+  function expectDoorDashLink(link) {
+    expect(link).toHaveAttribute('href', doorDashStoreUrl)
+    expect(link).not.toHaveAttribute('target')
+    expect(link.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  }
+
+  it('places DoorDash Delivery under Order Online and keeps it in the same window', () => {
+    render(<Nav />)
+
+    const orderOnline = screen.getByRole('link', { name: 'Order Online' })
+    const doorDash = screen.getByRole('link', { name: 'DoorDash Delivery' })
+
+    expectDoorDashLink(doorDash)
+    expect(
+      orderOnline.compareDocumentPosition(doorDash) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('places DoorDash Delivery under Order Online in the phone menu', async () => {
+    const user = userEvent.setup()
+    render(<Nav />)
+
+    await user.click(screen.getByLabelText('Menu'))
+
+    const doorDashLinks = screen.getAllByRole('link', { name: 'DoorDash Delivery' })
+    expect(doorDashLinks).toHaveLength(2)
+    doorDashLinks.forEach(expectDoorDashLink)
+
+    const orderLinks = screen.getAllByRole('link', { name: 'Order Online' })
+    const menuOrder = orderLinks[1]
+    const menuDoorDash = doorDashLinks[1]
+    expect(
+      menuOrder.compareDocumentPosition(menuDoorDash) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('keeps DoorDash Delivery under Checkout on the checkout page', () => {
+    mockPathname.mockReturnValue('/order')
+    render(<Nav />)
+
+    const checkout = screen.getByRole('link', { name: 'Checkout' })
+    const doorDash = screen.getByRole('link', { name: 'DoorDash Delivery' })
+
+    expectDoorDashLink(doorDash)
+    expect(
+      checkout.compareDocumentPosition(doorDash) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
 })
 
