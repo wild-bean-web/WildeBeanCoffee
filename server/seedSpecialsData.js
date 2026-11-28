@@ -364,13 +364,13 @@ export const specialsSeed = [
     weekOf: "2026-07-27",
     weekLabel: "7/27",
     base: ["Whole milk", "Double shot espresso"],
-    build: [b("Irish cream", "2 pumps", "3 pumps")],
+    build: [b("Irish cream", "3 pumps", "4 pumps")],
     toppings: ["White chocolate drizzle (inside cup)", "Cacao powder"],
     method: [
       "White chocolate drizzle inside cup",
       "Irish cream + milk, mix, ice, more milk",
       "Espresso on top",
-      "Dust with cacao powder",
+      "Garnish with cacao powder",
     ],
   },
   {
